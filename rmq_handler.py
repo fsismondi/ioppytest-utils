@@ -36,6 +36,7 @@ import datetime
 import traceback
 import pika
 import time
+import os
 from inspect import istraceback
 
 #Support order in python 2.7 and 3
@@ -43,6 +44,16 @@ try:
     from collections import OrderedDict
 except ImportError:
     pass
+
+AMQP_URL = 'amqp://guest:guest@localhost'
+
+try:
+    AMQP_URL = str(os.environ['AMQP_URL'])
+    print('Env vars for AMQP connection succesfully imported')
+    print('URL: %s'%AMQP_URL)
+
+except KeyError as e:
+    print(' Cannot retrieve environment variables for AMQP connection, using default %s'%AMQP_URL)
 
 # skip natural LogRecord attributes
 # http://docs.python.org/library/logging.html#logrecord-attributes
@@ -120,6 +131,7 @@ class JsonFormatter(logging.Formatter):
         for field in self._required_fields:
             log_record[field] = record.__dict__.get(field)
         log_record.update(message_dict)
+
         merge_record_extra(record, log_record, reserved=self._skip_fields)
 
     def process_log_record(self, log_record):
@@ -156,6 +168,7 @@ class JsonFormatter(logging.Formatter):
 
         try:
             log_record = OrderedDict()
+            log_record['_type'] = 'log'
         except NameError:
             log_record = {}
 
@@ -191,6 +204,7 @@ class RabbitMQHandler(logging.Handler):
 
     def close(self):
         self.channel.close()
+
 
 if __name__ == "__main__":
 
