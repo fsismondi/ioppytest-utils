@@ -50,11 +50,10 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.0.3'
+API_VERSION = '0.1.0'
 
 # TODO use metaclasses instead?
-# TODO Define also structure of request/reponses inside metadata (correlation id, reply_to,etc)
-
+# TODO Define also a reply method which provides amessage with routig key for the reply, correlation id, reply_to,etc
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -71,30 +70,28 @@ class Message:
         global API_VERSION
 
         # hard copy the message template
-        self._msg_meta = {k:v for k,v in self._msg_metadata_template.items()}
         self._msg_data = {k:v for k,v in self._msg_data_template.items()}
+
+        # init properties
+        self._properties = dict(
+                content_type='application/json',
+                message_id=str(uuid.uuid4()),
+        )
+
+        #if message is a service request then add some extra props
+        if self.routing_key.endswith('.service'):
+            self._properties['reply_to'] = '%s.%s'%(self.routing_key,'reply')
+            self._properties['correlation_id'] = self._properties['message_id']
 
         # rewrite default metadata and data fields of the message instance
         self._msg_data.update(kwargs)
-        self._msg_meta.update(kwargs)
-
-        # add UUID (message id) in meta
-        self._msg_meta['message_id'] = str(uuid.uuid4())
 
         # add API's version
         self._msg_data['_api_version'] = API_VERSION
 
-        #if message is a service request
-        if self._msg_meta['routing_key'].endswith('.service'):
-            # add reply to and corr_id
-            self._msg_meta['reply_to'] = '%s.%s'%(self._msg_meta['routing_key'],'reply')
-            self._msg_meta['correlation_id'] = self._msg_meta['message_id']
-
         # add values as objects attributes
         for key in self._msg_data:
             setattr(self, key, self._msg_data[key])
-        for key in self._msg_meta:
-            setattr(self, key, self._msg_meta[key])
 
 
     def to_dict(self) -> OrderedDict:
@@ -102,7 +99,6 @@ class Message:
         for field in self._msg_data:
             resp[field] = getattr(self, field)
         # for readability
-        resp.move_to_end('_api_version', False)
         resp.move_to_end('_type',False)
 
         return resp
@@ -110,19 +106,15 @@ class Message:
     def to_json(self):
         return json.dumps(self.to_dict())
 
-    def get_message_properties(self) -> OrderedDict:
-        resp = OrderedDict()
+    def get_properties(self) -> dict:
+        return self._properties
 
-        for field in self._msg_meta:
-            resp[field] = getattr(self, field)
-
-        return resp
-
-
-    def __repr__(self):
+    def __str__(self):
         str = ' - '*20 + '\n'
-        str += 'Message properties: %s'%json.dumps(self.get_message_properties())
-        str += '\n - - - \n'
+        str += 'Message routing key: %s' %self.routing_key
+        str += '\n'
+        str += 'Message properties: %s'%json.dumps(self.get_properties())
+        str += '\n'
         str += 'Message body: %s' %self.to_json()
         str += '\n' + ' - ' * 20
         return str
@@ -149,9 +141,7 @@ class MsgTestSuiteStart(Message):
     GUI -> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key' : "control.testcoordination",
-    }
+    routing_key = "control.testcoordination"
 
     _msg_data_template = {
         '_type': "testcoordination.testsuite.start",
@@ -164,9 +154,7 @@ class MsgTestCaseStart(Message):
     GUI -> Testing Tool
     Message used for indicating the testing tool to start the test case (the one previously selected)
     """
-    _msg_metadata_template = {
-        'routing_key' : "control.testcoordination",
-    }
+    routing_key = "control.testcoordination"
 
     _msg_data_template = {
         '_type': "testcoordination.testcase.start",
@@ -180,9 +168,7 @@ class MsgTestCaseStop(Message):
     Message used for indicating the testing tool to stop the test case (the one running)
     """
 
-    _msg_metadata_template = {
-        'routing_key' : 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.stop',
@@ -195,9 +181,7 @@ class MsgTestCaseRestart(Message):
     GUI -> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key' : 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.restart',
@@ -211,9 +195,7 @@ class MsgStimuliExecuted(Message):
     GUI (or automated-IUT)-> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key' : 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.step.stimuli.executed',
@@ -229,9 +211,8 @@ class MsgCheckResponse(Message):
     Not used in CoAP testing Tool (analysis of traces is done post mortem)
     """
 
-    _msg_metadata_template = {
-        'routing_key' : 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
+
 
     _msg_data_template = {
         '_type': 'testcoordination.step.check.response',
@@ -248,9 +229,7 @@ class MsgVerifyResponse(Message):
     GUI (or automated-IUT)-> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.step.verify.response',
@@ -265,9 +244,7 @@ class MsgTestCaseFinish(Message):
     Not used in CoAP Testing Tool (test coordinator deduces it automatically by using the testcase's step sequence)
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.finish',
@@ -279,9 +256,7 @@ class MsgTestCaseSkip(Message):
     GUI (or automated-IUT)-> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.skip',
@@ -295,9 +270,7 @@ class MsgTestCaseSelect(Message):
     GUI (or automated-IUT)-> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.select',
@@ -310,9 +283,7 @@ class MsgTestSuiteAbort(Message):
     GUI (or automated-IUT)-> Testing Tool
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination',
-    }
+    routing_key = 'control.testcoordination'
 
     _msg_data_template = {
         '_type': 'testcoordination.testsuite.abort',
@@ -329,9 +300,7 @@ class MsgTestSuiteGetStatus(Message):
     GUI MUST implement
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination.service',
-    }
+    routing_key = 'control.testcoordination.service'
 
     _msg_data_template = {
         '_type': 'testcoordination.testsuite.getstatus',
@@ -344,9 +313,7 @@ class MsgTestSuiteGetTestCases(Message):
     GUI MUST implement
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.testcoordination.service',
-    }
+    routing_key = 'control.testcoordination.service'
 
     _msg_data_template = {
         '_type': 'testcoordination.testsuite.gettestcases',
@@ -361,9 +328,7 @@ class MsgSniffingStart(Message):
     Testing Tool SHOULD implement (design recommendation)
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.sniffing.service',
-    }
+    routing_key = 'control.sniffing.service'
 
     _msg_data_template = {
         '_type': 'sniffing.start',
@@ -379,9 +344,7 @@ class MsgSniffingStop(Message):
     Testing Tool SHOULD implement (design recommendation)
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.sniffing.service',
-    }
+    routing_key = 'control.sniffing.service'
 
     _msg_data_template = {
         '_type': 'sniffing.stop',
@@ -394,9 +357,7 @@ class MsgSniffingGetCapture(Message):
     Testing Tool SHOULD implement (design recommendation)
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.sniffing.service',
-    }
+    routing_key = 'control.sniffing.service'
 
     _msg_data_template = {
         '_type': 'sniffing.getcapture',
@@ -412,9 +373,7 @@ class MsgSniffingGetCaptureLast(Message):
     Testing Tool SHOULD implement (design recommendation)
     """
 
-    _msg_metadata_template = {
-        'routing_key': 'control.sniffing.service',
-    }
+    routing_key ='control.sniffing.service'
 
     _msg_data_template = {
         '_type': 'sniffing.getlastcapture',
@@ -431,9 +390,7 @@ class MsgAnalysisTestCaseAnalyze(Message):
 
     PCAP_empty_base64 = '1MOyoQIABAAAAAAAAAAAAMgAAAAAAAAA'
 
-    _msg_metadata_template = {
-        'routing_key': 'control.analysis.service',
-    }
+    routing_key = 'control.analysis.service'
 
     _msg_data_template = {
         '_type': 'analysis.testcase.analyze',
@@ -462,9 +419,7 @@ class MsgDissectionDissectCapture(Message):
                                               "AAXBjtHRlc6oJfVjSGgYAOwAAADsAAABgAz8VABMRP7u7AAAAAAAAAAAAAAAAAAG7uw" \
                                               "AAAAAAAAAAAAAAAAAC17wWMwATWVBAAXBjtHRlc3TBAg=="
 
-    _msg_metadata_template = {
-        'routing_key': 'control.dissection.service',
-    }
+    routing_key = 'control.dissection.service'
 
     _msg_data_template = {
         '_type': 'dissection.dissectcapture',
@@ -511,12 +466,10 @@ if __name__ == '__main__':
     print(m1)
     print(m1.to_json())
     print(m1._msg_data)
-    print(m1._msg_meta)
 
     print(m2)
     print(m2.to_json())
     print(m2._msg_data)
-    print(m2._msg_meta)
     #
     # m2=MsgTestSuiteStart()
     # print(json.dumps(m2.to_dict()))
