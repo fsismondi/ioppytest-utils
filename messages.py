@@ -50,7 +50,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.0.2'
+API_VERSION = '0.0.3'
 
 # TODO use metaclasses instead?
 # TODO Define also structure of request/reponses inside metadata (correlation id, reply_to,etc)
@@ -131,11 +131,9 @@ class Message:
     def from_json(cls, body):
 
         try:
-            logging.info('Converting json into a Message object..')
-            logging.info('json: %s')%body
-
-            message_dict = json.loads(body)
-            # message = json.loads(body.decode('utf-8'))
+            logging.debug('Converting json into a Message object..')
+            message_dict = json.loads(body.decode('utf-8'))
+            logging.debug('json: %s' %json.dumps(message_dict))
             message_type = message_dict['_type']
             if message_type in _message_types_dict:
                 return _message_types_dict[message_type](**message_dict)
@@ -407,6 +405,20 @@ class MsgSniffingGetCapture(Message):
 
     }
 
+class MsgSniffingGetCaptureLast(Message):
+    """
+    Testing Tools'internal call.
+    Coordinator -> Sniffer
+    Testing Tool SHOULD implement (design recommendation)
+    """
+
+    _msg_metadata_template = {
+        'routing_key': 'control.sniffing.service',
+    }
+
+    _msg_data_template = {
+        '_type': 'sniffing.getlastcapture',
+    }
 
 ###### ANALYSIS SERVICES REQUESTS MESSAGES ######
 
