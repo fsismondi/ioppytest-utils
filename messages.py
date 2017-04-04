@@ -50,7 +50,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.1.0'
+API_VERSION = '0.1.1'
 
 # TODO use metaclasses instead?
 # TODO Define also a reply method which provides amessage with routig key for the reply, correlation id, reply_to,etc
@@ -124,13 +124,28 @@ class Message:
 
         try:
             logging.debug('Converting json into a Message object..')
-            message_dict = json.loads(body.decode('utf-8'))
-            logging.debug('json: %s' %json.dumps(message_dict))
+
+            if type(body) is str:
+                message_dict = json.loads(body)
+
+            # Note: pika re-encodes json.dumps strings as utf-8 for some reason, the following line undoes this
+            elif type(body) is bytes:
+                message_dict = json.loads(body.decode('utf-8'))
+
+            logging.debug('json: %s' % json.dumps(message_dict))
             message_type = message_dict['_type']
             if message_type in _message_types_dict:
                 return _message_types_dict[message_type](**message_dict)
         except :
             raise NonCompliantMessageFormatError('Cannot load json message: %s'%str(body))
+
+    def __repr__(self):
+
+        ret = '%s(' %self.__class__.__name__
+        for field in self._msg_data:
+            ret += '%s = %s'%(field,getattr(self, field))
+        ret += ')'
+        return ret
 
 
 ###### TEST COORDINATION MESSAGES ######
@@ -464,8 +479,12 @@ if __name__ == '__main__':
     #m2 = MsgTestCaseStart(routing_key = 'lolo', hola='verano')
 
     print(m1)
-    print(m1.to_json())
     print(m1._msg_data)
+    j = m1.to_json()
+    print(j)
+    deco = Message.from_json(j)
+    print(repr(deco))
+
 
     print(m2)
     print(m2.to_json())
