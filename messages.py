@@ -43,6 +43,17 @@ testcase_id : TD_COAP_CORE_03_v01
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
 '{"_type": "testcoordination.testcase.skip", "testcase_id": "TD_COAP_CORE_03_v01"}'
+
+# using it to import json into python objects:
+>>> m=MsgTestSuiteStart()
+>>> m.to_json()
+'{"_type": "testcoordination.testsuite.start", "_api_version": "0.1.1"}'
+>>> json_message = m.to_json()
+>>> obj=Message.from_json(json_message)
+>>> type(obj)
+<class 'messages.MsgTestSuiteStart'>
+
+
 """
 
 from collections import OrderedDict
