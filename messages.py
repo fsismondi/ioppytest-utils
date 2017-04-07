@@ -12,47 +12,54 @@ The idea is to be able to have an
 
 Usage:
 ------
->>> from messages import *
+>>> from messages import * # doctest: +SKIP
 >>> m = MsgTestCaseSkip()
->>> print(m)
- -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - - -
-Message representation:
- - - -
-routing_key / topic : control.testcoordination
- - - -
-_type : testcoordination.testcase.skip
-testcase_id : TD_COAP_CORE_02_v01
- -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - - -
+>>> m
+MsgTestCaseSkip(_type = testcoordination.testcase.skip, _api_version = 0.1.2, testcase_id = TD_COAP_CORE_02_v01, )
 >>> m.routing_key
 'control.testcoordination'
+>>> m.message_id # doctest: +SKIP
+'802012eb-24e3-45c4-9dcc-dc293c584f63'
 >>> m.testcase_id
 'TD_COAP_CORE_02_v01'
+
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03_v01')
 >>> m
- -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - - -
-Message representation:
- - - -
-routing_key / topic : control.testcoordination
- - - -
-_type : testcoordination.testcase.skip
-testcase_id : TD_COAP_CORE_03_v01
- -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - - -
+MsgTestCaseSkip(_type = testcoordination.testcase.skip, _api_version = 0.1.2, testcase_id = TD_COAP_CORE_03_v01, )
 >>> m.testcase_id
 'TD_COAP_CORE_03_v01'
+
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_type": "testcoordination.testcase.skip", "testcase_id": "TD_COAP_CORE_03_v01"}'
+'{"_type": "testcoordination.testcase.skip", "_api_version": "0.1.2", "testcase_id": "TD_COAP_CORE_03_v01"}'
 
-# using it to import json into python objects:
+# We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.to_json()
-'{"_type": "testcoordination.testsuite.start", "_api_version": "0.1.1"}'
+'{"_type": "testcoordination.testsuite.start", "_api_version": "0.1.2"}'
 >>> json_message = m.to_json()
 >>> obj=Message.from_json(json_message)
 >>> type(obj)
-<class 'messages.MsgTestSuiteStart'>
+<class '__main__.MsgTestSuiteStart'>
 
+# We can use the library for generating error responses to the requests:
+# the request:
+>>> m = MsgSniffingStart()
+>>>
+# the error reply (note that we pass the message of the request to build the reply):
+>>> err = MsgErrorReply(m)
+>>> err
+MsgErrorReply(_type = sniffing.start, _api_version = 0.1.2, ok = False, error_code = Some error code TBD, error_message = Some error message TBD, )
+>>> m.reply_to
+'control.sniffing.service.reply'
+>>> err.routing_key
+'control.sniffing.service.reply'
+
+>>> m.correlation_id # doctest: +SKIP
+'360b0f67-4455-43e3-a00f-eca91f2e84da'
+>>> err.correlation_id # doctest: +SKIP
+'360b0f67-4455-43e3-a00f-eca91f2e84da'
 
 """
 
@@ -61,7 +68,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.1.1'
+API_VERSION = '0.1.6'
 
 # TODO use metaclasses instead?
 # TODO Define also a reply method which provides amessage with routig key for the reply, correlation id, reply_to,etc
@@ -85,14 +92,16 @@ class Message:
 
         # init properties
         self._properties = dict(
-                content_type='application/json',
-                message_id=str(uuid.uuid4()),
+            content_type='application/json',
+            message_id=str(uuid.uuid4()),
         )
 
-        #if message is a service request then add some extra props
-        if self.routing_key.endswith('.service'):
-            self._properties['reply_to'] = '%s.%s'%(self.routing_key,'reply')
-            self._properties['correlation_id'] = self._properties['message_id']
+        try:
+            if self.routing_key.endswith('.service'):
+                self._properties['reply_to'] = '%s.%s' % (self.routing_key, 'reply')
+                self._properties['correlation_id'] = self._properties['message_id']
+        except AttributeError:
+                pass
 
         # rewrite default metadata and data fields of the message instance
         self._msg_data.update(kwargs)
@@ -104,13 +113,24 @@ class Message:
         for key in self._msg_data:
             setattr(self, key, self._msg_data[key])
 
+        # add props as objects attributes
+        for key in self._properties:
+            setattr(self, key, self._properties[key])
+
 
     def to_dict(self) -> OrderedDict:
         resp = OrderedDict()
-        for field in self._msg_data:
+        # let's use sorted so API returns items inside always in the same order
+        for field in sorted(self._msg_data.keys()):
             resp[field] = getattr(self, field)
+
         # for readability
-        resp.move_to_end('_type',False)
+        if 'ok' in resp:
+            resp.move_to_end('ok', False)
+        if '_api_version' in resp:
+            resp.move_to_end('_api_version', False)
+        if '_type' in resp:
+            resp.move_to_end('_type',False)
 
         return resp
 
@@ -118,7 +138,10 @@ class Message:
         return json.dumps(self.to_dict())
 
     def get_properties(self) -> dict:
-        return self._properties
+        resp = OrderedDict()
+        for field in self._properties:
+            resp[field] = getattr(self, field)
+        return resp
 
     def __str__(self):
         str = ' - '*20 + '\n'
@@ -132,32 +155,93 @@ class Message:
 
     @classmethod
     def from_json(cls, body):
+        """
+        :param body: json string or string encoded as utf-8
+        :return:  Message object generated from the body
+        :raises NonCompliantMessageFormatError: If the message cannot be build from the provided json
+        """
 
-        try:
-            logging.debug('Converting json into a Message object..')
+        if type(body) is str:
+            message_dict = json.loads(body)
+        # Note: pika re-encodes json.dumps strings as utf-8 for some reason, the following line undoes this
+        elif type(body) is bytes:
+            message_dict = json.loads(body.decode('utf-8'))
+        else:
+            raise NonCompliantMessageFormatError('Not a Json')
 
-            if type(body) is str:
-                message_dict = json.loads(body)
+        # check fist if it's a response
+        if 'ok' in message_dict:
+            # cannot build a complete reply message just from the json representation
+            raise NotImplementedError()
 
-            # Note: pika re-encodes json.dumps strings as utf-8 for some reason, the following line undoes this
-            elif type(body) is bytes:
-                message_dict = json.loads(body.decode('utf-8'))
-
-            logging.debug('json: %s' % json.dumps(message_dict))
-            message_type = message_dict['_type']
-            if message_type in _message_types_dict:
-                return _message_types_dict[message_type](**message_dict)
-        except :
+        message_type = message_dict['_type']
+        if message_type in message_types_dict:
+            return message_types_dict[message_type](**message_dict)
+        else:
             raise NonCompliantMessageFormatError('Cannot load json message: %s'%str(body))
 
     def __repr__(self):
-
         ret = '%s(' %self.__class__.__name__
-        for field in self._msg_data:
-            ret += '%s = %s'%(field,getattr(self, field))
+        for key, value in self.to_dict().items():
+                ret += '%s = %s, '%(key,value)
         ret += ')'
         return ret
 
+
+class MsgReply(Message):
+    """
+    Auxiliary class which creates replies messages with fields based on the request.
+    Routing key, corr_id and _type are generated based on the request message
+    """
+    def __init__(self, request_message, **kwargs):
+        assert request_message
+
+        self.routing_key = request_message.routing_key + ".reply"
+
+        # if not data template, then let's build one for a reply
+        # (possible when creating a MsgReply directly and not by using subclass)
+        if not hasattr(self, '_msg_data_template'):
+            self._msg_data_template= {
+                '_type' : request_message._type,
+                'ok' : True,
+            }
+
+        super().__init__(**kwargs)
+
+        # override correlation id template and attribute
+        self._properties['correlation_id'] = request_message.correlation_id
+        self.correlation_id = request_message.correlation_id
+
+
+class MsgErrorReply(MsgReply):
+    """
+    F-Interop conventions:
+        - if event is a service request then the routing keys is control.someFunctionality.service
+        also, its reply will be control.someFunctionality.service.reply
+        - reply.correlation_id = request.correlation_id
+
+    """
+
+    _msg_data_template = {
+        'ok': False,
+        'error_message': 'Some error message TBD',
+        'error_code': 'Some error code TBD'
+    }
+
+
+###### SESSION MESSAGES ######
+
+class MsgSessionTerminate(Message):
+    """
+    Testing Tool MUST-implement API endpoint
+    GUI, (or Orchestrator?) -> Testing Tool
+    Testing tool should stop all it's processes gracefully.
+    """
+    routing_key = 'control.session.terminate'
+
+    _msg_data_template = {
+        '_type': 'session.terminate',
+    }
 
 ###### TEST COORDINATION MESSAGES ######
 
@@ -238,7 +322,6 @@ class MsgCheckResponse(Message):
     """
 
     routing_key = 'control.testcoordination'
-
 
     _msg_data_template = {
         '_type': 'testcoordination.step.check.response',
@@ -332,6 +415,10 @@ class MsgTestSuiteGetStatus(Message):
         '_type': 'testcoordination.testsuite.getstatus',
     }
 
+class MsgTestSuiteGetStatusReply(MsgReply):
+    # TODO implement
+    pass
+
 class MsgTestSuiteGetTestCases(Message):
     """
     Testing Tool's MUST-implement API entrypoint
@@ -344,6 +431,10 @@ class MsgTestSuiteGetTestCases(Message):
     _msg_data_template = {
         '_type': 'testcoordination.testsuite.gettestcases',
     }
+
+class MsgTestSuiteGetTestCasesReply(Message):
+    # TODO implement
+    pass
 
 ###### SNIFFING SERVICES REQUEST MESSAGES ######
 
@@ -363,6 +454,20 @@ class MsgSniffingStart(Message):
         'filter_proto': 'udp port 5683'
     }
 
+class MsgSniffingStartReply(MsgReply):
+    """
+    Testing Tools'internal call.
+    Sniffer -> Coordinator
+    Testing Tool SHOULD implement (design recommendation)
+    """
+
+    routing_key = 'control.sniffing.service.reply'
+
+    _msg_data_template = {
+        '_type': 'sniffing.start.reply',
+        'ok': True
+    }
+
 class MsgSniffingStop(Message):
     """
     Testing Tools'internal call.
@@ -376,6 +481,20 @@ class MsgSniffingStop(Message):
         '_type': 'sniffing.stop',
     }
 
+class MsgSniffingStoptReply(MsgReply):
+    """
+    Testing Tools'internal call.
+    Sniffer -> Coordinator
+    Testing Tool SHOULD implement (design recommendation)
+    """
+
+    routing_key = 'control.sniffing.service.reply'
+
+    _msg_data_template = {
+        '_type': 'sniffing.stop.reply',
+        'ok': True
+    }
+
 class MsgSniffingGetCapture(Message):
     """
     Testing Tools'internal call.
@@ -387,10 +506,13 @@ class MsgSniffingGetCapture(Message):
 
     _msg_data_template = {
         '_type': 'sniffing.getcapture',
-        "get_last": False,
         "capture_id": "TD_COAP_CORE_01",
 
     }
+
+class MsgSniffingGetCaptureReply(MsgReply):
+    # TODO implement
+    pass
 
 class MsgSniffingGetCaptureLast(Message):
     """
@@ -405,9 +527,13 @@ class MsgSniffingGetCaptureLast(Message):
         '_type': 'sniffing.getlastcapture',
     }
 
-###### ANALYSIS SERVICES REQUESTS MESSAGES ######
+class MsgSniffingGetCaptureLastReply(MsgReply):
+    # TODO implement
+    pass
 
-class MsgAnalysisTestCaseAnalyze(Message):
+###### ANALYSIS MESSAGES ######
+
+class MsgInteropTestCaseAnalyze(Message):
     """
     Testing Tools'internal call.
     Coordinator -> Analyzer
@@ -419,15 +545,59 @@ class MsgAnalysisTestCaseAnalyze(Message):
     routing_key = 'control.analysis.service'
 
     _msg_data_template = {
-        '_type': 'analysis.testcase.analyze',
+        '_type': 'analysis.interop.testcase.analyze',
         "testcase_id": "TD_COAP_CORE_01",
-        "testcase_ref": "http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
+        "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
         "file_enc": "pcap_base64",
         "filename": "TD_COAP_CORE_01.pcap",
         "value": PCAP_empty_base64,
     }
 
-###### DISSECTION SERVICES REQUESTS MESSAGES ######
+class MsgInteropTestCaseAnalyzeReply(MsgReply):
+    """
+    Testing Tools'internal call.
+    Analyzer -> Coordinator
+    Testing Tool SHOULD implement (design recommendation)
+
+    The recommended structure for the partial_verdicts field is a list of partial verdicts with the following
+    requirements:
+     - each one of those elements of the list correspond to one CHECK or VERIFY steps of the test description
+     - first value of the list MUST be a "pass", "fail", "inconclusive" or eventually "error" partial verdict (string)
+     - the second value MUST be a string with a description of partial verdict (intended for the user)
+     - more values elements MAY be added to the list
+
+    """
+
+    _msg_data_template = {
+        '_type' : 'analysis.interop.testcase.analyze.reply',
+        'ok' : True,
+        'verdict': 'pass',
+        'analysis_type': 'postmortem',
+        'description': 'The test purpose has been verified without any fault detected',
+        'review_frames':[],
+        'token' : '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
+        "partial_verdicts": [
+            [
+                "pass", "<Frame   1: [127.0.0.1 -> 127.0.0.1] CoAP [CON 43521] GET /test> Match: CoAP(type=0, code=1)"
+             ],
+
+            [
+                "pass",
+                "<Frame   2: [127.0.0.1 -> 127.0.0.1] CoAP [ACK 43521] 2.05 Content > Match: CoAP(code=69, mid=0xaa01, \
+                tok=b'b\\xda', pl=Not(b''))"
+             ],
+            [
+                "pass",
+                "<Frame   2: [127.0.0.1 -> 127.0.0.1] CoAP [ACK 43521] 2.05 Content > \
+                Match: CoAP(opt=Opt(CoAPOptionContentFormat()))"
+             ]
+        ],
+        "testcase_id": "TD_COAP_CORE_01",
+        "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
+    }
+
+###### DISSECTION MESSAGES ######
+
 class MsgDissectionDissectCapture(Message):
     """
     Testing Tools'internal call.
@@ -456,7 +626,83 @@ class MsgDissectionDissectCapture(Message):
     }
 
 
-_message_types_dict = {
+class MsgDissectionDissectCaptureReply(MsgReply):
+    """
+    Testing Tools'internal call.
+    Dissector -> Coordinator
+    and
+    Dissector -> Analyzer
+    Testing Tool SHOULD implement (design recommendation)
+    """
+
+    frames_example = \
+    """"frames": [
+        {
+            "_type": "frame",
+            "id": 1,
+            "timestamp": 1464858393.547275,
+            "error": null,
+            "protocol_stack": [
+                {
+                    "_type": "protocol",
+                    "_protocol": "NullLoopback",
+                    "AddressFamily": "2",
+                    "ProtocolFamily": "0"
+                },
+                {
+                    "_type": "protocol",
+                    "_protocol": "IPv4",
+                    "Version": "4",
+                    "HeaderLength": "5",
+                    "TypeOfService": "0x00",
+                    "TotalLength": "41",
+                    "Identification": "0x71ac",
+                    "Reserved": "0",
+                    "DontFragment": "0",
+                    "MoreFragments": "0",
+                    "FragmentOffset": "0",
+                    "TimeToLive": "64",
+                    "Protocol": "17",
+                    "HeaderChecksum": "0x0000",
+                    "SourceAddress": "127.0.0.1",
+                    "DestinationAddress": "127.0.0.1",
+                    "Options": "b''"
+                  }
+        }
+    ]"""
+
+
+    _msg_data_template = {
+        '_type' : 'dissection.dissectcapture.reply',
+        'ok' : True,
+        'token' : '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
+        'frames' : frames_example
+    }
+
+
+class MsgDissectionAutoDissect(Message):
+    """
+    Testing Tool's MUST-implement.
+    Testing Tool -> GUI
+    GUI MUST display this info during execution:
+     - interop session
+     - conformance session
+     - performance ?
+     - privacy?
+
+    """
+    event_r_key = 'control.dissection.auto'
+
+    frames_example = MsgDissectionDissectCaptureReply.frames_example
+
+    _msg_data_template = {
+        '_type' : 'dissection.autotriggered',
+        'token' : '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
+        'frames' : frames_example
+    }
+
+
+message_types_dict = {
     "testcoordination.testsuite.start": MsgTestSuiteStart,
     "testcoordination.testcase.start": MsgTestCaseStart,
     "testcoordination.testcase.stop": MsgTestCaseStop,
@@ -473,8 +719,12 @@ _message_types_dict = {
     "sniffing.start": MsgSniffingStart,
     "sniffing.stop": MsgSniffingStop,
     "sniffing.getcapture": MsgSniffingGetCapture,
-    "analysis.testcase.analyze": MsgAnalysisTestCaseAnalyze,
+    "sniffing.getlastcapture": MsgSniffingGetCaptureLast,
+    "analysis.interop.testcase.analyze": MsgInteropTestCaseAnalyze,
+    "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,
     "dissection.dissectcapture": MsgDissectionDissectCapture,
+    "reply.error" : MsgErrorReply,
+    "session.terminate" : MsgSessionTerminate,
 }
 
 
@@ -500,18 +750,18 @@ if __name__ == '__main__':
     print(m2)
     print(m2.to_json())
     print(m2._msg_data)
-    #
-    # m2=MsgTestSuiteStart()
-    # print(json.dumps(m2.to_dict()))
-    # print(m2.routing_key)
-    # print(m2.to_json())
-    # print(m2)
-    #
-    # m3=MsgTestCaseStop()
-    # print(json.dumps(m3.to_dict()))
-    # print(m3.routing_key)
-    # print(m3.to_json())
-    # print(m3)
+
+    m2=MsgTestSuiteStart()
+    print(json.dumps(m2.to_dict()))
+    print(m2.routing_key)
+    print(m2.to_json())
+    print(m2)
+
+    m3=MsgTestCaseStop()
+    print(json.dumps(m3.to_dict()))
+    print(m3.routing_key)
+    print(m3.to_json())
+    print(m3)
 
     j = json.dumps({
         '_type': 'dissection.dissectcapture',
@@ -523,3 +773,35 @@ if __name__ == '__main__':
     print(type(r))
     print(r)
 
+
+    m = MsgTestCaseSkip()
+    print(m)
+    print(
+        m.routing_key,
+        m.message_id,
+        m.testcase_id,
+    )
+    m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03_v01')
+    print(
+            m.testcase_id,
+            m.to_json(),
+    )
+    m=MsgTestSuiteStart()
+    m.to_json()
+    json_message = m.to_json()
+    obj=Message.from_json(json_message)
+    type(obj)
+
+    #build responses from requests
+    m = MsgSniffingStart()
+    err = MsgErrorReply(m)
+    print(
+        err,
+        m.reply_to,
+        err.routing_key,
+        m.message_id,
+        m.correlation_id,
+    )
+
+    import doctest
+    doctest.testmod()
