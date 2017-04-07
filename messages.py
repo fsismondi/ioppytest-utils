@@ -68,7 +68,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.1.6'
+API_VERSION = '0.1.7'
 
 # TODO use metaclasses instead?
 # TODO Define also a reply method which provides amessage with routig key for the reply, correlation id, reply_to,etc
@@ -221,6 +221,12 @@ class MsgErrorReply(MsgReply):
         - reply.correlation_id = request.correlation_id
 
     """
+    def __init__(self, request_message, **kwargs):
+        assert request_message
+        # msg_data_template doesnt include _type cause this class is generic, we can only get this at init,
+        # so, let's copy the _type from request and let the MsgReply handle the rest of the fields
+        self._msg_data_template['_type'] = request_message._type
+        super().__init__(request_message, **kwargs)
 
     _msg_data_template = {
         'ok': False,
@@ -635,13 +641,12 @@ class MsgDissectionDissectCaptureReply(MsgReply):
     Testing Tool SHOULD implement (design recommendation)
     """
 
-    frames_example = \
-    """"frames": [
+    _frames_example = [
         {
             "_type": "frame",
             "id": 1,
             "timestamp": 1464858393.547275,
-            "error": null,
+            "error": None,
             "protocol_stack": [
                 {
                     "_type": "protocol",
@@ -668,15 +673,15 @@ class MsgDissectionDissectCaptureReply(MsgReply):
                     "DestinationAddress": "127.0.0.1",
                     "Options": "b''"
                   }
-        }
-    ]"""
-
+            ]
+        },
+    ]
 
     _msg_data_template = {
         '_type' : 'dissection.dissectcapture.reply',
         'ok' : True,
         'token' : '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
-        'frames' : frames_example
+        'frames' : _frames_example
     }
 
 
@@ -691,14 +696,14 @@ class MsgDissectionAutoDissect(Message):
      - privacy?
 
     """
-    event_r_key = 'control.dissection.auto'
+    routing_key = 'control.dissection.auto'
 
-    frames_example = MsgDissectionDissectCaptureReply.frames_example
+    _frames_example = MsgDissectionDissectCaptureReply._frames_example
 
     _msg_data_template = {
         '_type' : 'dissection.autotriggered',
         'token' : '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
-        'frames' : frames_example
+        'frames' : _frames_example
     }
 
 
@@ -723,8 +728,10 @@ message_types_dict = {
     "analysis.interop.testcase.analyze": MsgInteropTestCaseAnalyze,
     "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,
     "dissection.dissectcapture": MsgDissectionDissectCapture,
+    "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,
     "reply.error" : MsgErrorReply,
     "session.terminate" : MsgSessionTerminate,
+    "control.dissection.auto" : MsgDissectionAutoDissect,
 }
 
 
