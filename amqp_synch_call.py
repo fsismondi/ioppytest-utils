@@ -3,9 +3,7 @@
 
 import pika
 import time
-from coap_testing_tool import AMQP_URL, AMQP_EXCHANGE
-from coap_testing_tool.utils.event_bus_messages import *
-
+from .messages import *
 
 def publish_message(channel, message):
     """ Published which uses message object metadata
@@ -25,23 +23,29 @@ def publish_message(channel, message):
     )
 
 
-def amqp_request(request_message: Message, component_id: str):
+def amqp_request(channel, request_message: Message, component_id: str):
+    """
+    NOTE: channel must be a pika channel
+    """
+
+    global AMQP_EXCHANGE
+
     # check first that sender didnt forget about reply to and corr id
     assert request_message.reply_to
     assert request_message.correlation_id
 
-    # setup blocking connection, do not reuse the conection from coord, it needs to be a new one
-    connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+    if AMQP_EXCHANGE is None:
+        AMQP_EXCHANGE = 'default'
+
     response = None
 
-    channel = connection.channel()
     reply_queue_name = 'amqp_rpc_%s@%s' % (str(uuid.uuid4())[:8], component_id)
 
     result = channel.queue_declare(queue=reply_queue_name, auto_delete=True)
 
     callback_queue = result.method.queue
 
-    # by convention routing key of answer is routing_key + .reply
+    # bind and listen to reply_to topic
     channel.queue_bind(
             exchange=AMQP_EXCHANGE,
             queue=callback_queue,
@@ -80,9 +84,9 @@ def amqp_request(request_message: Message, component_id: str):
                 )
         )
 
-    # cleaning up
+    # clean up
     channel.queue_delete(reply_queue_name)
-    connection.close()
+
     return response
 
 
