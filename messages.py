@@ -1112,7 +1112,7 @@ message_types_dict = {
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
     "session.terminate": MsgSessionTerminate, # GUI (or Orchestrator?) -> TestingTool
-    "control.dissection.auto": MsgDissectionAutoDissect, # TestingTool -> GUI
+    "dissection.autotriggered": MsgDissectionAutoDissect, # TestingTool -> GUI
     # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
     "privacy.analyze": MsgPrivacyAnalyze, # TestingTool internal
     "privacy.getstatus":  MsgPrivacyGetStatus, # GUI -> TestingTool
