@@ -68,7 +68,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.1.12'
+API_VERSION = '0.1.13'
 
 
 # TODO use metaclasses instead?
@@ -1096,6 +1096,7 @@ class MsgPrivacyVerdict(Message):
 
 message_types_dict = {
     "testcoordination.testsuite.start": MsgTestSuiteStart, # GUI -> TestingTool
+    "testcoordination.testsuite.finish": MsgTestSuiteFinish, # GUI -> TestingTool
     "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
     "testcoordination.testcase.start": MsgTestCaseStart, # GUI -> TestingTool
     "testcoordination.step.execute": MsgStepExecute, # TestingTool -> GUI
