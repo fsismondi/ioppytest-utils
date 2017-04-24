@@ -269,6 +269,19 @@ class MsgTestSuiteStart(Message):
     }
 
 
+
+class MsgTestSuiteFinish(Message):
+    """
+    Testing Tool MUST-implement API endpoint
+    GUI -> Testing Tool
+    """
+
+    routing_key = "control.testcoordination"
+
+    _msg_data_template = {
+        '_type': "testcoordination.testsuite.finish",
+    }
+
 class MsgTestCaseReady(Message):
     """
     Testing Tool MUST-implement notification.
