@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python3
-
+import os
 import pika
 import time
 from .messages import *
+
+VERSION = '0.0.2'
+
+try:
+    AMQP_EXCHANGE = str(os.environ['AMQP_EXCHANGE'])
+except KeyError as e:
+    print('couldnt import AMQP_EXCHANGE from environment')
+    AMQP_EXCHANGE = "default"
+
+try:
+    AMQP_URL = str(os.environ['AMQP_URL'])
+except KeyError as e:
+    print('couldnt import AMQP_URL from environment')
+    AMQP_URL = "amqp://guest:guest@localhost/"
+
 
 def publish_message(channel, message):
     """ Published which uses message object metadata
