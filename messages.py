@@ -977,6 +977,109 @@ class MsgDissectionAutoDissect(Message):
         'frames': _frames_example
     }
 
+###### PRIVACY TESTING TOOL MESSAGES ######
+
+
+class MsgPrivacyAnalyze(Message):
+    """
+        Testing Tool's MUST-implement.
+        Analyze PCAP File for Privacy checks.  
+    """
+    routing_key = 'control.privacy.service'
+
+    # TODO: This message should be update with a valuable privacy example
+    PCAP_COAP_GET_OVER_TUN_INTERFACE_base64 = "1MOyoQIABAAAAAAAAAAAAMgAAABlAAAAqgl9WK8aBgA7AAAAOwAAAGADPxUAExFAu7s" \
+                                              "AAAAAAAAAAAAAAAAAAbu7AAAAAAAAAAAAAAAAAALXvBYzABNZUEABcGO0dGVzdMECqg" \
+                                              "l9WMcaBgCQAAAAkAAAAGAAAAAAaDr//oAAAAAAAAAAAAAAAAAAA7u7AAAAAAAAAAAAA" \
+                                              "AAAAAGJAAcTAAAAALu7AAAAAAAAAAAAAAAAAAK7uwAAAAAAAAAAAAAAAAACBAgAAAAA" \
+                                              "AABgAz8VABMRQLu7AAAAAAAAAAAAAAAAAAG7uwAAAAAAAAAAAAAAAAAC17wWMwATWVB" \
+                                              "AAXBjtHRlc6oJfVjSGgYAOwAAADsAAABgAz8VABMRP7u7AAAAAAAAAAAAAAAAAAG7uw" \
+                                              "AAAAAAAAAAAAAAAAAC17wWMwATWVBAAXBjtHRlc3TBAg=="
+
+    _msg_data_template = {
+        "_type": "privacy.analyze",
+        "value":  PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
+        "file_enc": "pcap_base64",
+        "filename": "TD_PRIVACY_DEMO_01.pcap",
+    }
+
+
+class MsgPrivacyGetConfiguration(Message):
+    """
+           Read Privacy configuration.
+           GUI MUST display this info during setup
+    """
+    routing_key = 'control.privacy.service'
+
+    _msg_data_template = {
+        "_type": "privacy.configuration.get",
+    }
+
+
+class MsgPrivacySetConfiguration(Message):
+    """
+        Write Privacy configuration.
+        GUI MUST display this info during setup
+    """
+    routing_key = 'control.privacy.service'
+
+    CFG_EXAMPLE = {}
+
+    _msg_data_template = {
+        "_type": "privacy.configuration.set",
+        "configuration": CFG_EXAMPLE,
+    }
+
+
+class MsgPrivacyGetStatus(Message):
+    """
+    Testing Tool's MUST-implement.
+    GUI -> Testing Tool 
+    GUI MUST display this info during execution:
+     - privacy?
+
+    """
+    routing_key = 'control.privacy.service'
+
+    _msg_data_template = {
+        "_type": "privacy.getstatus",
+    }
+
+
+class MsgPrivacyGetStatusReply(Message):
+    """
+    Testing Tool's MUST-implement.
+    GUI -> Testing Tool 
+    GUI MUST display this info during execution:
+     - privacy?
+
+    """
+
+
+    REPORT_EXAMPLE = dict()
+    routing_key = 'control.privacy.service'
+
+    _msg_data_template = {
+        "_type": "privacy.getstatus.reply",
+        "verdict": REPORT_EXAMPLE,
+        "status" : "TBD",
+        "ok": True,
+
+    }
+
+class MsgPrivacyVerdict(Message):
+
+    routing_key = 'control.privacy.service'
+
+    REPORT_EXAMPLE = dict()
+
+    _msg_data_template = {
+        "_type": "privacy.verdict.reply",
+        "verdict": REPORT_EXAMPLE,
+
+
+    }
+
 
 message_types_dict = {
     "testcoordination.testsuite.start": MsgTestSuiteStart, # GUI -> TestingTool
@@ -1010,6 +1113,13 @@ message_types_dict = {
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
     "session.terminate": MsgSessionTerminate, # GUI (or Orchestrator?) -> TestingTool
     "control.dissection.auto": MsgDissectionAutoDissect, # TestingTool -> GUI
+    # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
+    "privacy.analyze": MsgPrivacyAnalyze, # TestingTool internal
+    "privacy.getstatus":  MsgPrivacyGetStatus, # GUI -> TestingTool
+    "privacy.getstatus.reply":  MsgPrivacyGetStatusReply, # GUI -> TestingTool (reply)
+    "privacy.verdict":  MsgPrivacyVerdict, # TestingTool -> GUI,
+    "privacy.configuration.get":  MsgPrivacyGetConfiguration, # TestingTool -> GUI,
+    "privacy.configuration.set":  MsgPrivacySetConfiguration, # GUI -> TestingTool,
 }
 
 if __name__ == '__main__':
