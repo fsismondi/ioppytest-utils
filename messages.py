@@ -68,7 +68,7 @@ import json
 import uuid
 import logging
 
-API_VERSION = '0.1.13'
+API_VERSION = '0.1.14'
 
 
 # TODO use metaclasses instead?
