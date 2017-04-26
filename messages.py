@@ -247,7 +247,7 @@ class MsgSessionTerminate(Message):
     GUI, (or Orchestrator?) -> Testing Tool
     Testing tool should stop all it's processes gracefully.
     """
-    routing_key = 'control.session.terminate'
+    routing_key = 'control.session'
 
     _msg_data_template = {
         '_type': 'session.terminate',
@@ -980,7 +980,7 @@ class MsgDissectionAutoDissect(Message):
      - privacy?
 
     """
-    routing_key = 'control.dissection.auto'
+    routing_key = 'control.dissection'
 
     _frames_example = MsgDissectionDissectCaptureReply._frames_example
 
@@ -1125,8 +1125,8 @@ message_types_dict = {
     "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,  # Testing Tool Internal
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
-    "session.terminate": MsgSessionTerminate, # GUI (or Orchestrator?) -> TestingTool
     "dissection.autotriggered": MsgDissectionAutoDissect, # TestingTool -> GUI
+    "session.terminate": MsgSessionTerminate, # GUI (or Orchestrator?) -> TestingTool
     # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
     "privacy.analyze": MsgPrivacyAnalyze, # TestingTool internal
     "privacy.getstatus":  MsgPrivacyGetStatus, # GUI -> TestingTool
