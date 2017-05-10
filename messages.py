@@ -64,11 +64,11 @@ MsgErrorReply(_type = sniffing.start, _api_version = 0.1.2, ok = False, error_co
 """
 
 from collections import OrderedDict
+import time
 import json
 import uuid
-import logging
 
-API_VERSION = '0.1.15'
+API_VERSION = '0.1.19'
 
 
 # TODO use metaclasses instead?
@@ -92,6 +92,7 @@ class Message:
         self._properties = dict(
                 content_type='application/json',
                 message_id=str(uuid.uuid4()),
+                timestamp=int(time.time())
         )
 
         try:
@@ -241,7 +242,7 @@ class MsgErrorReply(MsgReply):
 
 ###### SESSION MESSAGES ######
 
-class MsgSessionTerminate(Message):
+class MsgTestingToolTerminate(Message):
     """
     Testing Tool MUST-implement API endpoint
     GUI, (or Orchestrator?) -> Testing Tool
@@ -250,7 +251,52 @@ class MsgSessionTerminate(Message):
     routing_key = 'control.session'
 
     _msg_data_template = {
-        '_type': 'session.terminate',
+        '_type': 'testingtool.terminate',
+    }
+
+
+class MsgTestingToolReady(Message):
+    """
+    Testing Tool MUST-implement notification.
+    Testing Tool -> GUI
+
+    Used to indicate to the GUI that testing is ready to start the test suite
+    """
+    routing_key = 'control.session'
+
+    _msg_data_template = {
+        '_type': 'testingtool.ready',
+        "message": "Testing tool ready to start test suite."
+    }
+
+
+class MsgTestingToolComponentReady(Message):
+    """
+    Testing Tools'internal call.
+    Component x -> Test Coordinator
+    Testing Tool SHOULD implement (design recommendation)
+    """
+    routing_key = 'control.session'
+
+    _msg_data_template = {
+        '_type': 'testingtool.component.ready',
+        'component': 'SomeComponent',
+        "message": "Component ready to start test suite."
+    }
+
+
+class MsgTestingToolComponentShutdown(Message):
+    """
+    Testing Tools'internal call.
+    Component x -> Test Coordinator
+    Testing Tool SHOULD implement (design recommendation)
+    """
+    routing_key = 'control.session'
+
+    _msg_data_template = {
+        '_type': 'testingtool.component.shutdown',
+        'component': 'SomeComponent',
+        "message": "Component is shutting down. Bye!"
     }
 
 
@@ -269,7 +315,6 @@ class MsgTestSuiteStart(Message):
     }
 
 
-
 class MsgTestSuiteFinish(Message):
     """
     Testing Tool MUST-implement API endpoint
@@ -281,6 +326,7 @@ class MsgTestSuiteFinish(Message):
     _msg_data_template = {
         '_type': "testcoordination.testsuite.finish",
     }
+
 
 class MsgTestCaseReady(Message):
     """
@@ -328,6 +374,8 @@ class MsgTestCaseConfiguration(Message):
         "_type": "testcoordination.testcase.configuration",
         "configuration_id": "COAP_CFG_01_v01",
         "node": "coap_server",
+        "testcase_id": "TBD",
+        "testcase_ref": "TBD",
         "message":
             ["CoAP servers running service at [bbbb::2]:5683",
              "CoAP servers are requested to offer the following resources",
@@ -397,7 +445,9 @@ class MsgStepExecute(Message):
         ],
         "step_state": "executing",
         "node": "coap_client",
-        "node_execution_mode": "user_assisted"
+        "node_execution_mode": "user_assisted",
+        "testcase_id": "TBD",
+        "testcase_ref": "TBD"
     }
 
 
@@ -462,6 +512,7 @@ class MsgTestCaseFinish(Message):
         '_type': 'testcoordination.testcase.finish',
     }
 
+
 class MsgTestCaseFinished(Message):
     """
     Testing Tool MUST-implement notification.
@@ -474,8 +525,9 @@ class MsgTestCaseFinished(Message):
 
     _msg_data_template = {
         '_type': 'testcoordination.testcase.finished',
-        'testcase_id' : 'TD_COAP_CORE_01',
-        'message' : 'Testcase finished'
+        'testcase_id': 'TD_COAP_CORE_01',
+        "testcase_ref": "TBD",
+        'message': 'Testcase finished'
     }
 
 
@@ -987,8 +1039,11 @@ class MsgDissectionAutoDissect(Message):
     _msg_data_template = {
         '_type': 'dissection.autotriggered',
         'token': '0lzzb_Bx30u8Gu-xkt1DFE1GmB4',
-        'frames': _frames_example
+        'frames': _frames_example,
+        "testcase_id": "TBD",
+        "testcase_ref": "TBD"
     }
+
 
 ###### PRIVACY TESTING TOOL MESSAGES ######
 
@@ -996,7 +1051,7 @@ class MsgDissectionAutoDissect(Message):
 class MsgPrivacyAnalyze(Message):
     """
         Testing Tool's MUST-implement.
-        Analyze PCAP File for Privacy checks.  
+        Analyze PCAP File for Privacy checks.
     """
     routing_key = 'control.privacy.service'
 
@@ -1019,7 +1074,7 @@ class MsgPrivacyAnalyze(Message):
 
     _msg_data_template = {
         "_type": "privacy.analyze",
-        "value":  PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
+        "value": PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
         "file_enc": "pcap_base64",
         "filename": "TD_PRIVACY_DEMO_01.pcap",
     }
@@ -1106,7 +1161,7 @@ class MsgPrivacySetConfigurationReply(MsgReply):
 class MsgPrivacyGetStatus(Message):
     """
     Testing Tool's MUST-implement.
-    GUI -> Testing Tool 
+    GUI -> Testing Tool
     GUI MUST display this info during execution:
      - privacy?
 
@@ -1121,12 +1176,11 @@ class MsgPrivacyGetStatus(Message):
 class MsgPrivacyGetStatusReply(MsgReply):
     """
     Testing Tool's MUST-implement.
-    GUI -> Testing Tool 
+    GUI -> Testing Tool
     GUI MUST display this info during execution:
      - privacy?
 
     """
-
 
     REPORT_EXAMPLE = dict()
     routing_key = 'control.privacy.service.reply'
@@ -1134,7 +1188,7 @@ class MsgPrivacyGetStatusReply(MsgReply):
     _msg_data_template = {
         "_type": "privacy.getstatus.reply",
         "verdict": REPORT_EXAMPLE,
-        "status" : "TBD",
+        "status": "TBD",
         "ok": True,
 
     }
@@ -1156,38 +1210,41 @@ class MsgPrivacyIssue(Message):
 
 
 message_types_dict = {
-    "testcoordination.testsuite.start": MsgTestSuiteStart, # GUI -> TestingTool
-    "testcoordination.testsuite.finish": MsgTestSuiteFinish, # GUI -> TestingTool
+    "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
+    "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
     "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
-    "testcoordination.testcase.start": MsgTestCaseStart, # GUI -> TestingTool
-    "testcoordination.step.execute": MsgStepExecute, # TestingTool -> GUI
-    "testcoordination.testcase.configuration": MsgTestCaseConfiguration, # TestingTool -> GUI
-    "testcoordination.testcase.stop": MsgTestCaseStop, # GUI -> TestingTool
-    "testcoordination.testcase.restart": MsgTestCaseRestart, # GUI -> TestingTool
-    "testcoordination.step.stimuli.executed": MsgStimuliExecuted, # GUI -> TestingTool
-    "testcoordination.step.check.response": MsgCheckResponse, # GUI -> TestingTool
-    "testcoordination.step.verify.response": MsgVerifyResponse, # GUI -> TestingTool
-    "testcoordination.testcase.skip": MsgTestCaseSkip, # GUI -> TestingTool
-    "testcoordination.testcase.select": MsgTestCaseSelect, # GUI -> TestingTool
-    "testcoordination.testcase.finish": MsgTestCaseFinish, # GUI -> TestingTool
-    "testcoordination.testcase.finished": MsgTestCaseFinished, # TestingTool -> GUI
-    "testcoordination.testcase.verdict": MsgTestCaseVerdict, # TestingTool -> GUI
-    "testcoordination.testsuite.abort": MsgTestSuiteAbort, # GUI -> TestingTool
-    "testcoordination.testsuite.getstatus": MsgTestSuiteGetStatus, # GUI -> TestingTool
-    "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,# TestingTool -> GUI (reply)
-    "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,# GUI -> TestingTool
-    "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,# TestingTool -> GUI (reply)
-    "testcoordination.testsuite.report" : MsgTestSuiteReport, # TestingTool -> GUI
-    "sniffing.start": MsgSniffingStart, # Testing Tool Internal
-    "sniffing.stop": MsgSniffingStop, # Testing Tool Internal
+    "testcoordination.testcase.start": MsgTestCaseStart,  # GUI -> TestingTool
+    "testcoordination.step.execute": MsgStepExecute,  # TestingTool -> GUI
+    "testcoordination.testcase.configuration": MsgTestCaseConfiguration,  # TestingTool -> GUI
+    "testcoordination.testcase.stop": MsgTestCaseStop,  # GUI -> TestingTool
+    "testcoordination.testcase.restart": MsgTestCaseRestart,  # GUI -> TestingTool
+    "testcoordination.step.stimuli.executed": MsgStimuliExecuted,  # GUI -> TestingTool
+    "testcoordination.step.check.response": MsgCheckResponse,  # GUI -> TestingTool
+    "testcoordination.step.verify.response": MsgVerifyResponse,  # GUI -> TestingTool
+    "testcoordination.testcase.skip": MsgTestCaseSkip,  # GUI -> TestingTool
+    "testcoordination.testcase.select": MsgTestCaseSelect,  # GUI -> TestingTool
+    "testcoordination.testcase.finish": MsgTestCaseFinish,  # GUI -> TestingTool
+    "testcoordination.testcase.finished": MsgTestCaseFinished,  # TestingTool -> GUI
+    "testcoordination.testcase.verdict": MsgTestCaseVerdict,  # TestingTool -> GUI
+    "testcoordination.testsuite.abort": MsgTestSuiteAbort,  # GUI -> TestingTool
+    "testcoordination.testsuite.getstatus": MsgTestSuiteGetStatus,  # GUI -> TestingTool
+    "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,  # TestingTool -> GUI (reply)
+    "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
+    "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
+    "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
+    "sniffing.start": MsgSniffingStart,  # Testing Tool Internal
+    "sniffing.stop": MsgSniffingStop,  # Testing Tool Internal
     "sniffing.getcapture": MsgSniffingGetCapture,  # Testing Tool Internal
     "sniffing.getlastcapture": MsgSniffingGetCaptureLast,  # Testing Tool Internal
     "analysis.interop.testcase.analyze": MsgInteropTestCaseAnalyze,  # Testing Tool Internal
     "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,  # Testing Tool Internal
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
-    "dissection.autotriggered": MsgDissectionAutoDissect, # TestingTool -> GUI
-    "session.terminate": MsgSessionTerminate, # GUI (or Orchestrator?) -> TestingTool
+    "dissection.autotriggered": MsgDissectionAutoDissect,  # TestingTool -> GUI
+    "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
+    "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
+    "testingtool.ready": MsgTestingToolReady,  # GUI Testing Tool -> GUI
+    "testingtool.terminate": MsgTestingToolTerminate,  # GUI (or Orchestrator?) -> TestingTool
     # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
     "privacy.analyze": MsgPrivacyAnalyze, # TestingTool internal
     "privacy.analyze.reply": MsgPrivacyAnalyzeReply, # TestingTool internal (reply)
