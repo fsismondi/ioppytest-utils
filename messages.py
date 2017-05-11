@@ -68,7 +68,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.19'
+API_VERSION = '0.1.20'
 
 
 # TODO use metaclasses instead?
@@ -144,10 +144,10 @@ class Message:
     def __str__(self):
         str = ' - ' * 20 + '\n'
         str += 'Message routing key: %s' % self.routing_key
-        str += '\n'
-        str += 'Message properties: %s' % json.dumps(self.get_properties())
-        str += '\n'
-        str += 'Message body: %s' % self.to_json()
+        str += '\n -  -  - \n'
+        str += 'Message properties: %s' % json.dumps(self.get_properties(),indent=4,)
+        str += '\n -  -  - \n'
+        str += 'Message body: %s' % json.dumps(self.to_dict(),indent=4,)
         str += '\n' + ' - ' * 20
         return str
 
@@ -876,7 +876,14 @@ class MsgSniffingGetCaptureLastReply(MsgReply):
 class MsgInteropTestCaseAnalyze(Message):
     """
     Testing Tools'internal call.
+
+    Method to launch an analysis from a pcap file or a token if the pcap file has already been provided.
+    # TODO token support
+
+    The method need a token or a pcap_file but doesn't allow someone to provide both.
+
     Coordinator -> Analyzer
+
     Testing Tool SHOULD implement (design recommendation)
     """
 
@@ -1201,7 +1208,7 @@ class MsgPrivacyIssue(Message):
          - privacy
 
         """
-    routing_key = 'control.privacy.service'
+    routing_key = 'control.privacy'
 
     _msg_data_template = {
         "_type": "privacy.issue",
