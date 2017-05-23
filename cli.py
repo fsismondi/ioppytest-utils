@@ -463,10 +463,12 @@ if __name__ == '__main__':
                                                                              'as expected '),
             # TT should be able to know when the test case was finished based on stimuli, check and verify signals
             '5': MsgTestCaseFinish(),
+            '6': MsgTestCaseSkip(testcase_id=None),
             '6.a': MsgTestCaseSkip(testcase_id= 'TD_COAP_CORE_01_v01'),
             '6.b': MsgTestCaseSkip(testcase_id= 'TD_COAP_CORE_02_v01'),
             '6.c': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_03_v01'),
             '6.d': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_04_v01'),
+            '6.e': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_05_v01'),
             '7': MsgTestCaseSelect(testcase_id= 'TD_COAP_CORE_02_v01'),
             '8': MsgTestSuiteAbort(),
         })
