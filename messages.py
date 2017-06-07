@@ -68,7 +68,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.20'
+API_VERSION = '0.1.22'
 
 
 # TODO use metaclasses instead?
@@ -239,6 +239,51 @@ class MsgErrorReply(MsgReply):
         'error_code': 'Some error code TBD'
     }
 
+###### AGENT MESSAGES ######
+
+class MsgAgentTunStart(Message):
+    """
+    Message for triggering start IP tun interface in OS where the agent is running
+    """
+    routing_key = 'control.tun.toAgent.agent_TT'
+
+    _msg_data_template = {
+        '_type': 'tun.start',
+        'name': 'agent_TT',
+        'ipv6_prefix': 'bbbb',
+        'ipv6_host': ':3',
+        'ipv6_no_forwarding': False,
+        'ipv4_host': None,
+        'ipv4_network': None,
+        'ipv4_netmask': None,
+    }
+
+
+class MsgAgentTunStarted(Message):
+    """
+    Message for indicating that agent tun has been started
+    """
+    routing_key = 'control.tun.from.agent_TT'
+
+    _msg_data_template = {
+        '_type': 'tun.started',
+        'name': 'agent_TT',
+        'ipv6_prefix': 'bbbb',
+        'ipv6_host': ':3',
+        'ipv4_host': None,
+        'ipv4_network': None,
+        'ipv4_netmask': None,
+        'ipv6_no_forwarding': False,
+    }
+
+'''
+TODO add packet.sniffed.raw
+ROUTING_KEY: data.tun.fromAgent.coap_server_agent
+ - - -
+PROPS: {"delivery_mode": 2, "content_type": "application/json", "headers": {}, "priority": 0, "content_encoding": "utf-8"}
+ - - -
+BODY {"timestamp": "1488586183.45", "_type": "packet.sniffed.raw", "interface_name": "tun0", "data": [96, 0, 0, 0, 0, 36, 0, 1, 254, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 58, 0, 5, 2, 0, 0, 1, 0, 143, 0, 112, 7, 0, 0, 0, 1, 4, 0, 0, 0, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]}
+'''
 
 ###### SESSION MESSAGES ######
 
@@ -1203,7 +1248,7 @@ class MsgPrivacyGetStatusReply(MsgReply):
 class MsgPrivacyIssue(Message):
     """
         Testing Tool's MUST-implement.
-        Testing tools -> GUI 
+        Testing tools -> GUI
         GUI MUST display this info during execution:
          - privacy
 
@@ -1217,6 +1262,8 @@ class MsgPrivacyIssue(Message):
 
 
 message_types_dict = {
+    "tun.start" : MsgAgentTunStart, # TestingTool -> Agent
+    "tun.started" : MsgAgentTunStarted, # Agent -> TestingTool
     "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
     "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
     "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
