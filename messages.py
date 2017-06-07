@@ -68,7 +68,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.22'
+API_VERSION = '0.1.25'
 
 
 # TODO use metaclasses instead?
@@ -650,23 +650,11 @@ class MsgTestSuiteGetStatusReply(MsgReply):
     _msg_data_template = {
         '_type': 'testcoordination.testsuite.getstatus.reply',
         'ok': True,
-        "status": {
-            "current_tc":
-                {
-                    "state": "executing",
-                    "testcase_id": "TD_COAP_CORE_01_v01"
-                },
-            "current_step":
-                {
-                    "step_id": "TD_COAP_CORE_01_v01_step_01",
-                    "step_type": "stimuli",
-                    "step_info":
-                        ["Client is requested to send a GET request with", "Type = 0(CON)", "Code = 1(GET)"],
-                    "step_state": "executing",
-                    "node": "coap_client",
-                    "node_execution_mode": "user_assisted"
-                }
-        }
+        "started": True,
+        "testcase_id": "TD_COAP_CORE_01_v01",
+        "testcase_state": "executing",
+        "step_id": "TD_COAP_CORE_01_v01_step_01"
+
     }
 
 
