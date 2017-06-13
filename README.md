@@ -17,7 +17,7 @@ Please increase the VERSION number when doing so.
 2. Submodule it:
 From the top dir of your git repo run:
 ```
-git submodule add https://gitlab.f-interop.eu/f-interop-contributors/utils.git <someOtherDir>/utils
+git submodule add https://gitlab.f-interop.eu/f-interop-contributors/utils.git <someSubDir>/utils
 ```
 
 commit & push
@@ -40,4 +40,11 @@ you can 'bring' those last changes from the main utils repo to your project
 with:
 ```
 git submodule update --remote --merge
+```
+
+after bringing the last changes you can update your project with the last changes by doing:
+```
+git add <someSubDir>/utils
+git commit -m 'updated submodule reference to last commit'
+git push
 ```
