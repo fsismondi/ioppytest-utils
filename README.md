@@ -15,3 +15,29 @@ Any modification on the libraries must be done into
 Please increase the VERSION number when doing so.
 
 2. Submodule it:
+From the top dir of your git repo run:
+```
+git submodule add https://gitlab.f-interop.eu/f-interop-contributors/utils.git <someOtherDir>/utils
+```
+
+commit & push
+```
+git commit -m 'added f-interop's utils git repo as submodule'
+```
+
+remember when cloning a project with submodules to use --recursive flag
+```
+git clone --recursive ...
+```
+
+or else, right after cloning you can:
+```
+git submodule update --init --recursive
+```
+
+whenever you find that your utils libraries are not the latests versions
+you can 'bring' those last changes from the main utils repo to your project
+with:
+```
+git submodule update --remote --merge
+```
