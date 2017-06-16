@@ -558,6 +558,13 @@ if __name__ == '__main__':
             ),
         })
 
+        testing_tool_emulation = OrderedDict({
+            # testing tool is ready to start session
+            'tt1': MsgTestingToolReady(),
+        })
+
+
+
         event_type = params[0]
         print(event_type)
 
@@ -568,6 +575,7 @@ if __name__ == '__main__':
             **service_sniffing,
             **service_tat,
             **service_dissection,
+            **testing_tool_emulation,
         }
 
         # send message
