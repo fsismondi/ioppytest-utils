@@ -15,7 +15,7 @@ Usage:
 >>> from messages import * # doctest: +SKIP
 >>> m = MsgTestCaseSkip()
 >>> m
-MsgTestCaseSkip(_type = testcoordination.testcase.skip, _api_version = 0.1.28, testcase_id = TD_COAP_CORE_02_v01, )
+MsgTestCaseSkip(_api_version = 0.1.29, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_02_v01, )
 >>> m.routing_key
 'control.testcoordination'
 >>> m.message_id # doctest: +SKIP
@@ -26,32 +26,31 @@ MsgTestCaseSkip(_type = testcoordination.testcase.skip, _api_version = 0.1.28, t
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03_v01')
 >>> m
-MsgTestCaseSkip(_type = testcoordination.testcase.skip, _api_version = 0.1.28, testcase_id = TD_COAP_CORE_03_v01, )
+MsgTestCaseSkip(_api_version = 0.1.29, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_03_v01, )
 >>> m.testcase_id
 'TD_COAP_CORE_03_v01'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_type": "testcoordination.testcase.skip", "_api_version": "0.1.28", "testcase_id": "TD_COAP_CORE_03_v01"}'
+'{"_api_version": "0.1.29", "_type": "testcoordination.testcase.skip", "testcase_id": "TD_COAP_CORE_03_v01"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.to_json()
-'{"_type": "testcoordination.testsuite.start", "_api_version": "0.1.28"}'
+'{"_api_version": "0.1.29", "_type": "testcoordination.testsuite.start"}'
 >>> json_message = m.to_json()
 >>> obj=Message.from_json(json_message)
 >>> type(obj)
 <class 'messages.MsgTestSuiteStart'>
 
-# We can use the library for generating error responses to the requests:
+# We can use the library for generating error responses:
 # the request:
 >>> m = MsgSniffingStart()
 >>>
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_type = sniffing.start, _api_version = 0.1.28, ok = False, error_code = Some error code TBD,
-error_message = Some error message TBD, )
+MsgErrorReply(_api_version = 0.1.29, _type = sniffing.start, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
 >>> m.reply_to
 'control.sniffing.service.reply'
 >>> err.routing_key
@@ -69,7 +68,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.28'
+API_VERSION = '0.1.29'
 
 
 # TODO use metaclasses instead?
@@ -170,11 +169,29 @@ class Message:
             # cannot build a complete reply message just from the json representation
             return
 
+        return cls.from_dict(message_dict)
+
+    @classmethod
+    def from_dict(cls, message_dict):
+        """
+        :param body: dict
+        :return:  Message object generated from the body
+        :raises NonCompliantMessageFormatError: If the message cannot be build from the provided json
+        """
+        assert type(message_dict) is dict
+
+        # check fist if it's a response
+        if "ok" in message_dict:
+            # cannot build a complete reply message just from the json representation
+            return
+
         message_type = message_dict["_type"]
+
         if message_type in message_types_dict:
             return message_types_dict[message_type](**message_dict)
         else:
-            raise NonCompliantMessageFormatError("Cannot load json message: %s" % str(body))
+            raise NonCompliantMessageFormatError("Cannot load json message: %s" % str(message_dict))
+
 
     def __repr__(self):
         ret = "%s(" % self.__class__.__name__
@@ -363,11 +380,11 @@ class MsgInteropSessionConfiguration(Message):
         "tests":         [
             {
                 "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
-                "settings":    {}
+                "settings":     {}
             },
             {
                 "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_02_v01",
-                "settings":    {}
+                "settings":     {}
             }
         ]
     }
@@ -387,6 +404,7 @@ class MsgTestingToolConfigured(Message):
         "session_id":    "8ea6b6d5-ffcc-4a0e-ba93-92ee1befea23",
         "testing_tools": "f-interop/interoperability-coap",
     }
+
 
 class MsgTestingToolComponentShutdown(Message):
     """
