@@ -353,7 +353,7 @@ class MsgInteropSessionConfiguration(Message):
 
     _msg_data_template = {
         "_type":         "session.interop.configuration",
-        "session_id":    "8ea6b6d5-ffcc-4a0e-ba93-92ee1befea23",
+        "session_id":    "TBD",
         "testing_tools": "f-interop/interoperability-coap",
         "users":         [
             "u1",
@@ -1338,7 +1338,7 @@ message_types_dict = {
     "testingtool.component.ready":                   MsgTestingToolComponentReady,  # Testing Tool internal
     "testingtool.component.shutdown":                MsgTestingToolComponentShutdown,  # Testing Tool internal
     "testingtool.ready":                             MsgTestingToolReady,  # GUI Testing Tool -> GUI
-    "testingtool.terminate":                         MsgTestingToolTerminate,
+    "testingtool.terminate":                         MsgTestingToolTerminate, # orchestrator -> TestingTool
     "testcoordination.testsuite.start":              MsgTestSuiteStart,  # GUI -> TestingTool
     "testcoordination.testsuite.finish":             MsgTestSuiteFinish,  # GUI -> TestingTool
     "testcoordination.testcase.ready":               MsgTestCaseReady,  # TestingTool -> GUI
