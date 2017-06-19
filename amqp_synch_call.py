@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# !/usr/bin/env python3
 import os
 import pika
 import time
 from .messages import *
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 try:
     AMQP_EXCHANGE = str(os.environ['AMQP_EXCHANGE'])
@@ -38,7 +36,7 @@ def publish_message(channel, message):
     )
 
 
-def amqp_request(channel, request_message: Message, component_id: str):
+def amqp_request(channel, request_message, component_id):
     """
     NOTE: channel must be a pika channel
     """
@@ -92,7 +90,7 @@ def amqp_request(channel, request_message: Message, component_id: str):
         response = MsgReply(request_message, **body_dict)
 
     else:
-        raise TimeoutError(
+        raise Exception(
                 "Response timeout! rkey: %s , request type: %s" % (
                     request_message.routing_key,
                     request_message._type
