@@ -462,11 +462,10 @@ if __name__ == '__main__':
             '6.e': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_05_v01'),
             '7':   MsgTestCaseSelect(testcase_id='TD_COAP_CORE_02_v01'),
             '8':   MsgTestSuiteAbort(),
-        })
 
-        service_testcoordination = OrderedDict({
-            'stat0':   MsgTestSuiteGetStatus(),
-            'tclist':  MsgTestSuiteGetTestCases(),
+        })
+        events_orchestrator = OrderedDict({
+            'term': MsgTestingToolTerminate(),
             'config':  MsgInteropSessionConfiguration(),
             'config2': MsgInteropSessionConfiguration(
                     tests=[
@@ -486,7 +485,11 @@ if __name__ == '__main__':
                     ]
 
             ),
+        })
 
+        service_testcoordination = OrderedDict({
+            'stat0':   MsgTestSuiteGetStatus(),
+            'tclist':  MsgTestSuiteGetTestCases(),
         })
 
         service_sniffing = OrderedDict({
@@ -561,15 +564,20 @@ if __name__ == '__main__':
         testing_tool_emulation = OrderedDict({
             # testing tool is ready to start session
             'tt1': MsgTestingToolReady(),
+
+            # testcase coordination
+            'tt10': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_01"),
+            'tt11': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
+            'tt12': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
+            'tt13': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
         })
-
-
 
         event_type = params[0]
         print(event_type)
 
         # dict of all messages
         messages = {
+            **events_orchestrator,
             **events_testcoordination,
             **service_testcoordination,
             **service_sniffing,
