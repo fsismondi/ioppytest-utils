@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
+
+About the library:
+-----------------
+
 This module provides the API message formats used in F-Interop.
 
 The idea is to be able to have an
@@ -9,6 +13,14 @@ The idea is to be able to have an
 - re-use this also for the integration testing;
 - to have version control the messages e.g. messages_testcase_start API v1 and API v2;
 - to have a direct way of exporting this as doc.
+
+
+F-Interop conventions:
+---------------------
+- if event is a service request then the routing key (r_key) is control.someFunctionality.service
+- a reply to a service will be on topic/r_key : control.someFunctionality.service.reply
+- reply.correlation_id = request.correlation_id
+
 
 Usage:
 ------
@@ -68,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.29'
+API_VERSION = '0.1.30'
 
 
 # TODO use metaclasses instead?
@@ -229,11 +241,7 @@ class MsgReply(Message):
 
 class MsgErrorReply(MsgReply):
     """
-    F-Interop conventions:
-        - if event is a service request then the routing keys is control.someFunctionality.service
-        also, its reply will be control.someFunctionality.service.reply
-        - reply.correlation_id = request.correlation_id
-
+    see section "F-Interop conventions" on top
     """
 
     def __init__(self, request_message, **kwargs):
@@ -254,7 +262,10 @@ class MsgErrorReply(MsgReply):
 
 class MsgAgentTunStart(Message):
     """
-    Message for triggering start IP tun interface in OS where the agent is running
+    Requirements: Testing Tool MAY implement (if IP tun needed)
+    Type: Event
+    Typical_use: Testing Tool -> Agent
+    Description: Message for triggering start IP tun interface in OS where the agent is running
     """
     routing_key = "control.tun.toAgent.agent_TT"
 
@@ -272,7 +283,10 @@ class MsgAgentTunStart(Message):
 
 class MsgAgentTunStarted(Message):
     """
-    Message for indicating that agent tun has been started
+    Description: Message for indicating that agent tun has been started
+    Type: Event
+    Typical_use: Testing Tool -> Agent
+    Description: TBD
     """
     routing_key = "control.tun.from.agent_TT"
 
@@ -302,9 +316,10 @@ BODY {"timestamp": "1488586183.45", "_type": "packet.sniffed.raw", "interface_na
 
 class MsgTestingToolTerminate(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI, (or Orchestrator?) -> Testing Tool
-    Testing tool should stop all it's processes gracefully.
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI, (or Orchestrator) -> Testing Tool
+    Description: Testing tool should stop all it's processes gracefully.
     """
     routing_key = "control.session"
 
@@ -315,10 +330,10 @@ class MsgTestingToolTerminate(Message):
 
 class MsgTestingToolReady(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    Used to indicate to the GUI that testing is ready to start the test suite
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typcal_use: Testing Tool -> GUI
+    Description: Used to indicate to the GUI that testing is ready to start the test suite
     """
     routing_key = "control.session"
 
@@ -330,9 +345,10 @@ class MsgTestingToolReady(Message):
 
 class MsgTestingToolComponentReady(Message):
     """
-    Testing Tools'internal call.
-    Component x -> Test Coordinator
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Event
+    Typical_use: Any Testing tool's component -> Test Coordinator
+    Description: Once a testing tool's component is ready, it should publish a compoennt ready message
     """
     routing_key = "control.session"
 
@@ -345,9 +361,10 @@ class MsgTestingToolComponentReady(Message):
 
 class MsgInteropSessionConfiguration(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    Orchestrator -> Testing Tool
-    Testing tool should listen to this message and configure the testsuite correspondingly
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: Orchestrator -> Testing Tool
+    Description: Testing tool MUST listen to this message and configure the testsuite correspondingly
     """
     routing_key = "control.session"
 
@@ -392,9 +409,10 @@ class MsgInteropSessionConfiguration(Message):
 
 class MsgTestingToolConfigured(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> Orchestrator, GUI
-    Notify orchestrator and other components that the testing tool has been configured
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> Orchestrator, GUI
+    Description: The goal is to notify orchestrator and other components that the testing tool has been configured
     """
 
     routing_key = "control.session"
@@ -408,10 +426,11 @@ class MsgTestingToolConfigured(Message):
 
 class MsgTestingToolComponentShutdown(Message):
     """
-        Testing Tools'internal call.
-        Component x -> Test Coordinator
-        Testing Tool SHOULD implement (design recommendation)
-        """
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event) 
+    Type: Event
+    Typical_use: Any Testing tool's component -> Test Coordinator
+    Description: tbd
+    """
     routing_key = "control.session"
 
     _msg_data_template = {
@@ -425,8 +444,10 @@ class MsgTestingToolComponentShutdown(Message):
 
 class MsgTestSuiteStart(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI -> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI -> Testing Tool
+    Description: tbd
     """
 
     routing_key = "control.testcoordination"
@@ -438,8 +459,10 @@ class MsgTestSuiteStart(Message):
 
 class MsgTestSuiteFinish(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI -> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI -> Testing Tool
+    Description: tbd
     """
 
     routing_key = "control.testcoordination"
@@ -451,11 +474,12 @@ class MsgTestSuiteFinish(Message):
 
 class MsgTestCaseReady(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    Used to indicate to the GUI (or automated-iut) which is the next test case to be executed.
-    This message is normally followed by a MsgTestCaseStart (from GUI-> Testing Tool)
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: GUI -> Testing Tool
+    Description:
+        - Used to indicate to the GUI (or automated-iut) which is the next test case to be executed.
+        - This message is normally followed by a MsgTestCaseStart (from GUI-> Testing Tool)
     """
 
     routing_key = "control.testcoordination"
@@ -472,9 +496,11 @@ class MsgTestCaseReady(Message):
 
 class MsgTestCaseStart(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI -> Testing Tool
-    Message used for indicating the testing tool to start the test case (the one previously selected)
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI -> Testing Tool
+    Description:
+        - Message used for indicating the testing tool to start the test case (the one previously selected)
     """
     routing_key = "control.testcoordination"
 
@@ -485,9 +511,11 @@ class MsgTestCaseStart(Message):
 
 class MsgTestCaseConfiguration(Message):
     """
-    Testing Tool MUST-implement notification
-    Testing Tool -> GUI
-    Messages used to indicate GUI which configuration to use.
+    Requirements: Testing Tool MAY publish event (if needed for executing the test case)
+    Type: Event
+    Typical_use: Testing Tool -> GUI & automated-iut
+    Description:
+        - Message used to indicate GUI and/or automated-iut which configuration to use.
     """
     routing_key = "control.testcoordination"
 
@@ -521,9 +549,11 @@ class MsgTestCaseConfiguration(Message):
 
 class MsgTestCaseStop(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI -> Testing Tool
-    Message used for indicating the testing tool to stop the test case (the one running)
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI & automated-iut -> Testing Tool
+    Description:
+        - Message used for indicating the testing tool to stop the test case (the one running).
     """
 
     routing_key = "control.testcoordination"
@@ -535,8 +565,10 @@ class MsgTestCaseStop(Message):
 
 class MsgTestCaseRestart(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI -> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI -> Testing Tool
+    Description: Restart the running test cases.
     """
 
     routing_key = "control.testcoordination"
@@ -548,10 +580,11 @@ class MsgTestCaseRestart(Message):
 
 class MsgStepExecute(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    Used to indicate to the GUI (or automated-iut) which is the step to be executed by the user (or automated-IUT)
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> GUI
+    Description:
+        - Used to indicate to the GUI (or automated-iut) which is the step to be executed by the user (or automated-IUT).
     """
 
     routing_key = "control.testcoordination"
@@ -576,8 +609,11 @@ class MsgStepExecute(Message):
 
 class MsgStimuliExecuted(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI (or automated-IUT)-> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description:
+        - Used to indicate stimuli has been executed by user (and it's user-assisted iut) or by automated-iut
     """
 
     routing_key = "control.testcoordination"
@@ -589,11 +625,13 @@ class MsgStimuliExecuted(Message):
 
 class MsgCheckResponse(Message):
     """
-    Testing Tools'internal call.
-    In the context of IUT to IUT test execution, this message is used for indicating that the previously executed
-    messages (stimuli message and its reply) CHECK or comply to what is described in the Test Description.
-    Testing tools' coordinator -> Testing Tool's analyzer (TAT)
-    Not used in CoAP testing Tool (analysis of traces is done post mortem)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Event
+    Typical_use: test coordination -> test analysis
+    Description:
+        - In the context of IUT to IUT test execution, this message is used for indicating that the previously executed
+        messages (stimuli message and its reply) CHECK or comply to what is described in the Test Description.
+        - Not used in CoAP testing Tool (analysis of traces is done post mortem)
     """
 
     routing_key = "control.testcoordination"
@@ -607,10 +645,12 @@ class MsgCheckResponse(Message):
 
 class MsgVerifyResponse(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    Message provided by user declaring if the IUT VERIFY the step previously executed as described in the Test
-    Description.
-    GUI (or automated-IUT)-> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description:
+        - Message provided by user declaring if the IUT VERIFY the step previously executed as described in the Test
+        Description.
     """
 
     routing_key = "control.testcoordination"
@@ -624,9 +664,15 @@ class MsgVerifyResponse(Message):
 
 class MsgTestCaseFinish(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI (or automated-IUT)-> Testing Tool
-    Not used in CoAP Testing Tool (test coordinator deduces it automatically by using the testcase's step sequence)
+    TODO: TBD if needed or not
+
+    Requirements: Testing Tool MAY listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description:
+        - Used for indicating that the test case has finished.
+        - Test coordinator deduces it automatically by using the testcase's step sequence
+        - Not used in CoAP Testing Tool.
     """
 
     routing_key = "control.testcoordination"
@@ -638,10 +684,12 @@ class MsgTestCaseFinish(Message):
 
 class MsgTestCaseFinished(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    This message is followed by a verdict
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> GUI
+    Description:
+        - Used for indicating to subscribers that the test cases has finished.
+        - This message is followed by a verdict.
     """
 
     routing_key = "control.testcoordination"
@@ -656,10 +704,12 @@ class MsgTestCaseFinished(Message):
 
 class MsgTestCaseSkip(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI (or automated-IUT)-> Testing Tool
-
-    - testcase_id (optional) : if not provided then current tc is skipped
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description:
+        - Used for skipping a test cases event when was previusly selected to be executed.
+        - testcase_id (optional) : if not provided then current tc is skipped
     """
 
     routing_key = "control.testcoordination"
@@ -672,8 +722,11 @@ class MsgTestCaseSkip(Message):
 
 class MsgTestCaseSelect(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI (or automated-IUT)-> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description: tbd
+
     """
 
     routing_key = "control.testcoordination"
@@ -686,8 +739,10 @@ class MsgTestCaseSelect(Message):
 
 class MsgTestSuiteAbort(Message):
     """
-    Testing Tool MUST-implement API endpoint
-    GUI (or automated-IUT)-> Testing Tool
+    Requirements: Testing Tool MUST listen to event
+    Type: Event
+    Typical_use: GUI (or automated-IUT)-> Testing Tool
+    Description: tbd
     """
 
     routing_key = "control.testcoordination"
@@ -699,11 +754,12 @@ class MsgTestSuiteAbort(Message):
 
 class MsgTestSuiteGetStatus(Message):
     """
-    Testing Tool SHOULD-implement API endpoint
-    Describes current state of the test suite.
-    Format for the response not standardised.
-
-    GUI -> Testing Tool
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Request (service)
+    Typical_use: GUI -> Testing Tool
+    Description:
+        - Describes current state of the test suite.
+        - Format for the response not standardised.
     """
 
     routing_key = "control.testcoordination.service"
@@ -715,12 +771,12 @@ class MsgTestSuiteGetStatus(Message):
 
 class MsgTestSuiteGetStatusReply(MsgReply):
     """
-    Testing Tool SHOULD-implement API endpoint
-    Describes current state of the test suite.
-    Format for the response not standardised.
-
-    Testing Tool -> GUI
-
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: Testing Tool -> GUI
+    Description:
+        - Describes current state of the test suite.
+        - Format for the response not standardised.
     """
 
     routing_key = "control.testcoordination.service.reply"
@@ -738,9 +794,10 @@ class MsgTestSuiteGetStatusReply(MsgReply):
 
 class MsgTestSuiteGetTestCases(Message):
     """
-    Testing Tool's MUST-implement API endpoint
-    GUI -> Testing Tool
-    GUI MUST implement
+    Requirements: Testing Tool SHOULD (MUST?) implement (other components should not subscribe to event)
+    Type: Request (service)
+    Typical_use: GUI -> Testing Tool
+    Description: TBD
     """
 
     routing_key = "control.testcoordination.service"
@@ -752,8 +809,10 @@ class MsgTestSuiteGetTestCases(Message):
 
 class MsgTestSuiteGetTestCasesReply(MsgReply):
     """
-    Testing Tool's MUST-implement API endpoint
-    Testing Tool -> GUI
+    Requirements: Testing Tool SHOULD (MUST?) implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: Testing Tool -> GUI
+    Description: TBD
     """
 
     routing_key = "control.testcoordination.service.reply"
@@ -786,10 +845,10 @@ class MsgTestSuiteGetTestCasesReply(MsgReply):
 
 class MsgTestCaseVerdict(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    Used to indicate to the GUI (or automated-iut) which is the final verdict of the testcase.
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> GUI
+    Description: Used to indicate to the GUI (or automated-iut) which is the final verdict of the testcase.
     """
 
     routing_key = "control.testcoordination"
@@ -817,10 +876,10 @@ class MsgTestCaseVerdict(Message):
 
 class MsgTestSuiteReport(Message):
     """
-    Testing Tool MUST-implement notification.
-    Testing Tool -> GUI
-
-    Used to indicate to the GUI (or automated-iut) the final results of the test session.
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> GUI
+    Description: Used to indicate to the GUI (or automated-iut) the final results of the test session.
     """
 
     routing_key = "control.testcoordination"
@@ -870,9 +929,10 @@ class MsgTestSuiteReport(Message):
 
 class MsgSniffingStart(Message):
     """
-    Testing Tools'internal call.
-    Coordinator -> Sniffer
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event) 
+    Type: Request (service)
+    Typical_use: coordination -> sniffing
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service"
@@ -887,9 +947,10 @@ class MsgSniffingStart(Message):
 
 class MsgSniffingStartReply(MsgReply):
     """
-    Testing Tools'internal call.
-    Sniffer -> Coordinator
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: sniffing -> coordination
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service.reply"
@@ -902,9 +963,10 @@ class MsgSniffingStartReply(MsgReply):
 
 class MsgSniffingStop(Message):
     """
-    Testing Tools'internal call.
-    Coordinator -> Sniffer
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Request (service)
+    Typical_use: coordination -> sniffing
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service"
@@ -916,9 +978,10 @@ class MsgSniffingStop(Message):
 
 class MsgSniffingStoptReply(MsgReply):
     """
-    Testing Tools'internal call.
-    Sniffer -> Coordinator
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: sniffing -> coordination
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service.reply"
@@ -931,9 +994,10 @@ class MsgSniffingStoptReply(MsgReply):
 
 class MsgSniffingGetCapture(Message):
     """
-    Testing Tools'internal call.
-    Coordinator -> Sniffer
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event) 
+    Type: Request (service)
+    Typical_use: coordination -> sniffing
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service"
@@ -946,6 +1010,12 @@ class MsgSniffingGetCapture(Message):
 
 
 class MsgSniffingGetCaptureReply(MsgReply):
+    """
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: sniffing -> coordination
+    Description: tbd
+    """
     routing_key = "control.sniffing.service.reply"
 
     _msg_data_template = {
@@ -959,9 +1029,10 @@ class MsgSniffingGetCaptureReply(MsgReply):
 
 class MsgSniffingGetCaptureLast(Message):
     """
-    Testing Tools'internal call.
-    Coordinator -> Sniffer
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event) 
+    Type: Request (service)
+    Typical_use: coordination -> sniffing
+    Description: tbd
     """
 
     routing_key = "control.sniffing.service"
@@ -972,6 +1043,12 @@ class MsgSniffingGetCaptureLast(Message):
 
 
 class MsgSniffingGetCaptureLastReply(MsgReply):
+    """
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: sniffing -> coordination
+    Description: tbd
+    """
     routing_key = "control.sniffing.service.reply"
 
     _msg_data_template = {
@@ -987,16 +1064,13 @@ class MsgSniffingGetCaptureLastReply(MsgReply):
 
 class MsgInteropTestCaseAnalyze(Message):
     """
-    Testing Tools'internal call.
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Request (service)
+    Typical_use: coordination -> analysis
+    Description:
+        - Method to launch an analysis from a pcap file or a token if the pcap file has already been provided.
+        - The method need a token or a pcap_file but doesn't allow someone to provide both.
 
-    Method to launch an analysis from a pcap file or a token if the pcap file has already been provided.
-    # TODO token support
-
-    The method need a token or a pcap_file but doesn't allow someone to provide both.
-
-    Coordinator -> Analyzer
-
-    Testing Tool SHOULD implement (design recommendation)
     """
 
     PCAP_empty_base64 = "1MOyoQIABAAAAAAAAAAAAMgAAAAAAAAA"
@@ -1015,7 +1089,7 @@ class MsgInteropTestCaseAnalyze(Message):
 
 class MsgInteropTestCaseAnalyzeReply(MsgReply):
     """
-    Testing Tools'internal call.
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event) 
     Analyzer -> Coordinator
     Testing Tool SHOULD implement (design recommendation)
 
@@ -1062,11 +1136,10 @@ class MsgInteropTestCaseAnalyzeReply(MsgReply):
 
 class MsgDissectionDissectCapture(Message):
     """
-    Testing Tools'internal call.
-    Coordinator -> Dissector
-    and
-    Analyzer -> Dissector
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Request (service)
+    Typical_use: coordination -> dissection, analysis -> dissection
+    Description: TBD
     """
 
     PCAP_COAP_GET_OVER_TUN_INTERFACE_base64 = "1MOyoQIABAAAAAAAAAAAAMgAAABlAAAAqgl9WK8aBgA7AAAAOwAAAGADPxUAExFAu7s" \
@@ -1090,11 +1163,10 @@ class MsgDissectionDissectCapture(Message):
 
 class MsgDissectionDissectCaptureReply(MsgReply):
     """
-    Testing Tools'internal call.
-    Dissector -> Coordinator
-    and
-    Dissector -> Analyzer
-    Testing Tool SHOULD implement (design recommendation)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+    Type: Reply (service)
+    Typical_use: Dissector -> Coordinator, Dissector -> Analyzer
+    Description: TBD
     """
 
     _frames_example = [
@@ -1143,13 +1215,15 @@ class MsgDissectionDissectCaptureReply(MsgReply):
 
 class MsgDissectionAutoDissect(Message):
     """
-    Testing Tool's MUST-implement.
-    Testing Tool -> GUI
-    GUI MUST display this info during execution:
-     - interop session
-     - conformance session
-     - performance ?
-     - privacy?
+    Requirements: Testing Tool MUST publish event
+    Type: Event
+    Typical_use: Testing Tool -> GUI
+    Description: Used to indicate to the GUI the dissection of the exchanged packets.
+        - GUI MUST display this info during execution:
+            - interop session
+            - conformance session
+            - performance ?
+            - privacy?
 
     """
     routing_key = "control.dissection"
