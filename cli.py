@@ -46,11 +46,11 @@ class AmqpSniffer(threading.Thread):
 
         self.channel = connection.channel()
 
-        services_queue_name = 'services_queue@%s' % COMPONENT_ID
-        self.channel.queue_declare(queue=services_queue_name, auto_delete=True)
+        self.services_queu_name = 'services_queue@%s' % COMPONENT_ID
+        self.channel.queue_declare(queue=self.services_queu_name, auto_delete=True)
 
         self.channel.queue_bind(exchange=AMQP_EXCHANGE,
-                                queue=services_queue_name,
+                                queue=self.services_queu_name,
                                 routing_key='#')
         # Hello world message
         self.channel.basic_publish(
@@ -63,10 +63,12 @@ class AmqpSniffer(threading.Thread):
         )
 
         self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(self.on_request, queue=services_queue_name)
+        self.channel.basic_consume(self.on_request, queue=self.services_queu_name)
 
     def stop(self):
+        self.channel.queue_delete(self.services_queu_name)
         self.channel.stop_consuming()
+        self.connection.close()
 
     def on_request(self, ch, method, props, body):
         # obj hook so json.loads respects the order of the fields sent -just for visualization purposeses-
@@ -620,7 +622,8 @@ if __name__ == '__main__':
     amqp_listener = AmqpSniffer(connection)
     amqp_listener.start()
 
-    # TODO catch sigint and stop threads gracefully
+    # interrumpted
     cli.join()
     amqp_listener.join()
-    connection.close()
+    if connection:
+        connection.close()
