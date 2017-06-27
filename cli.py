@@ -54,12 +54,12 @@ class AmqpSniffer(threading.Thread):
                                 routing_key='#')
         # Hello world message
         self.channel.basic_publish(
-                body=json.dumps({'_type': 'cli.info', 'value': 'CLI is up!'}),
-                routing_key='control.cli.info',
-                exchange=AMQP_EXCHANGE,
-                properties=pika.BasicProperties(
-                        content_type='application/json',
-                )
+            body=json.dumps({'_type': 'cli.info', 'value': 'CLI is up!'}),
+            routing_key='control.cli.info',
+            exchange=AMQP_EXCHANGE,
+            properties=pika.BasicProperties(
+                content_type='application/json',
+            )
         )
 
         self.channel.basic_qos(prefetch_count=1)
@@ -78,19 +78,19 @@ class AmqpSniffer(threading.Thread):
         self.message_count += 1
 
         props_dict = {
-            'content_type':     props.content_type,
+            'content_type': props.content_type,
             'content_encoding': props.content_encoding,
-            'headers':          props.headers,
-            'delivery_mode':    props.delivery_mode,
-            'priority':         props.priority,
-            'correlation_id':   props.correlation_id,
-            'reply_to':         props.reply_to,
-            'expiration':       props.expiration,
-            'message_id':       props.message_id,
-            'timestamp':        props.timestamp,
-            'user_id':          props.user_id,
-            'app_id':           props.app_id,
-            'cluster_id':       props.cluster_id,
+            'headers': props.headers,
+            'delivery_mode': props.delivery_mode,
+            'priority': props.priority,
+            'correlation_id': props.correlation_id,
+            'reply_to': props.reply_to,
+            'expiration': props.expiration,
+            'message_id': props.message_id,
+            'timestamp': props.timestamp,
+            'user_id': props.user_id,
+            'app_id': props.app_id,
+            'cluster_id': props.cluster_id,
         }
         # let's get rid of values which are empty
         props_dict_only_non_empty_values = {k: v for k, v in props_dict.items() if v is not None}
@@ -157,33 +157,33 @@ class Cli(threading.Thread):
 
         # register system commands (user commands registered by child object)
         self._registerCommand_internal(
-                self.CMD_LEVEL_SYSTEM,
-                'help',
-                'h',
-                'print this menu',
-                [],
-                self._handleHelp)
+            self.CMD_LEVEL_SYSTEM,
+            'help',
+            'h',
+            'print this menu',
+            [],
+            self._handleHelp)
         self._registerCommand_internal(
-                self.CMD_LEVEL_SYSTEM,
-                'info',
-                'i',
-                'information about this application',
-                [],
-                self._handleInfo)
+            self.CMD_LEVEL_SYSTEM,
+            'info',
+            'i',
+            'information about this application',
+            [],
+            self._handleInfo)
         self._registerCommand_internal(
-                self.CMD_LEVEL_SYSTEM,
-                'quit',
-                'q',
-                'quit this application',
-                [],
-                self._handleQuit)
+            self.CMD_LEVEL_SYSTEM,
+            'quit',
+            'q',
+            'quit this application',
+            [],
+            self._handleQuit)
         self._registerCommand_internal(
-                self.CMD_LEVEL_SYSTEM,
-                'uptime',
-                'ut',
-                'how long this application has been running',
-                [],
-                self._handleUptime)
+            self.CMD_LEVEL_SYSTEM,
+            'uptime',
+            'ut',
+            'how long this application has been running',
+            [],
+            self._handleUptime)
 
         self.startTime = 0.0
 
@@ -280,12 +280,12 @@ class Cli(threading.Thread):
 
         self.commandLock.acquire()
         self.commands.append({
-            'cmdLevel':              cmdLevel,
-            'name':                  name,
-            'alias':                 alias,
-            'description':           description,
-            'params':                params,
-            'callback':              callback,
+            'cmdLevel': cmdLevel,
+            'name': name,
+            'alias': alias,
+            'description': description,
+            'params': params,
+            'callback': callback,
             'dontCheckParamsLength': dontCheckParamsLength,
         })
         self.commandLock.release()
@@ -372,8 +372,8 @@ class Cli(threading.Thread):
         upTime = timedelta(seconds=time.time() - self.startTime)
 
         print('Running since {0} ({1} ago)'.format(
-                time.strftime("%m/%d/%Y %H:%M:%S", time.localtime(self.startTime)),
-                upTime))
+            time.strftime("%m/%d/%Y %H:%M:%S", time.localtime(self.startTime)),
+            upTime))
 
 
         # ======================== helpers =========================================
@@ -430,10 +430,10 @@ if __name__ == '__main__':
             properties = pika.BasicProperties(**message.get_properties())
 
             channel.basic_publish(
-                    exchange=AMQP_EXCHANGE,
-                    routing_key=message.routing_key,
-                    properties=properties,
-                    body=message.to_json(),
+                exchange=AMQP_EXCHANGE,
+                routing_key=message.routing_key,
+                properties=properties,
+                body=message.to_json(),
             )
 
         # for a typical user input, for a user (coap client) vs automated-iut ( coap server) session type:
@@ -446,60 +446,60 @@ if __name__ == '__main__':
         # re-write each message forged as a unittest? (if not this won't escalate very well)
 
         events_testcoordination = OrderedDict({
-            '1':   MsgTestSuiteStart(),
-            '2':   MsgTestCaseStart(),
-            '3':   MsgTestCaseRestart(),
-            '4.a': MsgStimuliExecuted(),
-            '4.b': MsgCheckResponse(),
-            '4.c': MsgVerifyResponse(),
-            '4.d': MsgVerifyResponse(verify_response=False, description='User indicates that IUT didnt behave '
-                                                                        'as expected '),
+            '1': MsgTestSuiteStart(),
+            '2': MsgTestCaseStart(),
+            '3': MsgTestCaseRestart(),
+            '4.a': MsgStepStimuliExecuted(),
+            '4.b': MsgStepCheckExecuted(),
+            '4.c': MsgStepVerifyExecuted(),
+            '4.d': MsgStepVerifyExecuted(verify_response=False, description='User indicates that IUT didnt behave '
+                                                                            'as expected '),
             # TT should be able to know when the test case was finished based on stimuli, check and verify signals
-            '5':   MsgTestCaseFinish(),
-            '6':   MsgTestCaseSkip(testcase_id=None),
+            # '5':   MsgTestCaseFinish(),
+            '6': MsgTestCaseSkip(testcase_id=None),
             '6.a': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_01_v01'),
             '6.b': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_02_v01'),
             '6.c': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_03_v01'),
             '6.d': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_04_v01'),
             '6.e': MsgTestCaseSkip(testcase_id='TD_COAP_CORE_05_v01'),
-            '7':   MsgTestCaseSelect(testcase_id='TD_COAP_CORE_02_v01'),
-            '8':   MsgTestSuiteAbort(),
+            '7': MsgTestCaseSelect(testcase_id='TD_COAP_CORE_02_v01'),
+            '8': MsgTestSuiteAbort(),
 
         })
         events_orchestrator = OrderedDict({
             'term': MsgTestingToolTerminate(),
-            'config':  MsgInteropSessionConfiguration(),
+            'config': MsgInteropSessionConfiguration(),
             'config2': MsgInteropSessionConfiguration(
-                    tests=[
-                        {
-                            'testcase_ref': 'TD_COAP_CORE_01_v01',
-                            'settings':     {}
-                        },
-                    ]
+                tests=[
+                    {
+                        'testcase_ref': 'TD_COAP_CORE_01_v01',
+                        'settings': {}
+                    },
+                ]
 
             ),
             'config3': MsgInteropSessionConfiguration(
-                    tests=[
-                        {
-                            'testcase_ref': 'someNoneExistantTestCase',
-                            'settings':     {}
-                        },
-                    ]
+                tests=[
+                    {
+                        'testcase_ref': 'someNoneExistantTestCase',
+                        'settings': {}
+                    },
+                ]
 
             ),
         })
 
         service_testcoordination = OrderedDict({
-            'stat0':   MsgTestSuiteGetStatus(),
-            'tclist':  MsgTestSuiteGetTestCases(),
+            'stat0': MsgTestSuiteGetStatus(),
+            'tclist': MsgTestSuiteGetTestCases(),
         })
 
         service_sniffing = OrderedDict({
             # start sniffing w/ certain parametrization
             'snif0': MsgSniffingStart(
-                    capture_id='TD_COAP_CORE_01',
-                    filter_if='tun0',
-                    filter_proto='udp port 5683'
+                capture_id='TD_COAP_CORE_01',
+                filter_if='tun0',
+                filter_proto='udp port 5683'
             ),
             'snif1': MsgSniffingStop(),
             # get a particular capture file
@@ -511,18 +511,18 @@ if __name__ == '__main__':
         service_tat = OrderedDict({
             'tat0': MsgInteropTestCaseAnalyze(),
             'tat1': MsgInteropTestCaseAnalyze(
-                    testcase_id="TD_COAP_CORE_01",
-                    testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    value=PCAP_empty_base64,
+                testcase_id="TD_COAP_CORE_01",
+                testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                value=PCAP_empty_base64,
             ),
             'tat2': MsgInteropTestCaseAnalyze(
-                    testcase_id="TD_COAP_CORE_01",
-                    testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    value=PCAP_TC_COAP_01_base64,
+                testcase_id="TD_COAP_CORE_01",
+                testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                value=PCAP_TC_COAP_01_base64,
             )
         })
 
@@ -531,35 +531,35 @@ if __name__ == '__main__':
             'dis1': MsgDissectionDissectCapture(),
             # dissection of pcap only coap frames
             'dis2': MsgDissectionDissectCapture(
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    protocol_selection='coap',
-                    value=PCAP_TC_COAP_01_base64,
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                protocol_selection='coap',
+                value=PCAP_TC_COAP_01_base64,
             ),
             # complete dissection of pcap
             'dis3': MsgDissectionDissectCapture(
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    value=PCAP_TC_COAP_01_base64,
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                value=PCAP_TC_COAP_01_base64,
             ),
             # complete dissection of pcap with extra TCP traffic
             'dis4': MsgDissectionDissectCapture(
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    value=PCAP_TC_COAP_01_mingled_with_tcp_traffic_base64,
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                value=PCAP_TC_COAP_01_mingled_with_tcp_traffic_base64,
             ),
             # same as dis4 but filtering coap messages
             'dis5': MsgDissectionDissectCapture(
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    protocol_selection='coap',
-                    value=PCAP_TC_COAP_01_mingled_with_tcp_traffic_base64,
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                protocol_selection='coap',
+                value=PCAP_TC_COAP_01_mingled_with_tcp_traffic_base64,
             ),
             # pcap sniffed using AMQP based packet sniffer
             'dis6': MsgDissectionDissectCapture(
-                    file_enc="pcap_base64",
-                    filename="TD_COAP_CORE_01.pcap",
-                    value=PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
+                file_enc="pcap_base64",
+                filename="TD_COAP_CORE_01.pcap",
+                value=PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
             ),
         })
 
@@ -568,10 +568,10 @@ if __name__ == '__main__':
             'tt1': MsgTestingToolReady(),
 
             # testcase coordination
-            'tt10': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_01"),
-            'tt11': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
-            'tt12': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
-            'tt13': MsgStepExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
+            'tt10': MsgStepStimuliExecute(step_id="TD_COAP_CORE_01_v01_step_01"),
+            # 'tt11': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
+            # 'tt12': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
+            'tt13': MsgStepVerifyExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
         })
 
         event_type = params[0]
