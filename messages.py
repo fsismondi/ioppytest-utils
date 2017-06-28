@@ -1654,8 +1654,8 @@ message_types_dict = {
     "testcoordination.step.stimuli.executed": MsgStepStimuliExecuted,  # GUI -> TestingTool
     "testcoordination.step.check.execute": MsgStepCheckExecute,  # TestingTool -> GUI
     "testcoordination.step.check.executed": MsgStepCheckExecuted,  # GUI -> TestingTool
-    "testcoordination.step.verify.execute": MsgStepCheckExecute,  # Testing Tool Internal
-    "testcoordination.step.verify.executed": MsgStepCheckExecuted,  # Testing Tool Internal
+    "testcoordination.step.verify.execute": MsgStepVerifyExecute,  # Testing Tool Internal
+    "testcoordination.step.verify.executed": MsgStepVerifyExecuted,  # Testing Tool Internal
     "testcoordination.testcase.configuration": MsgTestCaseConfiguration,  # TestingTool -> GUI
     "testcoordination.testcase.stop": MsgTestCaseStop,  # GUI -> TestingTool
     "testcoordination.testcase.restart": MsgTestCaseRestart,  # GUI -> TestingTool
