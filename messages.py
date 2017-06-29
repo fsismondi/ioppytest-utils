@@ -81,7 +81,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.32'
+API_VERSION = '0.1.33'
 
 
 # TODO use metaclasses instead?
@@ -1639,6 +1639,78 @@ class MsgPrivacyIssue(Message):
         "verdict": json.dumps(MsgPrivacyAnalyzeReply._privacy_empty_report),
     }
 
+# # # # # #   PERFORMANCE TESTING TOOL MESSAGES   # # # # # #
+
+class MsgPerformanceHeartbeat(Message):
+    """
+    Requirements:   Timeline Controller MUST listen to event
+                    Performance submodules MUST emit event periodically
+    Type:           Event
+    Typical_use:    Performance Submodules -> Timeline Controller
+    Description:    The Timeline Controller verifies that all submodules are
+                    active and in the correct state
+    """
+    routing_key = "control.performance"
+
+    _msg_data_template = {
+        "_type"     : "performance.heartbeat",
+        "mod_name"  : "unknown"
+        "status"    : "ready",  # ready, configured or failed
+    }
+
+class MsgPerformanceConfiguration(Message):
+    """
+    Requirements:   Timeline Controller MUST listen to event
+    Type:           Event
+    Typical_use:    Orchestrator -> Timeline Controller
+    Description:    Carries the performance test configuration to the
+                    Timeline Controller
+    """
+    routing_key = "control.performance"
+
+    _msg_data_template = {
+        "_type"     : "performance.configuration",
+        "configuration" : { # As produced by configuration GUI
+            "static"    : { },  # Static configuration of submodules
+            "initial"   : { },  # Initial values for dynamic parameters
+            "segments"  : [ ],  # Timeline segments
+        }
+    }
+
+class MsgPerformanceSetValues(Message):
+    """
+    Requirements:   Performance Submodules MUST listen to event
+    Type:           Event
+    Typical_use:    Timeline Controller -> Performance Submodules
+    Description:    During the test execution, the Timeline Controller will
+                    periodically emit this event to the performance submodules
+                    to update dynamic parameters
+    """
+    routing_key = "control.performance"
+
+    _msg_data_template = {
+        "_type"     : "performance.setvalues",
+        "values"    : { }
+    }
+
+class MsgPerformanceStats(Message):
+    """
+    Requirements:   Performance Submodules SHOULD emit this event periodically
+                    Visualization module SHOULD listen to this event
+    Type:           Event
+    Typical_use:    Performance Submodules -> Visualization
+    Description:    During the test execution, the Performance Submodules
+                    will periodically emit this event carrying current
+                    performance statistics/measurements
+    """
+    routing_key = "control.performance"
+
+    _msg_data_template = {
+        "_type"     : "performance.setvalues",
+        "mod_name"  : "unknown",
+        "timestamp" : 0,
+        "stats"     : { },
+    }
 
 message_types_dict = {
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
@@ -1693,6 +1765,12 @@ message_types_dict = {
     "privacy.configuration.get.reply": MsgPrivacyGetConfigurationReply,  # TestingTool -> GUI (reply),
     "privacy.configuration.set": MsgPrivacySetConfiguration,  # GUI -> TestingTool,
     "privacy.configuration.set.reply": MsgPrivacySetConfigurationReply,  # GUI -> TestingTool (reply),
+    # PERFORMANCE TESTING TOOL -> Reference: Eduard Bröse (EANTC)
+    "performance.heartbeat":        MsgPerformanceHeartbeat,        # Perf. Submodules -> Timeline Controller
+    "performance.configuration":    MsgPerformanceConfiguration,    # Orchestrator -> Timeline Controller
+    "performance.stats":            MsgPerformanceStats,            # Perf. Submodules -> Visualization
+    "performance.setvalues":        MsgPerformanceSetValues,        # Timeline Controller -> Perf. Submodules
+
 }
 
 if __name__ == '__main__':
