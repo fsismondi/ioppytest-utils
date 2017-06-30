@@ -1729,7 +1729,7 @@ class MsgPerformanceStats(Message):
     routing_key = "control.performance"
 
     _msg_data_template = {
-        "_type": "performance.setvalues",
+        "_type": "performance.stats",
         "mod_name": "unknown",
         "timestamp": 0,
         "stats": {},
