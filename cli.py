@@ -389,17 +389,26 @@ if __name__ == '__main__':
 
     try:
         AMQP_EXCHANGE = str(os.environ['AMQP_EXCHANGE'])
+        print('Imported AMQP_EXCHANGE env var: %s' % AMQP_EXCHANGE)
+
     except KeyError as e:
-        AMQP_EXCHANGE = "default"
+        AMQP_EXCHANGE = "amq.topic"
+        print('Cannot retrieve environment variables for AMQP EXCHANGE. Loading default: %s' %AMQP_EXCHANGE)
 
     try:
         AMQP_URL = str(os.environ['AMQP_URL'])
+        print('Imported AMQP_URL env var: %s' % AMQP_URL)
+
         p = six.moves.urllib_parse.urlparse(AMQP_URL)
+
         AMQP_USER = p.username
         AMQP_SERVER = p.hostname
+
         logging.info(
             "Env variables imported for AMQP connection, User: {0} @ Server: {1} ".format(AMQP_USER, AMQP_SERVER))
+
     except KeyError as e:
+
         print('Cannot retrieve environment variables for AMQP connection. Loading defaults..')
         # load default values
         AMQP_URL = "amqp://{0}:{1}@{2}/{3}".format("guest", "guest", "localhost", "/")

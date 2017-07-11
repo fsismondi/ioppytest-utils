@@ -40,8 +40,10 @@ except ImportError:
     pass
 
 VERSION = '0.0.3'
+
+# defaults vars
 AMQP_URL = 'amqp://guest:guest@localhost'
-AMQP_EXCHANGE = 'default'
+AMQP_EXCHANGE = 'amq.default'
 
 try:
     AMQP_URL = str(os.environ['AMQP_URL'])
@@ -182,7 +184,7 @@ class RabbitMQHandler(logging.Handler):
      Example setup::
         handler = RabbitMQHandler('amqp://guest:guest@localhost')
     """
-    def __init__(self, url, name, exchange="default"):
+    def __init__(self, url, name, exchange=AMQP_EXCHANGE):
         logging.Handler.__init__(self)
         self.connection = pika.BlockingConnection(pika.URLParameters(url))
         self.channel = self.connection.channel()
