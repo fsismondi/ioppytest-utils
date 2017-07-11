@@ -43,7 +43,7 @@ VERSION = '0.0.3'
 
 # defaults vars
 AMQP_URL = 'amqp://guest:guest@localhost'
-AMQP_EXCHANGE = 'amq.default'
+AMQP_EXCHANGE = 'amq.topic'
 
 try:
     AMQP_URL = str(os.environ['AMQP_URL'])

@@ -417,11 +417,11 @@ if __name__ == '__main__':
     channel = connection.channel()
     logging.info("AMQP connection established")
 
-    # in case its not declared
-    connection.channel().exchange_declare(exchange=AMQP_EXCHANGE,
-                                          type='topic',
-                                          durable=True,
-                                          )
+    # # in case its not declared
+    # connection.channel().exchange_declare(exchange=AMQP_EXCHANGE,
+    #                                       type='topic',
+    #                                       durable=True,
+    #                                       )
 
 
     def quitCallback():
