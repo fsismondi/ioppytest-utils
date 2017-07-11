@@ -578,15 +578,13 @@ if __name__ == '__main__':
         print(event_type)
 
         # dict of all messages
-        messages = {
-            **events_orchestrator,
-            **events_testcoordination,
-            **service_testcoordination,
-            **service_sniffing,
-            **service_tat,
-            **service_dissection,
-            **testing_tool_emulation,
-        }
+        messages = events_orchestrator
+        messages.update(events_testcoordination)
+        messages.update(service_testcoordination)
+        messages.update(service_sniffing)
+        messages.update(service_tat)
+        messages.update(service_dissection)
+        messages.update(testing_tool_emulation)
 
         # send message
         if event_type in messages.keys():
