@@ -27,7 +27,7 @@ Usage:
 >>> from messages import * # doctest: +SKIP
 >>> m = MsgTestCaseSkip()
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.34, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_02_v01, )
+MsgTestCaseSkip(_api_version = 0.1.35, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_02_v01, )
 >>> m.routing_key
 'control.testcoordination'
 >>> m.message_id # doctest: +SKIP
@@ -38,18 +38,18 @@ MsgTestCaseSkip(_api_version = 0.1.34, _type = testcoordination.testcase.skip, t
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03_v01')
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.34, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_03_v01, )
+MsgTestCaseSkip(_api_version = 0.1.35, _type = testcoordination.testcase.skip, testcase_id = TD_COAP_CORE_03_v01, )
 >>> m.testcase_id
 'TD_COAP_CORE_03_v01'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "0.1.34", "_type": "testcoordination.testcase.skip", "testcase_id": "TD_COAP_CORE_03_v01"}'
+'{"_api_version": "0.1.35", "_type": "testcoordination.testcase.skip", "testcase_id": "TD_COAP_CORE_03_v01"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.to_json()
-'{"_api_version": "0.1.34", "_type": "testcoordination.testsuite.start"}'
+'{"_api_version": "0.1.35", "_type": "testcoordination.testsuite.start"}'
 >>> json_message = m.to_json()
 >>> obj=Message.from_json(json_message)
 >>> type(obj)
@@ -62,7 +62,7 @@ MsgTestCaseSkip(_api_version = 0.1.34, _type = testcoordination.testcase.skip, t
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 0.1.34, _type = sniffing.start, error_code = Some error code TBD, error_message = Some
+MsgErrorReply(_api_version = 0.1.35, _type = sniffing.start, error_code = Some error code TBD, error_message = Some
 error message TBD, ok = False, )
 >>> m.reply_to
 'control.sniffing.service.reply'
@@ -81,7 +81,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.33'
+API_VERSION = '0.1.35'
 
 
 # TODO use metaclasses instead?
@@ -308,17 +308,25 @@ class MsgAgentTunStarted(Message):
     }
 
 
-'''
-TODO add packet.sniffed.raw
-ROUTING_KEY: data.tun.fromAgent.coap_server_agent
- - - -
-PROPS: {"delivery_mode": 2, "content_type": "application/json", "headers": {}, "priority": 0, "content_encoding": 
-"utf-8"}
- - - -
-BODY {"timestamp": "1488586183.45", "_type": "packet.sniffed.raw", "interface_name": "tun0", "data": [96, 0, 0, 0, 0, 
-36, 0, 1, 254, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 58, 
-0, 5, 2, 0, 0, 1, 0, 143, 0, 112, 7, 0, 0, 0, 1, 4, 0, 0, 0, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]}
-'''
+class MsgPacketSniffedRaw(Message):
+    """
+    Description: Message captured by the agent in one of its embedded interfaces (e.g. tun, serial, etc..)
+
+    Type: Event
+
+    Pub/Sub: Agent -> Testing Tool
+
+    Description: TBD
+    """
+    routing_key = None  # depends on the agent_id and the agent interface being used, re-write after creation
+
+    _msg_data_template = {
+        "_type": "packet.sniffed.raw",
+        "timestamp": "1488586183.45",
+        "interface_name": "tun0",
+        "data": [96, 0, 0, 0, 0, 36, 0, 1, 254, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 255, 2, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 22, 58, 0, 5, 2, 0, 0, 1, 0, 143, 0, 112, 7, 0, 0, 0, 1, 4, 0, 0, 0, 255, 2, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]}
 
 
 # # # # # # SESSION MESSAGES # # # # # #
@@ -471,6 +479,27 @@ class MsgTestingToolConfigured(Message):
         "description": "Event Testing tool CONFIGURED",
         "session_id": "TBD",
         "testing_tools": "f-interop/interoperability-coap",
+    }
+
+
+class MsgSessionCreated(Message):
+    """
+    Requirements: Session Orchestrator MUST publish message on common-services channel (on every session creation)
+
+    Type: Event
+
+    Pub/Sub: SO -> viz tools
+
+    Description: The goal is to notify viz tools about new sessions
+    """
+
+    routing_key = "control.session.created"
+
+    _msg_data_template = {
+        "_type": "session.created",
+        "description": "A new session has been created",
+        "session_id": "TBD",
+        "testing_tools": "TBD",
     }
 
 
@@ -1740,6 +1769,7 @@ message_types_dict = {
     "agent.configured": MsgAgentConfigured,  # TestingTool -> GUI
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
     "tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
+    "packet.sniffed.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
     "session.interop.configuration": MsgInteropSessionConfiguration,  # Orchestrator -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
     "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
