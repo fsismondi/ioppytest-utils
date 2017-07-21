@@ -1,7 +1,13 @@
+import six
 import os
 import pika
 import time
-from .messages import *
+import logging
+import threading
+from binascii import unhexlify
+from datetime import datetime
+
+from messages import *
 
 VERSION = '0.0.3'
 
@@ -29,10 +35,10 @@ def publish_message(channel, message):
     properties = pika.BasicProperties(**message.get_properties())
 
     channel.basic_publish(
-            exchange=AMQP_EXCHANGE,
-            routing_key=message.routing_key,
-            properties=properties,
-            body=message.to_json(),
+        exchange=AMQP_EXCHANGE,
+        routing_key=message.routing_key,
+        properties=properties,
+        body=message.to_json(),
     )
 
 
@@ -60,16 +66,16 @@ def amqp_request(channel, request_message, component_id):
 
     # bind and listen to reply_to topic
     channel.queue_bind(
-            exchange=AMQP_EXCHANGE,
-            queue=callback_queue,
-            routing_key=request_message.reply_to
+        exchange=AMQP_EXCHANGE,
+        queue=callback_queue,
+        routing_key=request_message.reply_to
     )
 
     channel.basic_publish(
-            exchange=AMQP_EXCHANGE,
-            routing_key=request_message.routing_key,
-            properties=pika.BasicProperties(**request_message.get_properties()),
-            body=request_message.to_json(),
+        exchange=AMQP_EXCHANGE,
+        routing_key=request_message.routing_key,
+        properties=pika.BasicProperties(**request_message.get_properties()),
+        body=request_message.to_json(),
     )
 
     time.sleep(0.2)
@@ -91,10 +97,10 @@ def amqp_request(channel, request_message, component_id):
 
     else:
         raise Exception(
-                "Response timeout! rkey: %s , request type: %s" % (
-                    request_message.routing_key,
-                    request_message._type
-                )
+            "Response timeout! rkey: %s , request type: %s" % (
+                request_message.routing_key,
+                request_message._type
+            )
         )
 
     # clean up
@@ -103,7 +109,43 @@ def amqp_request(channel, request_message, component_id):
     return response
 
 
+
+
 if __name__ == '__main__':
-    m = MsgSniffingGetCapture()
-    r = amqp_request(m, 'someImaginaryComponent')
-    print(repr(r))
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
+
+    # m = MsgSniffingGetCapture()
+    # r = amqp_request(m, 'someImaginaryComponent')
+    # print(repr(r))
+
+    try:
+        AMQP_EXCHANGE = str(os.environ['AMQP_EXCHANGE'])
+        print('Imported AMQP_EXCHANGE env var: %s' % AMQP_EXCHANGE)
+
+    except KeyError as e:
+        AMQP_EXCHANGE = "amq.topic"
+        print('Cannot retrieve environment variables for AMQP EXCHANGE. Loading default: %s' % AMQP_EXCHANGE)
+
+    try:
+        AMQP_URL = str(os.environ['AMQP_URL'])
+        print('Imported AMQP_URL env var: %s' % AMQP_URL)
+
+        p = six.moves.urllib_parse.urlparse(AMQP_URL)
+
+        AMQP_USER = p.username
+        AMQP_SERVER = p.hostname
+
+        logging.info(
+            "Env variables imported for AMQP connection, User: {0} @ Server: {1} ".format(AMQP_USER, AMQP_SERVER))
+
+    except KeyError as e:
+
+        print('Cannot retrieve environment variables for AMQP connection. Loading defaults..')
+        # load default values
+        AMQP_URL = "amqp://{0}:{1}@{2}/{3}".format("guest", "guest", "localhost", "/")
+
+    connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+    channel = connection.channel()
+    logging.info("AMQP connection established")
+
+

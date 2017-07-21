@@ -14,6 +14,7 @@ python3 cli.py
 
 import six
 import pika
+import pprint
 import threading
 import logging
 import time
@@ -57,17 +58,183 @@ def print_message(method, props, body):
     # let's get rid of values which are empty
     props_dict_only_non_empty_values = {k: v for k, v in props_dict.items() if v is not None}
 
-    print('\n* * * * * * MESSAGE SNIFFED (%s) * * * * * * *' % message_count)
-    print("TIME: %s" % datetime.time(datetime.now()))
-    print(" - - - ")
-    print("ROUTING_KEY: %s" % method.routing_key)
-    print(" - - - ")
-    print("PROPS: %s" % json.dumps(props_dict_only_non_empty_values))
-    print(" - - - ")
-    print('BODY %s' % json.dumps(req_body_dict))
-    print(" - - - ")
+    # print('\n* * * * * * MESSAGE SNIFFED (%s) * * * * * * *' % message_count)
+    # print("TIME: %s" % datetime.time(datetime.now()))
+    # print(" - - - ")
+    # print("ROUTING_KEY: %s" % method.routing_key)
+    # print(" - - - ")
+    # print("PROPS: %s" % json.dumps(props_dict_only_non_empty_values))
+    # print(" - - - ")
+    # print('BODY %s' % json.dumps(req_body_dict))
+    # print(" - - - ")
+    # # print("ERRORS: %s" % )
+    # print('* * * * * * * * * * * * * * * * * * * * * \n')
+
+    def print_head():
+        print('\n* * * * * * MESSAGE SNIFFED (%s) * * * * * * *' % message_count)
+        print("TIME:\n%s" % datetime.time(datetime.now()))
+        # print(" - - - ")
+        # print("ROUTING_KEY: %s" % method.routing_key)
+        print(" - - - ")
+        print('TYPE\n%s' % req_body_dict['_type'])
+        print(" - - - ")
+
+    def print_tail():
+        print('* * * * * * * * * * * * * * * * * * * * * \n')
     # print("ERRORS: %s" % )
-    print('* * * * * * * * * * * * * * * * * * * * * \n')
+
+    def print_field(d, field_name = None):
+        if type(d) is list or type(d) is dict:
+            if field_name:
+                print('%s:' % field_name)
+            pprint.pprint(d)
+        else:
+            if field_name:
+                print('%s:\n%s' % (field_name, d))
+            else:
+                print(d)
+
+    extra_description = ''
+
+    try:
+        m = Message.from_json(body)
+
+        if isinstance(m, MsgTestingToolTerminate):
+            print_head()
+            pprint.pprint(m.description,'DESCRIPTION')
+            print_tail()
+
+        elif isinstance(m, MsgTestingToolComponentShutdown):
+            pass
+            # print_head()
+            # pprint.pprint(m.message,'DESCRIPTION')
+            # print_tail()
+
+        elif isinstance(m, MsgAgentConfigured):
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print_field(m.name, 'AGENT')
+            print_tail()
+
+        elif isinstance(m, MsgInteropSessionConfiguration):
+            print_head()
+            print('DESCRIPTION:\nTesting Tool Configuration message.')
+            print_field(m.iuts)
+            print_field(m.tests)
+            print_tail()
+
+        elif isinstance(m, MsgPacketSniffedRaw):
+            print_head()
+            print('PACKETS: %s' % m.data)
+            print_tail()
+
+        elif isinstance(m, MsgPrivacyGetStatus):
+            pass
+
+        elif isinstance(m, MsgTestingToolComponentReady):
+            pass
+            # if hasattr(m, 'value'):
+            #     pprint.pprint(m.value, 'COMPONENT')
+            # if hasattr(m, 'component'):
+            #     pprint.pprint(m.component, 'COMPONENT')
+            # elif hasattr(m, 'description'):
+            #     pprint.pprint(m.description, 'DESCRIPTION')
+            #     # extra_description += 'DESCRIPTION: %s' % m.value
+        elif isinstance(m, MsgTestingToolReady):
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print_tail()
+        elif isinstance(m, MsgTestingToolConfigured):
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print_field(m.tc_list, 'DESCRIPTION')
+            print_tail()
+
+        elif isinstance(m, MsgStepStimuliExecute):
+            print_head()
+            print_field(m.step_info, 'STEP_INFO')
+            print("TESTCASE: %s" % m.testcase_id)
+            print("STEP: %s" % m.step_id)
+            print("TYPE: %s" % m.step_type)
+            print_tail()
+
+        elif isinstance(m, MsgStepVerifyExecute):
+            print_head()
+            print_field(m.step_info, 'STEP_INFO')
+            print("TESTCASE: %s" % m.testcase_id)
+            print("STEP: %s" % m.step_id)
+            print("TYPE: %s" % m.step_type)
+            print_tail()
+
+        elif isinstance(m, MsgStepVerifyExecuted):
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print_field(m.verify_response, 'USER RESPONSE')
+            print_field(m.response_type, 'RESPONSE TYPE')
+            print_tail()
+
+
+        elif isinstance(m, MsgTestCaseVerdict):
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print("TESTCASE: %s" % m.testcase_id)
+            print("VERDICT: %s" % m.verdict)
+            print_field(m.partial_verdicts, 'PARTIAL_VERDICTS')
+            print_tail()
+
+        elif isinstance(m, MsgTestSuiteReport):
+            print_head()
+            print_field("Test suite report", 'DESCRIPTION')
+            for tc in ['TD_COAP_CORE_01_v01','TD_COAP_CORE_02_v01','TD_COAP_CORE_03_v01']:
+                if hasattr(m,tc):
+                    print('- -')
+                    print_field(tc, 'TESTCASE')
+                    print_field(getattr(m,tc), 'RESULT')
+                    print('- -')
+            #print_field(m.to_json(), 'FINAL REPORT')
+            print_tail()
+        elif 'testcoordination' in m.routing_key:
+            print_head()
+            print_field(m.description, 'DESCRIPTION')
+            print_tail()
+        # "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
+        # "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
+        # "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
+        # "testcoordination.testcase.start": MsgTestCaseStart,  # GUI -> TestingTool
+        # "testcoordination.step.stimuli.execute": MsgStepStimuliExecute,  # TestingTool -> GUI
+        # "testcoordination.step.stimuli.executed": MsgStepStimuliExecuted,  # GUI -> TestingTool
+        # "testcoordination.step.check.execute": MsgStepCheckExecute,  # TestingTool -> GUI
+        # "testcoordination.step.check.executed": MsgStepCheckExecuted,  # GUI -> TestingTool
+        # "testcoordination.step.verify.execute": MsgStepVerifyExecute,  # Testing Tool Internal
+        # "testcoordination.step.verify.executed": MsgStepVerifyExecuted,  # Testing Tool Internal
+        # "testcoordination.testcase.configuration": MsgTestCaseConfiguration,  # TestingTool -> GUI
+        # "testcoordination.testcase.stop": MsgTestCaseStop,  # GUI -> TestingTool
+        # "testcoordination.testcase.restart": MsgTestCaseRestart,  # GUI -> TestingTool
+        # "testcoordination.testcase.skip": MsgTestCaseSkip,  # GUI -> TestingTool
+        # "testcoordination.testcase.select": MsgTestCaseSelect,  # GUI -> TestingTool
+        # # "testcoordination.testcase.finish": MsgTestCaseFinish,  # GUI -> TestingTool
+        # "testcoordination.testcase.finished": MsgTestCaseFinished,  # TestingTool -> GUI
+        # "testcoordination.testcase.verdict": MsgTestCaseVerdict,  # TestingTool -> GUI
+        # "testcoordination.testsuite.abort": MsgTestSuiteAbort,  # GUI -> TestingTool
+        # "testcoordination.testsuite.getstatus": MsgTestSuiteGetStatus,  # GUI -> TestingTool
+        # "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,  # TestingTool -> GUI (reply)
+        # "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
+        # "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
+        # "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
+
+        else:
+            # extra_description += 'BODY %s' % json.dumps(req_body_dict)
+            print('MESSAGE:')
+            pprint.pprint(req_body_dict)
+            print_tail()
+    except Exception as e:
+        extra_description += 'BODY %s' % json.dumps(req_body_dict)
+        print_tail()
+        logging.warning(e)
+        print_tail()
+
+    #pprint.pprint(extra_description)
+
 
 
 def validate_message_format(method, props, body):
@@ -92,7 +259,7 @@ class NullLogHandler(logging.Handler):
 
 
 class AmqpSniffer(threading.Thread):
-    COMPONENT_ID = 'amqp_sniffer'
+    COMPONENT_ID = 'user_cli.amqp_sniffer'
 
     def __init__(self, conn, topics=None):
         threading.Thread.__init__(self)
@@ -114,10 +281,11 @@ class AmqpSniffer(threading.Thread):
             self.channel.queue_bind(exchange=AMQP_EXCHANGE,
                                     queue=self.services_queu_name,
                                     routing_key='#')
+
         # Hello world message
         self.channel.basic_publish(
-            body=json.dumps({'_type': 'cli.info', 'value': 'CLI is up!'}),
-            routing_key='control.cli.info',
+            body=json.dumps({'_type': 'testingtool.component.ready', 'value': 'CLI is up!'}),
+            routing_key='control.session',
             exchange=AMQP_EXCHANGE,
             properties=pika.BasicProperties(
                 content_type='application/json',
@@ -157,7 +325,7 @@ class AmqpDataPacketDumper(threading.Thread):
         incl_len: the number of bytes of packet data actually captured and saved in the file. This value should never become larger than orig_len or the snaplen value of the global header.
         orig_len: the length of the packet as it appeared on the network when it was captured. If incl_len and orig_len differ, the actually saved packet size was limited by snaplen.
     """
-    COMPONENT_ID = 'capture_dumper'
+    COMPONENT_ID = 'user_cli.capture_dumper'
 
     def __init__(self, connection, topics):
         threading.Thread.__init__(self)
@@ -270,7 +438,7 @@ class Cli(threading.Thread):
     """
     \brief Thread which handles CLI commands entered by the user.
     """
-    COMPONENT_ID = 'finterop_CLI'
+    COMPONENT_ID = 'user_cli.finterop_CLI'
     CMD_LEVEL_USER = "user"
     CMD_LEVEL_SYSTEM = "system"
     CMD_LEVEL_ALL = [CMD_LEVEL_USER,
@@ -780,16 +948,20 @@ if __name__ == '__main__':
     # pcap_dumper.start()
 
     # start amqp listener thread
-    # sniffer_subscriptions = [
-    #     'control.session',
-    #     'control.testcoordination',
-    #     'log.warning.#',
-    #     'log.error.#',
-    #     'log.critical.#',
-    # ]
-    #sniffer_subscriptions = list(set(sniffer_subscriptions + pcap_amqp_topic_subscriptions))
+    sniffer_subscriptions = [
+        'control.session.#',
+        'control.testcoordination.#',
+        'dissection.autotriggered',
+        'data.tun.fromAgent.coap_server_agent',
+        'data.tun.fromAgent.coap_client_agent',
+        # 'log.warning.#',
+        'log.error.#',
+        'log.critical.#',
+    ]
+    # sniffer_subscriptions = list(set(sniffer_subscriptions + pcap_amqp_topic_subscriptions))
+    sniffer_subscriptions = list(set(sniffer_subscriptions))
 
-    amqp_listener = AmqpSniffer(connection, None)  # if None subscribe to all messages
+    amqp_listener = AmqpSniffer(connection, sniffer_subscriptions)  # if None subscribe to all messages
     amqp_listener.start()
 
     # interrumpted
