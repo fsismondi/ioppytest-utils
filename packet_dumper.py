@@ -7,7 +7,6 @@ import os
 from messages import *
 from pure_pcapy import Dumper, Pkthdr, DLT_IEEE802_15_4, DLT_RAW
 
-
 class AmqpDataPacketDumper:
     """
     Sniffs data.serial and dumps into pcap file (assumes that frames are DLT_IEEE802_15_4)
@@ -20,9 +19,9 @@ class AmqpDataPacketDumper:
         orig_len: the length of the packet as it appeared on the network when it was captured. If incl_len and orig_len differ, the actually saved packet size was limited by snaplen.
     """
     COMPONENT_ID = 'capture_dumper_%s' % uuid.uuid1()  # uuid in case several dumpers listening to bus
-    DEFAULT_DUMP_DIR = './dumps'
+    DEFAULT_DUMP_DIR = 'dumps'
 
-    def __init__(self, amqp_url, amqp_exchange, topics, dump_dir=None):
+    def __init__(self, amqp_url, amqp_exchange, topics, dump_dir):
 
         self.url = amqp_url
         self.exchange = amqp_exchange
@@ -46,10 +45,13 @@ class AmqpDataPacketDumper:
                                     queue=self.data_queue_name,
                                     routing_key=t)
 
-        if dump_dir and os.path.isdir(dump_dir):
+        if dump_dir:
             self.dump_dir = dump_dir
         else:
             self.dump_dir = self.DEFAULT_DUMP_DIR
+
+        if not os.path.exists(self.dump_dir):
+            os.makedirs(self.dump_dir)
 
         # Hello world message
         self.channel.basic_publish(
@@ -147,7 +149,6 @@ class AmqpDataPacketDumper:
                 except TypeError as e:
                     logging.error(str(e))
                     logging.error(repr(m))
-
 
             else:
                 logging.info('drop amqp message: ' + repr(m))
