@@ -60,14 +60,17 @@ class AmqpDataPacketDumper(threading.Thread):
         self.channel.basic_qos(prefetch_count=1)
         self.channel.basic_consume(self.on_request, queue=self.data_queue_name)
 
+        datetime_string = time.strftime("%Y%m%d_%H%M")
+        network_type = "DLT_IEEE802_15_4"
         self.pcap_15_4_dumper = Dumper(
-            filename='agents_serial_15_4.pcap',
+            filename="{0}_{1}.pcap".format(datetime_string, network_type),
             snaplen=200,
             network=DLT_IEEE802_15_4
         )
 
+        network_type = "DLT_RAW"
         self.pcap_raw_ip_dumper = Dumper(
-            filename='agents_tun_raw_ip.pcap',
+            filename="{0}_{1}.pcap".format(datetime_string, network_type),
             snaplen=200,
             network=DLT_RAW
         )
@@ -106,33 +109,39 @@ class AmqpDataPacketDumper(threading.Thread):
                 self.stop()
 
             if isinstance(m, MsgPacketSniffedRaw):
-                if 'serial' in method.routing_key:
-                    raw_packet = bytes(m.data)
-                    packet_slip = bytes(m.data_slip)
+                try:
+                    if 'serial' in m.interface_name:
+                        raw_packet = bytes(m.data)
+                        packet_slip = bytes(m.data_slip)
 
-                    # lets build pcap header for packet
-                    pcap_packet_header = Pkthdr(
-                        ts_sec=now.second,
-                        ts_usec=now.microsecond,
-                        incl_len=len(raw_packet),
-                        orig_len=len(raw_packet),
-                    )
-                    self.pcap_15_4_dumper.dump(pcap_packet_header, raw_packet)
+                        # lets build pcap header for packet
+                        pcap_packet_header = Pkthdr(
+                            ts_sec=now.second,
+                            ts_usec=now.microsecond,
+                            incl_len=len(raw_packet),
+                            orig_len=len(raw_packet),
+                        )
+                        self.pcap_15_4_dumper.dump(pcap_packet_header, raw_packet)
 
-                elif 'tun' in m.routing_key:
-                    raw_packet = bytes(m.data)
+                    elif 'tun' in m.interface_name:
+                        raw_packet = bytes(m.data)
 
-                    # lets build pcap header for packet
-                    pcap_packet_header = Pkthdr(
-                        ts_sec=now.second,
-                        ts_usec=now.microsecond,
-                        incl_len=len(raw_packet),
-                        orig_len=len(raw_packet),
-                    )
-                    self.pcap_raw_ip_dumper.dump(pcap_packet_header, raw_packet)
+                        # lets build pcap header for packet
+                        pcap_packet_header = Pkthdr(
+                            ts_sec=now.second,
+                            ts_usec=now.microsecond,
+                            incl_len=len(raw_packet),
+                            orig_len=len(raw_packet),
+                        )
+                        self.pcap_raw_ip_dumper.dump(pcap_packet_header, raw_packet)
 
-                else:
-                    logging.info('raw packet not dumped to pcap: ' + repr(m))
+                    else:
+                        logging.info('raw packet not dumped to pcap: ' + repr(m))
+
+                except TypeError as e:
+                    logging.error(str(e))
+                    logging.error(repr(m))
+
 
             else:
                 logging.info('drop amqp message: ' + repr(m))
@@ -153,7 +162,7 @@ if __name__ == '__main__':
 
     MESSAGE_UI_SELECTOR = 1
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
     try:
         AMQP_EXCHANGE = str(os.environ['AMQP_EXCHANGE'])
