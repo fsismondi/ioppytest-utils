@@ -2,16 +2,9 @@ import six
 import pika
 import threading
 import logging
-import time
-import json
 from datetime import timedelta, datetime
-import traceback
-import uuid
-from collections import OrderedDict
 import os
-import signal
 from messages import *
-from examples_pcap_base64 import *
 from pure_pcapy import Dumper, Pkthdr, DLT_IEEE802_15_4, DLT_RAW
 
 
