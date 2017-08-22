@@ -1342,6 +1342,7 @@ class MsgInteropTestCaseAnalyze(Message):
 
     _msg_data_template = {
         "_type": "analysis.interop.testcase.analyze",
+        "protocol": "coap",
         "testcase_id": "TD_COAP_CORE_01",
         "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
         "file_enc": "pcap_base64",
