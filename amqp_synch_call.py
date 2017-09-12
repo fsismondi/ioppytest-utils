@@ -54,7 +54,7 @@ def amqp_request(channel, request_message, component_id):
     assert request_message.correlation_id
 
     if AMQP_EXCHANGE is None:
-        AMQP_EXCHANGE = 'default'
+        AMQP_EXCHANGE = 'amq.topic'
 
     response = None
 
