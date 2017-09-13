@@ -485,6 +485,7 @@ if __name__ == '__main__':
         # re-write each message forged as a unittest? (if not this won't escalate very well)
 
         events_testcoordination = OrderedDict({
+            '0': MsgTestingToolConfigured(),
             '1': MsgTestSuiteStart(),
             '2': MsgTestCaseStart(),
             '3': MsgTestCaseRestart(),
