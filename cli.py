@@ -567,14 +567,13 @@ if __name__ == '__main__':
                 filename="TD_COAP_CORE_01.pcap",
                 value=PCAP_TC_COAP_01_base64,
             ),
-            'tat3': MsgInteropTestCaseAnalyze(
-                testcase_id="TD_COAP_CORE_04",
-                testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_04_v01",
-                file_enc="pcap_base64",
-                filename="TD_COAP_CORE_04.pcap",
-                value=PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,
-            )
-
+            # 'tat3': MsgInteropTestCaseAnalyze(
+            #     testcase_id="TD_COAP_CORE_04",
+            #     testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_04_v01",
+            #     file_enc="pcap_base64",
+            #     filename="TD_COAP_CORE_04.pcap",
+            #     value=PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,
+            # )
 
         })
 
@@ -613,14 +612,13 @@ if __name__ == '__main__':
                 filename="TD_COAP_CORE_01.pcap",
                 value=PCAP_COAP_GET_OVER_TUN_INTERFACE_base64,
             ),
-            # pcap sniffed using AMQP based packet sniffer
-            'dis7': MsgDissectionDissectCapture(
-                file_enc="pcap_base64",
-                filename="TD_COAP_CORE_04.pcap",
-                value=PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,
-            ),
+            # # pcap sniffed using AMQP based packet sniffer
+            # 'dis7': MsgDissectionDissectCapture(
+            #     file_enc="pcap_base64",
+            #     filename="TD_COAP_CORE_04.pcap",
+            #     value=PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,
+            # ),
         })
-
 
         testing_tool_emulation = OrderedDict({
             # testing tool is ready to start session
@@ -631,6 +629,30 @@ if __name__ == '__main__':
             # 'tt11': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
             # 'tt12': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
             'tt13': MsgStepVerifyExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
+            'tt100': MsgTestSuiteReport(),
+            # for 6lowpan TT tests
+            's_hc_01': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_01_step_01', node='eut1'),
+            's_hc_02': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_02_step_01', node='eut1'),
+            's_hc_03': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_03_step_01', node='eut1'),
+            's_hc_04': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_04_step_01', node='eut1'),
+            's_hc_05': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_05_step_01', node='eut1'),
+            's_hc_06': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_06_step_01', node='eut1'),
+            's_hc_07': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_07_step_01', node='eut1'),
+            's_format_01': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_01_step_01', node='eut1'),
+            's_format_03': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_03_step_01', node='eut1'),
+            's_format_04': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_04_step_01', node='eut1'),
+            's_format_06': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_06_step_01', node='eut1'),
+            'tc_hc_01': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_01'),
+            'tc_hc_02': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_02'),
+            'tc_hc_03': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_03'),
+            'tc_hc_04': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_04'),
+            'tc_hc_05': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_05'),
+            'tc_hc_06': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_06'),
+            'tc_hc_07': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_07'),
+            'tc_format_01': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_01'),
+            'tc_format_03': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_03'),
+            'tc_format_04': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_04'),
+            'tc_format_06': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_06'),
         })
 
         event_type = params[0]
