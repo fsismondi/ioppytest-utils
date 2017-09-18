@@ -268,18 +268,20 @@ class AmqpSniffer(threading.Thread):
 
         self.channel = self.connection.channel()
 
-        self.services_queu_name = 'services_queue@%s' % self.COMPONENT_ID
-        self.channel.queue_declare(queue=self.services_queu_name, auto_delete=True)
+        self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
+        self.channel.queue_declare(queue=self.services_queue_name,
+                                  auto_delete = True,
+                                  arguments = {'x-max-length': 100})
 
         if topics:  # susbscribe only to passed list
             for t in topics:
                 self.channel.queue_bind(exchange=AMQP_EXCHANGE,
-                                        queue=self.services_queu_name,
+                                        queue=self.services_queue_name,
                                         routing_key=t)
 
         else:  # subscribe to all events
             self.channel.queue_bind(exchange=AMQP_EXCHANGE,
-                                    queue=self.services_queu_name,
+                                    queue=self.services_queue_name,
                                     routing_key='#')
 
         # Hello world message
@@ -293,10 +295,10 @@ class AmqpSniffer(threading.Thread):
         )
 
         self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(self.on_request, queue=self.services_queu_name)
+        self.channel.basic_consume(self.on_request, queue=self.services_queue_name)
 
     def stop(self):
-        self.channel.queue_delete(self.services_queu_name)
+        self.channel.queue_delete(self.services_queue_name)
         self.channel.stop_consuming()
         self.connection.close()
 

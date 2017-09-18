@@ -92,7 +92,7 @@ class NullLogHandler(logging.Handler):
 
 
 class AmqpSniffer(threading.Thread):
-    COMPONENT_ID = 'amqp_sniffer'
+    COMPONENT_ID = 'amqp_sniffer_%s' % uuid.uuid1()
     DEFAULT_EXCHAGE = 'amq.topic'
 
     def __init__(self, conn, exchange=None, topics=None):
@@ -542,7 +542,7 @@ if __name__ == '__main__':
             'snif0': MsgSniffingStart(
                 capture_id='TD_COAP_CORE_01',
                 filter_if='tun0',
-                filter_proto='udp port 5683'
+                filter_proto='udp'
             ),
             'snif1': MsgSniffingStop(),
             # get a particular capture file
@@ -629,7 +629,8 @@ if __name__ == '__main__':
             # 'tt11': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
             # 'tt12': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
             'tt13': MsgStepVerifyExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
-            'tt100': MsgTestSuiteReport(),
+            'ttver':MsgTestCaseVerdict(),
+            'ttrepo': MsgTestSuiteReport(),
             # for 6lowpan TT tests
             's_hc_01': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_01_step_01', node='eut1'),
             's_hc_02': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_02_step_01', node='eut1'),

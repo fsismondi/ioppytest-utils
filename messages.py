@@ -461,7 +461,7 @@ class MsgSessionLog(Message):
     _msg_data_template = {
         "_type": "log",
         "component": "the_drummer",
-        "description": "I've got blisters on my fingers!"
+        "message": "I've got blisters on my fingers!"
     }
 
 
@@ -1267,7 +1267,7 @@ class MsgSniffingStart(Message):
         "_type": "sniffing.start",
         "capture_id": "TD_COAP_CORE_01",
         "filter_if": "tun0",
-        "filter_proto": "udp port 5683"
+        "filter_proto": "udp"
     }
 
 
