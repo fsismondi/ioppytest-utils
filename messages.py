@@ -27,7 +27,7 @@ Usage:
 >>> from messages import * # doctest: +SKIP
 >>> m = MsgTestCaseSkip()
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.41, _type = testcoordination.testcase.skip, node = someNode, testcase_id = TD_COAP_CORE_02_v01, )
+MsgTestCaseSkip(_api_version = 0.1.42, _type = testcoordination.testcase.skip, node = someNode, testcase_id = TD_COAP_CORE_02_v01, )
 >>> m.routing_key
 'control.testcoordination'
 >>> m.message_id # doctest: +SKIP
@@ -38,18 +38,18 @@ MsgTestCaseSkip(_api_version = 0.1.41, _type = testcoordination.testcase.skip, n
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03_v01')
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.41, _type = testcoordination.testcase.skip, node = someNode, testcase_id = TD_COAP_CORE_03_v01, )
+MsgTestCaseSkip(_api_version = 0.1.42, _type = testcoordination.testcase.skip, node = someNode, testcase_id = TD_COAP_CORE_03_v01, )
 >>> m.testcase_id
 'TD_COAP_CORE_03_v01'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "0.1.41", "_type": "testcoordination.testcase.skip", "node": "someNode", "testcase_id": "TD_COAP_CORE_03_v01"}'
+'{"_api_version": "0.1.42", "_type": "testcoordination.testcase.skip", "node": "someNode", "testcase_id": "TD_COAP_CORE_03_v01"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.to_json()
-'{"_api_version": "0.1.41", "_type": "testcoordination.testsuite.start", "description": "Event test suite START"}'
+'{"_api_version": "0.1.42", "_type": "testcoordination.testsuite.start", "description": "Event test suite START"}'
 >>> json_message = m.to_json()
 >>> obj=Message.from_json(json_message)
 >>> type(obj)
@@ -62,7 +62,7 @@ MsgTestCaseSkip(_api_version = 0.1.41, _type = testcoordination.testcase.skip, n
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 0.1.41, _type = sniffing.start, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
+MsgErrorReply(_api_version = 0.1.42, _type = sniffing.start, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
 >>> m.reply_to
 'control.sniffing.service.reply'
 >>> err.routing_key
@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.41'
+API_VERSION = '0.1.42'
 
 
 # TODO use metaclasses instead?
@@ -563,6 +563,7 @@ class MsgTestingToolConfigured(Message):
     }
 
 
+
 class MsgSessionCreated(Message):
     """
     Requirements: Session Orchestrator MUST publish message on common-services channel (on every session creation)
@@ -804,13 +805,15 @@ class MsgConfigurationExecuted(Message):
 
     Description:
         - Message used for indicating that the IUT has been configured as requested
+        - pixit must be included in this message (pixit = Protocol Implementaiton eXtra Information for Testing)
     """
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
         "_type": "testcoordination.configuration.executed",
         "description": "Event IUT has been configured",
-        "node": "coap_server"
+        "node": "coap_server",
+        "ipv6_address": "bbbb::1"  # example of pixit
     }
 
 
