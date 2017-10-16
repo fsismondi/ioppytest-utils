@@ -22,14 +22,14 @@ import logging
 import threading
 import traceback
 from tabulate import tabulate
-from collections import OrderedDict
-from click.testing import CliRunner
 from messages import *
 
 import click
 from click_repl import register_repl, ExitReplException
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
+
+COMPONENT_ID = 'cli'
 
 # click colors:: black (might gray) , red, green, yellow (might be an orange), blue, magenta, cyan, white (might gray)
 COLOR_DEFAULT = 'white'
@@ -49,7 +49,6 @@ DEFAULT_TOPIC_SUBSCRIPTIONS = [
 ]
 
 MESSAGE_TYPES_NOT_ECHOED = [
-    MsgPacketSniffedRaw,
     MsgPacketInjectRaw,
 ]
 
@@ -79,6 +78,7 @@ profile_choices = {
     'node': ['coap_client', 'coap_server', 'both']
 }
 
+# e.g. MsgTestingToolConfigured is normally followed by a test suite start (ts_start)
 UI_suggested_actions = {
     MsgTestingToolConfigured: 'ts_start',
     MsgTestCaseReady: 'tc_start',
@@ -87,6 +87,8 @@ UI_suggested_actions = {
 }
 
 
+def _init_action_suggested():
+    state['suggested_cmd'] = 'ts_start'
 
 
 class AmqpListener(threading.Thread):
@@ -96,7 +98,6 @@ class AmqpListener(threading.Thread):
     def __init__(self, amqp_url, amqp_exchange, topics, callback):
 
         threading.Thread.__init__(self)
-
 
         if callback is None:
             self.message_dipatcher = print
@@ -172,6 +173,7 @@ class AmqpListener(threading.Thread):
         try:
             m = Message.from_json(body)
             m.update_properties(**props_dict)
+            m.routing_key = method.routing_key
             self.message_dipatcher(m)
 
         except NonCompliantMessageFormatError as e:
@@ -195,6 +197,72 @@ class AmqpListener(threading.Thread):
                 self.message_dipatcher('Unexpected connection closed, retrying %s/%s' % (i, 4))
 
         self.message_dipatcher('Bye byes!')
+
+
+def amqp_request(channel, request_message, component_id):
+    """
+    NOTE: channel must be a pika channel
+    """
+    amqp_exchange = session_profile['amqp_exchange']
+
+    # check first that sender didnt forget about reply to and corr id
+    assert request_message.reply_to
+    assert request_message.correlation_id
+
+    if amqp_exchange is None:
+        amqp_exchange = 'amq.topic'
+
+    response = None
+
+    reply_queue_name = 'amqp_rpc_%s@%s' % (str(uuid.uuid4())[:8], component_id)
+
+    result = channel.queue_declare(queue=reply_queue_name, auto_delete=True)
+
+    callback_queue = result.method.queue
+
+    # bind and listen to reply_to topic
+    channel.queue_bind(
+        exchange=amqp_exchange,
+        queue=callback_queue,
+        routing_key=request_message.reply_to
+    )
+
+    channel.basic_publish(
+        exchange=amqp_exchange,
+        routing_key=request_message.routing_key,
+        properties=pika.BasicProperties(**request_message.get_properties()),
+        body=request_message.to_json(),
+    )
+
+    time.sleep(0.2)
+    retries_left = 5
+
+    while retries_left > 0:
+        time.sleep(0.5)
+        method, props, body = channel.basic_get(reply_queue_name)
+        if method:
+            channel.basic_ack(method.delivery_tag)
+            if hasattr(props, 'correlation_id') and props.correlation_id == request_message.correlation_id:
+                break
+        retries_left -= 1
+
+    if retries_left > 0:
+
+        body_dict = json.loads(body.decode('utf-8'), object_pairs_hook=OrderedDict)
+        response = MsgReply(request_message, **body_dict)
+
+    else:
+        raise Exception(
+            "Response timeout! rkey: %s , request type: %s" % (
+                request_message.routing_key,
+                request_message._type
+            )
+        )
+
+    # clean up
+    channel.queue_delete(reply_queue_name)
+
+    return response
 
 
 def publish_message(message):
@@ -249,6 +317,48 @@ def clear():
     """
 
     click.clear()
+
+
+def _handle_testcase_select():
+    #  requires testing tool to implement GetTestCases feature see MsgTestSuiteGetTestCases
+    _handle_get_testcase_list()
+    ls = state['tc_list'].copy()
+
+    i = 1
+    for tc_item in ls:
+        _echo_dispatcher("%s -> %s" % (i, tc_item['testcase_id']))
+        i += 1
+
+    resp = click.prompt('Select number of test case to execute from list', type=int)
+
+    try:
+        _echo_input("entered %s, corresponding to %s" % (resp, ls[resp - 1]['testcase_id']))
+    except Exception as e:
+        _echo_error("wrong input \n %s" % e)
+        return
+
+    msg = MsgTestCaseSelect(
+        testcase_id=ls[resp - 1]['testcase_id']
+    )
+
+    publish_message(msg)
+
+
+def _handle_get_testcase_list():
+    #  requires testing tool to implement GetTestCases feature see MsgTestSuiteGetTestCases
+    if _connection_ok():
+        temp_channel = state['connection'].channel()
+        request_message = MsgTestSuiteGetTestCases()
+
+        testcases_list_reponse = amqp_request(temp_channel, request_message, COMPONENT_ID)
+        try:
+            state['tc_list'] = testcases_list_reponse.tc_list
+        except Exception as e:
+            _echo_error(e)
+
+        _echo_list_of_dicts_as_table(state['tc_list'])
+    else:
+        _echo_error('No connection established')
 
 
 def _handle_action_testsuite_start():
@@ -319,6 +429,8 @@ message_handles_options = {'ts_start': _handle_action_testsuite_start,
                            'tc_start': _handle_action_testcase_start,
                            'tc_restart': _handle_action_testcase_restart,
                            'tc_skip': _handle_action_testcase_skip,
+                           'tc_list': _handle_get_testcase_list,
+                           'tc_select': _handle_testcase_select,
                            'verify': _handle_action_verify,
                            'stimuli': _handle_action_stimuli,
                            'suggested': None,
@@ -364,6 +476,7 @@ def ignore(message_type):
     """
     message_types = {
         'dissections': [MsgDissectionAutoDissect],
+        'packets': [MsgPacketSniffedRaw, MsgPacketInjectRaw]
     }
 
     if message_type in message_types:
@@ -541,6 +654,9 @@ def _exit():
     raise ExitReplException()
 
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# UI echo functions
+
 def _echo_welcome_message():
     m = """
     Welcome to F-Interop platform!
@@ -561,6 +677,8 @@ def _echo_dispatcher(msg):
         click.echo(click.style(msg, fg=COLOR_DEFAULT))
     elif isinstance(msg, MsgSessionLog):
         _echo_log_message(msg)
+    elif isinstance(msg, MsgPacketSniffedRaw):
+        _echo_data_message(msg)
     elif isinstance(msg, MsgSessionChat):
         _echo_chat_message(msg)
     elif isinstance(msg, Message):  # default echo for objects of Message type
@@ -574,8 +692,6 @@ def _echo_dispatcher(msg):
 def _quit_callback():
     click.echo(click.style('Quitting!', fg=COLOR_ERROR_MESSAGE))
 
-def _init_action_suggested():
-    state['suggested_cmd'] = 'ts_start'
 
 def _echo_backend_message(msg):
     assert isinstance(msg, Message)
@@ -636,10 +752,20 @@ def _echo_testcase_partial_verdicts_as_table(pvs):
 
     click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
 
+def _echo_list_of_dicts_as_table(l):
+    try:
 
+        assert type(l) is list
+
+        for d in l: #for each dict obj in the list
+            _echo_dict_as_table(d)
+
+    except Exception as e:
+        _echo_error('wrong frame format passed?')
+        _echo_error(e)
+        _echo_error(traceback.format_exc())
 
 def _echo_report_as_table(report_dict):
-
     try:
 
         assert type(report_dict) is OrderedDict
@@ -654,7 +780,7 @@ def _echo_report_as_table(report_dict):
 
             # testcase report
             click.echo()
-            click.echo(click.style(tabulate(table,headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+            click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
             click.echo()
             _echo_testcase_partial_verdicts_as_table(tc_report['partial_verdicts'])
             click.echo()
@@ -699,14 +825,17 @@ def _echo_frames_as_table(frames: list):
 
 
 def _echo_list_as_table(ls: list):
-    click.echo()  # new line
     click.echo(click.style(tabulate(ls), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+    click.echo()  # new line
 
 
 def _echo_dict_as_table(d: dict):
     table = []
     for key, value in d.items():
-        temp = [key, value]
+        if type(value) is list:
+            temp = [key, list_to_str(value)]
+        else:
+            temp = [key, value]
         table.append(temp)
 
     click.echo()  # new line
@@ -733,11 +862,19 @@ def _echo_chat_message(msg: MsgSessionChat):
                                fg=COLOR_CHAT_MESSAGE))
 
 
+def _echo_data_message(msg):
+    assert isinstance(msg, (MsgPacketInjectRaw, MsgPacketSniffedRaw))
+    click.echo(click.style(
+        '[agent] Packet captured on %s. Routing key: %s' % (msg.interface_name, msg.routing_key),
+        fg=COLOR_SESSION_LOG)
+    )
+
+
 def _echo_log_message(msg):
     if isinstance(msg, MsgSessionLog):
-        click.echo(click.style(list_to_str(msg.message), fg=COLOR_SESSION_LOG))
+        click.echo(click.style("[log][%s] %s" % (msg.component, list_to_str(msg.message)), fg=COLOR_SESSION_LOG))
     else:
-        click.echo(click.style(list_to_str(msg), fg=COLOR_SESSION_LOG))
+        click.echo(click.style("[%s] %s" % ('log', list_to_str(msg)), fg=COLOR_SESSION_LOG))
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -772,7 +909,6 @@ def list_to_str(ls):
 
 if __name__ == "__main__":
 
-
     try:
         session_profile.update({'amqp_exchange': str(os.environ['AMQP_EXCHANGE'])})
     except KeyError as e:
@@ -790,9 +926,9 @@ if __name__ == "__main__":
     _pre_configuration()
     _echo_session_helper(
         "\nPlease type <connect> to connect the CLI to the backend and start running the interop tests! \n")
-    _echo_session_helper("\nYou can press TAB for seeing the available commands at any time \n")
-    _echo_session_helper("\nThe command <action [param]> needs to be used for executing the test actions,"
-                         " note that <action suggested> will help you navigate through the session by executing the "
+    _echo_session_helper("\nYou can press TAB for the available commands at any time \n")
+    _echo_session_helper("\nThe command <action [param]> needs to be used for executing the test actions\n")
+    _echo_session_helper("\nNote that <action suggested> will help you navigate through the session by executing the "
                          "actions the backend normally expects for a standard session flow :)\n")
     _init_action_suggested()
 
