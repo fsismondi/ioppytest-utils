@@ -54,7 +54,6 @@ MESSAGE_TYPES_NOT_ECHOED = [
 
 TEMP_DIR = 'tmp'
 
-
 session_profile = OrderedDict(
     {
         'user_name': "Walter White",
@@ -345,18 +344,58 @@ def _handle_testcase_select():
 
 
 def _handle_get_testcase_list():
-    #  requires testing tool to implement GetTestCases feature see MsgTestSuiteGetTestCases
+    #  requires testing tool to implement GetTestCases feature, see MsgTestSuiteGetTestCases
     if _connection_ok():
         temp_channel = state['connection'].channel()
         request_message = MsgTestSuiteGetTestCases()
 
-        testcases_list_reponse = amqp_request(temp_channel, request_message, COMPONENT_ID)
+        try:
+            testcases_list_reponse = amqp_request(temp_channel, request_message, COMPONENT_ID)
+        except Exception as e:
+            _echo_error('Is testing tool up?')
+            _echo_error(e)
+            return
+
         try:
             state['tc_list'] = testcases_list_reponse.tc_list
         except Exception as e:
             _echo_error(e)
+            return
 
         _echo_list_of_dicts_as_table(state['tc_list'])
+    else:
+        _echo_error('No connection established')
+
+
+def _handle_get_testsuite_status():
+    #  requires testing tool to implement GetStatus feature, see MsgTestSuiteGetStatus
+    if _connection_ok():
+        temp_channel = state['connection'].channel()
+        request_message = MsgTestSuiteGetStatus()
+
+        try:
+            status_resp = amqp_request(temp_channel, request_message, COMPONENT_ID)
+        except Exception as e:
+            _echo_error('Is testing tool up?')
+            _echo_error(e)
+            return
+
+        resp = status_resp.to_dict()
+        tc_states = resp['tc_list']
+        del resp['tc_list']
+
+        # print general states
+        _echo_dict_as_table(resp)
+
+        list = []
+        list.append(('testcase id', 'testcase ref', 'testcase status'))
+        for tc in tc_states:
+            if tc:
+                val1, val2, val3, _, _, _ = tc.values()
+                list.append((val1, val2, val3))
+        # print tc states
+        _echo_list_as_table(list, first_row_is_header=True)
+
     else:
         _echo_error('No connection established')
 
@@ -425,6 +464,7 @@ def _handle_action_verify():
 
 
 message_handles_options = {'ts_start': _handle_action_testsuite_start,
+                           'ts_status': _handle_get_testsuite_status,
                            'ts_abort': _handle_action_testsuite_abort,
                            'tc_start': _handle_action_testcase_start,
                            'tc_restart': _handle_action_testcase_restart,
@@ -555,6 +595,7 @@ def _set_up_connection():
 
     # conn for repl publisher
     try:
+
         state['connection'] = pika.BlockingConnection(pika.URLParameters(session_profile['amqp_url']))
         state['channel'] = state['connection'].channel()
     except pika.exceptions.ProbableAccessDeniedError:
@@ -660,9 +701,16 @@ def _exit():
 def _echo_welcome_message():
     m = """
     Welcome to F-Interop platform!
-    the Test assistant will help you go through the interoperability session (messages in cyan).
-    If you experience any problems, or have any suggestions or feedback don't hesitate to drop me an email at:
-    federico.sismondi@inria.fr
+    The Test assistant will help you go through the interoperability session (messages in cyan).
+
+    """
+    _echo_session_helper(m)
+
+    m = """
+    *********************************************************************************
+    *   If you experience any problems, or you have any suggestions or feedback     *
+    *   don't hesitate to drop me an email at:  federico.sismondi@inria.fr          *
+    *********************************************************************************
     """
     _echo_session_helper(m)
 
@@ -752,18 +800,31 @@ def _echo_testcase_partial_verdicts_as_table(pvs):
 
     click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
 
+
 def _echo_list_of_dicts_as_table(l):
     try:
 
         assert type(l) is list
 
-        for d in l: #for each dict obj in the list
-            _echo_dict_as_table(d)
+        table = []
+        first = True
+
+        for d in l:  # for each dict obj in the list
+            if d:
+                if first:  # adds table header , we assume all dicts have same keys
+                    first = False
+                    table.append(tuple(d.keys()))
+                table.append(tuple(d.values()))
+
+        _echo_list_as_table(table,first_row_is_header=True)
 
     except Exception as e:
         _echo_error('wrong frame format passed?')
+        if l:
+            _echo_error(l)
         _echo_error(e)
         _echo_error(traceback.format_exc())
+
 
 def _echo_report_as_table(report_dict):
     try:
@@ -774,21 +835,24 @@ def _echo_report_as_table(report_dict):
 
         for tc_name, tc_report in testcases:
             table = []
+            if tc_report:
+                table.append(("Testcase ID", 'Final verdict', 'Description'))
+                table.append((tc_name, tc_report['verdict'], tc_report['description']))
 
-            table.append(("Testcase ID", 'Final verdict', 'Description'))
-            table.append((tc_name, tc_report['verdict'], tc_report['description']))
-
-            # testcase report
-            click.echo()
-            click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
-            click.echo()
-            _echo_testcase_partial_verdicts_as_table(tc_report['partial_verdicts'])
-            click.echo()
+                # testcase report
+                click.echo()
+                click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+                click.echo()
+                _echo_testcase_partial_verdicts_as_table(tc_report['partial_verdicts'])
+                click.echo()
+            else:
+                _echo_error('No report for testcase %s ' % tc_name)
 
     except Exception as e:
         _echo_error('wrong frame format passed?')
         _echo_error(e)
         _echo_error(traceback.format_exc())
+        _echo_error(json.dumps(report_dict))
 
 
 def _echo_frames_as_table(frames: list):
@@ -817,15 +881,25 @@ def _echo_frames_as_table(frames: list):
 
             click.echo()  # new line
 
-
     except Exception as e:
         _echo_error('wrong frame format passed?')
         _echo_error(e)
         _echo_error(traceback.format_exc())
 
 
-def _echo_list_as_table(ls: list):
-    click.echo(click.style(tabulate(ls), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+def _echo_list_as_table(ls: list, first_row_is_header=False):
+    list_flat_items = []
+    assert type(ls) is list
+
+    for row in ls:
+        assert type(row) is not str
+        list_flat_items.append(tuple(list_to_str(item) for item in row))
+
+    if first_row_is_header:
+        click.echo(click.style(tabulate(list_flat_items, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+    else:
+        click.echo(click.style(tabulate(list_flat_items), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+
     click.echo()  # new line
 
 
@@ -891,6 +965,9 @@ def list_to_str(ls):
 
     ret = ''
 
+    if ls is None:
+        return 'None'
+
     if type(ls) is str:
         return ls
 
@@ -915,7 +992,12 @@ if __name__ == "__main__":
         pass  # use default
 
     try:
-        session_profile.update({'amqp_url': str(os.environ['AMQP_URL'])})
+        url = '%s?%s&%s' % (
+            str(os.environ['AMQP_URL']),
+            "heartbeat_interval=600",
+            "blocked_connection_timeout=300"
+        )
+        session_profile.update({'amqp_url': url})
     except KeyError as e:
         pass  # use default
 
