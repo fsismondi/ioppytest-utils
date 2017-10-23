@@ -447,12 +447,6 @@ if __name__ == '__main__':
     channel = connection.channel()
     logging.info("AMQP connection established")
 
-    # in case its not declared
-    connection.channel().exchange_declare(exchange=AMQP_EXCHANGE,
-                                          type='topic',
-                                          durable=True,
-                                          )
-
 
     def quitCallback():
         print("quitting!")
@@ -620,6 +614,42 @@ if __name__ == '__main__':
             # ),
         })
 
+        # testing_tool_emulation = OrderedDict({
+        #     # testing tool is ready to start session
+        #     'tt1': MsgTestingToolReady(),
+        #
+        #     # testcase coordination
+        #     'tt10': MsgStepStimuliExecute(step_id="TD_COAP_CORE_01_v01_step_01"),
+        #     # 'tt11': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
+        #     # 'tt12': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
+        #     'tt13': MsgStepVerifyExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
+        #     'ttver':MsgTestCaseVerdict(),
+        #     'ttrepo': MsgTestSuiteReport(),
+        #     # for 6LoWPAN TT tests
+        #     's_hc_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_01_step_01', node='eut1'),
+        #     's_hc_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_02_step_01', node='eut1'),
+        #     's_hc_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_03_step_01', node='eut1'),
+        #     's_hc_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_04_step_01', node='eut1'),
+        #     's_hc_05': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05_step_01', node='eut1'),
+        #     's_hc_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_06_step_01', node='eut1'),
+        #     's_hc_07': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07_step_01', node='eut1'),
+        #     's_format_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_01_step_01', node='eut1'),
+        #     's_format_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_03_step_01', node='eut1'),
+        #     's_format_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_04_step_01', node='eut1'),
+        #     's_format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_06_step_01', node='eut1'),
+        #     'tc_hc_01': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_01'),
+        #     'tc_hc_02': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_02'),
+        #     'tc_hc_03': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_03'),
+        #     'tc_hc_04': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_04'),
+        #     'tc_hc_05': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_05'),
+        #     'tc_hc_06': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_06'),
+        #     'tc_hc_07': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_07'),
+        #     'tc_format_01': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_01'),
+        #     'tc_format_03': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_03'),
+        #     'tc_format_04': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_04'),
+        #     'tc_format_06': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_06'),
+        # })
+
         testing_tool_emulation = OrderedDict({
             # testing tool is ready to start session
             'tt1': MsgTestingToolReady(),
@@ -629,32 +659,59 @@ if __name__ == '__main__':
             # 'tt11': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_02"),
             # 'tt12': MsgStepCheckExecute(step_id="TD_COAP_CORE_01_v01_step_03"),
             'tt13': MsgStepVerifyExecute(step_id="TD_COAP_CORE_01_v01_step_04"),
-            'ttver':MsgTestCaseVerdict(),
+            'ttver': MsgTestCaseVerdict(),
             'ttrepo': MsgTestSuiteReport(),
-            # for 6lowpan TT tests
-            's_hc_01': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_01_step_01', node='eut1'),
-            's_hc_02': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_02_step_01', node='eut1'),
-            's_hc_03': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_03_step_01', node='eut1'),
-            's_hc_04': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_04_step_01', node='eut1'),
-            's_hc_05': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_05_step_01', node='eut1'),
-            's_hc_06': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_06_step_01', node='eut1'),
-            's_hc_07': MsgStepStimuliExecute(step_id='TD_6LowPAN_HC_07_step_01', node='eut1'),
-            's_format_01': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_01_step_01', node='eut1'),
-            's_format_03': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_03_step_01', node='eut1'),
-            's_format_04': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_04_step_01', node='eut1'),
-            's_format_06': MsgStepStimuliExecute(step_id='TD_6LowPAN_FORMAT_06_step_01', node='eut1'),
-            'tc_hc_01': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_01'),
-            'tc_hc_02': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_02'),
-            'tc_hc_03': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_03'),
-            'tc_hc_04': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_04'),
-            'tc_hc_05': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_05'),
-            'tc_hc_06': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_06'),
-            'tc_hc_07': MsgTestCaseReady(testcase_id='TD_6LowPAN_HC_07'),
-            'tc_format_01': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_01'),
-            'tc_format_03': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_03'),
-            'tc_format_04': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_04'),
-            'tc_format_06': MsgTestCaseReady(testcase_id='TD_6LowPAN_FORMAT_06'),
+            # for 6LoWPAN TT tests
+            'conf_hc_01_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_01', node='eut1'),
+            'conf_hc_01_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_01', node='eut2'),
+            'conf_hc_03_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_03', node='eut1'),
+            'conf_hc_03_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_03', node='eut2'),
+            'conf_hc_05_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_05', node='eut1'),
+            'conf_hc_05_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_05', node='eut2'),
+            'conf_hc_07_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_07', node='eut1'),
+            'conf_hc_07_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_HC_07', node='eut2'),
+            'conf_format_01_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_01', node='eut1'),
+            'conf_format_01_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_01', node='eut2'),
+            'conf_format_03_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_03', node='eut1'),
+            'conf_format_03_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_03', node='eut2'),
+            'conf_format_04_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_04', node='eut1'),
+            'conf_format_04_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_04', node='eut2'),
+            'conf_format_06_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_06', node='eut1'),
+            'conf_format_06_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_06', node='eut2'),
+            's_hc_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_01', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"), # need to update the target_Address before sending the message!!
+            's_hc_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_03', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_hc_05_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut2', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            's_hc_05_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_hc_07_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut2', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            's_hc_07_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_01', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:060d:97f5"),
+            's_format_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_03', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_04', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_06', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            # 'tc_hc_01': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_01'), They have no effect on the iut controller
+            # 'tc_hc_02': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_02'),
+            # 'tc_hc_03': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_03'),
+            # 'tc_hc_04': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_04'),
+            # 'tc_hc_05': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_05'),
+            # 'tc_hc_06': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_06'),
+            # 'tc_hc_07': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_07'),
+            # 'tc_format_01': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_01'),
+            # 'tc_format_03': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_03'),
+            # 'tc_format_04': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_04'),
+            # 'tc_format_06': MsgTestCaseReady(testcase_id='TD_6LoWPAN_FORMAT_06'),
+
+            # 'hc_07': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='6lo_client',
+            #                                target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            # 'format_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_Format_01', node='6lo_client',
+            #                                    target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            # 'format_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_Format_03', node='6lo_client',
+            #                                    target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            # 'format_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_Format_04', node='6lo_client',
+            #                                    target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            # 'format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_Format_06', node='6lo_client',
+            #                                    target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
         })
+
 
         event_type = params[0]
         print(event_type)
