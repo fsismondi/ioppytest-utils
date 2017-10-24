@@ -1,16 +1,10 @@
-import six
 import os
 import pika
-import time
-import logging
-import threading
-from binascii import unhexlify
-from datetime import datetime
-
 from messages import *
 
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 AMQP_EXCHANGE = 'amq.topic'
+
 
 def publish_message(connection, message):
     """ Published which uses message object metadata
@@ -27,7 +21,7 @@ def publish_message(connection, message):
         properties = pika.BasicProperties(**message.get_properties())
 
         channel.basic_publish(
-            exchange= AMQP_EXCHANGE,
+            exchange=AMQP_EXCHANGE,
             routing_key=message.routing_key,
             properties=properties,
             body=message.to_json(),
@@ -38,7 +32,7 @@ def publish_message(connection, message):
             channel.close()
 
 
-def amqp_request(connection, request_message: Message, component_id: str):
+def amqp_request(connection, request_message, component_id):
     # NOTE: channel must be a pika channel
 
     # check first that sender didnt forget about reply to and corr id
@@ -116,6 +110,7 @@ if __name__ == '__main__':
 
     try:
         from urllib.parse import urlparse
+
         AMQP_URL = str(os.environ['AMQP_URL'])
         p = urlparse(AMQP_URL)
         AMQP_USER = p.username
