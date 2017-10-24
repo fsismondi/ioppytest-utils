@@ -366,6 +366,7 @@ def _handle_testcase_select():
 def _handle_get_testcase_list():
     #  requires testing tool to implement GetTestCases feature, see MsgTestSuiteGetTestCases
     if _connection_ok():
+
         temp_channel = state['connection'].channel()
         request_message = MsgTestSuiteGetTestCases()
 
@@ -606,7 +607,7 @@ def get_session_parameters():
 def _connection_ok():
     conn_ok = False
     try:
-        conn_ok = state['connection'] is not None
+        conn_ok = state['connection'] is not None and state['connection'].is_open
     except AttributeError as ae:
         pass
     except TypeError as ae:
