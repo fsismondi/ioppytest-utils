@@ -117,7 +117,8 @@ class Message:
         self._msg_data.update(kwargs)
 
         # add API's version
-        self._msg_data["_api_version"] = API_VERSION
+        if not "_api_version" in self._msg_data:
+            self._msg_data["_api_version"] = API_VERSION
 
         # add values as objects attributes
         for key in self._msg_data:
