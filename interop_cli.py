@@ -39,7 +39,6 @@ MESSAGE_TYPES_NOT_ECHOED = [
     MsgPacketInjectRaw,
 ]
 
-
 session_profile = OrderedDict(
     {
         'user_name': "Walter White",
@@ -297,6 +296,7 @@ def exit():
     """
     _exit()
 
+
 @cli.command()
 def download_network_traces():
     """
@@ -386,6 +386,7 @@ def _handle_get_testcase_list():
         _echo_list_of_dicts_as_table(state['tc_list'])
     else:
         _echo_error('No connection established')
+
 
 def _handle_action_testsuite_start():
     if click.confirm('Do you want START test suite?'):
@@ -518,12 +519,15 @@ def enter_debug_context():
 
     """
     global message_handles_options
-    message_handles_options.update(
-        {
-            'send_skip_tc_coap_core_11': send_skip_tescase_coap_core_11,
-        }
+    debug_actions = {
+        'send_skip_tc_coap_core_11': send_skip_tescase_coap_core_11,
+        'snif1': snif1,
+        'snif2': snif2,
+        'snif3': snif3,
+    }
+    message_handles_options.update(debug_actions)
 
-    )
+    _echo_session_helper("Entering debugger context, added the following actions: %s" % debug_actions)
 
 
 @cli.command()
@@ -556,6 +560,7 @@ def check_connection():
     conn_ok = _connection_ok()
     _echo_dispatcher('connection is %s' % 'OK' if conn_ok else 'not OK')
     return conn_ok
+
 
 @cli.command()
 def get_session_status():
@@ -995,7 +1000,7 @@ def _echo_log_message(msg):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# debugging messages
+# debugging actions
 
 def send_skip_tescase_coap_core_11():
     _echo_input("Executing debug message %s" % "send_skip_tescase_coap_core_11")
@@ -1003,6 +1008,26 @@ def send_skip_tescase_coap_core_11():
     msg = MsgTestCaseSkip(
         testcase_id='TD_COAP_CORE_11'
     )
+    publish_message(msg)
+
+
+def snif1():
+    _echo_input("Executing debug message %s" % "start sniffing, file name PCAP_TEST.pcap")
+    msg = MsgSniffingStart(capture_id='PCAP_TEST',
+                           filter_if='tun0',
+                           filter_proto='udp')
+    publish_message(msg)
+
+
+def snif2():
+    _echo_input("Executing debug message %s" % "stop sniffing")
+    msg = MsgSniffingStop()
+    publish_message(msg)
+
+
+def snif3():
+    _echo_input("Executing debug message %s" % "get last sniffed file")
+    msg = MsgSniffingGetCaptureLast()
     publish_message(msg)
 
 
