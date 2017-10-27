@@ -1,17 +1,21 @@
 import os
 import pika
-from messages import *
 
-VERSION = '0.0.5'
+# for using it as library and as a __main__
+try:
+    from messages import *
+except:
+    from .messages import *
+
+VERSION = '0.0.6'
 AMQP_EXCHANGE = 'amq.topic'
 
 
 def publish_message(connection, message):
-    """ Published which uses message object metadata
-
-    :param channel:
-    :param message:
-    :return:
+    """
+    Publishes message into the correct topic (uses Message object metadata)
+    Creates temporary channel on it's own
+    Connection must be a pika.BlockingConnection
     """
     channel = None
 
@@ -33,7 +37,13 @@ def publish_message(connection, message):
 
 
 def amqp_request(connection, request_message, component_id):
-    # NOTE: channel must be a pika channel
+    """
+    Publishes message into the correct topic (uses Message object metadata)
+    Returns reply message.
+    Uses reply_to and corr id amqp's properties for matching the reply
+    Creates temporary channel, and queues on it's own
+    Connection must be a pika.BlockingConnection
+    """
 
     # check first that sender didnt forget about reply to and corr id
     assert request_message.reply_to

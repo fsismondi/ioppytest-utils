@@ -5,8 +5,14 @@ import signal
 import shutil
 import logging
 from datetime import datetime
-from messages import *
-from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+
+# use this as main and also lib:
+try:
+    from messages import *
+    from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+except:
+    from .messages import *
+    from .pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
 
 try:
     # For Python 3.0 and later
@@ -18,7 +24,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=None, dump_dir=None):
     def signal_int_handler(self, frame):
@@ -54,15 +60,11 @@ def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=No
             # load default values
             amqp_url = "amqp://{0}:{1}@{2}/{3}".format("guest", "guest", "localhost", "/")
 
-
     if topics:
         pcap_amqp_topic_subscriptions = topics
     else:
-        pcap_amqp_topic_subscriptions = ['data.serial.fromAgent.coap_client_agent',
-                                         'data.serial.fromAgent.coap_server_agent',
-                                         'data.tun.fromAgent.coap_server_agent',
-                                         'data.tun.fromAgent.coap_client_agent',
-                                         ]
+        pcap_amqp_topic_subscriptions = ['data.tun.fromAgent.*',
+                                         'data.serial.fromAgent.*']
 
     # init pcap_dumper
     pcap_dumper = AmqpDataPacketDumper(
@@ -297,7 +299,6 @@ class AmqpDataPacketDumper:
 
             else:
                 logger.info('drop amqp message: ' + repr(m))
-
 
         except NonCompliantMessageFormatError as e:
             print('* * * * * * API VALIDATION ERROR * * * * * * * ')
