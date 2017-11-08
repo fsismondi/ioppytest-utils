@@ -92,7 +92,7 @@ class NonCompliantMessageFormatError(Exception):
         return repr(self.value)
 
 
-class Message:
+class Message(object):
     def __init__(self, **kwargs):
         global API_VERSION
 
@@ -256,6 +256,7 @@ class MsgErrorReply(MsgReply):
         "error_code": "Some error code TBD"
     }
 
+
 # # # # # # CORE API # # # # #
 
 class MsgOrchestratorVersionReq(Message):
@@ -264,6 +265,7 @@ class MsgOrchestratorVersionReq(Message):
     _msg_data_template = {
         "_type": "ochestrator.version.request"
     }
+
 
 # # # # # # AGENT MESSAGES # # # # # #
 
@@ -2032,8 +2034,7 @@ class MsgPerformanceStats(Message):
 
 message_types_dict = {
     # CORE API
-    "ochestrator.version.request" : MsgOrchestratorVersionReq, # any -> SO
-
+    "ochestrator.version.request": MsgOrchestratorVersionReq,  # any -> SO
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
@@ -2043,7 +2044,7 @@ message_types_dict = {
     "log": MsgSessionLog,  # Any -> Any
     "chat": MsgSessionChat,  # GUI_x -> GUI_y
 
-
+    # ioppytest testing tool implementation specific
     "agent.configured": MsgAgentConfigured,  # TestingTool -> GUI
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
     "tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
@@ -2051,12 +2052,11 @@ message_types_dict = {
     "packet.sniffed.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
     "packet.to_inject.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
     "session.interop.configuration": MsgInteropSessionConfiguration,  # Orchestrator -> TestingTool
-
     "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
     "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
 
-
-    "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool TODO depricate this in favor of "testsuite.start"
+    # TODO depricate this in favor of "testsuite.start"
+    "testcoordination.testsuite.start": MsgTestSuiteStart,# GUI -> TestingTool
 
     "testcoordination.testsuite.started": MsgTestSuiteStarted,  # Testing Tool -> GUI
     "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
@@ -2085,7 +2085,9 @@ message_types_dict = {
     "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,  # TestingTool -> GUI (reply)
     "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
     "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
-    "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI TODO depricate this in favor of "testsuite.report"
+
+    #TODO depricate this in favor of "testsuite.report"
+    "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
 
     "sniffing.start": MsgSniffingStart,  # Testing Tool Internal
     "sniffing.start.reply": MsgSniffingStartReply,  # Testing Tool Internal
@@ -2098,7 +2100,7 @@ message_types_dict = {
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
     "dissection.autotriggered": MsgDissectionAutoDissect,  # TestingTool -> GUI
-    # GUI (or Orchestrator?) -> TestingTool
+
     # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
     "privacy.analyze": MsgPrivacyAnalyze,  # TestingTool internal
     "privacy.analyze.reply": MsgPrivacyAnalyzeReply,  # TestingTool internal (reply)
@@ -2109,6 +2111,7 @@ message_types_dict = {
     "privacy.configuration.get.reply": MsgPrivacyGetConfigurationReply,  # TestingTool -> GUI (reply),
     "privacy.configuration.set": MsgPrivacySetConfiguration,  # GUI -> TestingTool,
     "privacy.configuration.set.reply": MsgPrivacySetConfigurationReply,  # GUI -> TestingTool (reply),
+
     # PERFORMANCE TESTING TOOL -> Reference: Eduard Bröse (EANTC)
     "performance.heartbeat": MsgPerformanceHeartbeat,  # Perf. Submodules -> Timeline Controller
     "performance.configuration": MsgPerformanceConfiguration,  # Orchestrator -> Timeline Controller
