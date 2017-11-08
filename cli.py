@@ -501,6 +501,7 @@ if __name__ == '__main__':
             '100': MsgStepStimuliExecute(),
             '101': MsgStepVerifyExecute(),
             '102': MsgStepCheckExecute(),
+            'orch': MsgOrchestratorVersionReq(),
 
         })
         events_orchestrator = OrderedDict({
