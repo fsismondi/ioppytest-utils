@@ -27,7 +27,7 @@ Usage:
 >>> from messages import * # doctest: +SKIP
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.48, _type = testcoordination.testcase.skip, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.1, _type = testcoordination.testcase.skip, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'control.testcoordination'
 >>> m.message_id # doctest: +SKIP
@@ -38,18 +38,18 @@ MsgTestCaseSkip(_api_version = 0.1.48, _type = testcoordination.testcase.skip, d
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 0.1.48, _type = testcoordination.testcase.skip, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.1, _type = testcoordination.testcase.skip, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "0.1.48", "_type": "testcoordination.testcase.skip", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.1", "_type": "testcoordination.testcase.skip", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.to_json()
-'{"_api_version": "0.1.48", "_type": "testcoordination.testsuite.start", "description": "Event test suite START"}'
+'{"_api_version": "1.0.1", "_type": "testcoordination.testsuite.start", "description": "Event test suite START"}'
 >>> json_message = m.to_json()
 >>> obj=Message.from_json(json_message)
 >>> type(obj)
@@ -62,7 +62,7 @@ MsgTestCaseSkip(_api_version = 0.1.48, _type = testcoordination.testcase.skip, d
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 0.1.48, _type = sniffing.start, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
+MsgErrorReply(_api_version = 1.0.1, _type = sniffing.start, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
 >>> m.reply_to
 'control.sniffing.service.reply'
 >>> err.routing_key
@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.48'
+API_VERSION = '1.0.1'
 
 
 # TODO use metaclasses instead?
@@ -256,6 +256,14 @@ class MsgErrorReply(MsgReply):
         "error_code": "Some error code TBD"
     }
 
+# # # # # # CORE API # # # # #
+
+class MsgOrchestratorVersionReq(Message):
+    routing_key = "control.orchestrator.service"
+
+    _msg_data_template = {
+        "_type": "ochestrator.version.request"
+    }
 
 # # # # # # AGENT MESSAGES # # # # # #
 
@@ -373,7 +381,7 @@ class MsgPacketSniffedRaw(Message):
 
 class MsgTestingToolTerminate(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event, and handle a gracefully termination of all it's processes
 
     Type: Event
 
@@ -391,11 +399,11 @@ class MsgTestingToolTerminate(Message):
 
 class MsgTestingToolReady(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event as soon as TT is up and listening on the event bus
 
     Type: Event
 
-    Typcal_use: Testing Tool -> GUI
+    Pub/Sub: Testing Tool -> GUI
 
     Description: Used to indicate to the GUI that testing is ready to start the test suite
     """
@@ -436,7 +444,7 @@ class MsgSessionChat(Message):
 
     Description: Generic descriptor of chat messages
     """
-    routing_key = "log.warning.the_drummer"
+    routing_key = "control.session"
 
     _msg_data_template = {
         "_type": "chat",
@@ -467,13 +475,13 @@ class MsgSessionLog(Message):
 
 class MsgSessionConfiguration(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event, and configure accordingly
 
     Type: Event
 
     Pub/Sub: Orchestrator -> Testing Tool
 
-    Description: Testing tool MUST listen to this message and configure the testsuite correspondingly
+    Description: TT MUST listen to this message and configure the testsuite correspondingly
     """
     routing_key = "control.session"
 
@@ -497,13 +505,13 @@ class MsgSessionConfiguration(Message):
 # TODO deprecate this in favor of the generic MsgSessionConfiguration
 class MsgInteropSessionConfiguration(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
     Pub/Sub: Orchestrator -> Testing Tool
 
-    Description: Testing tool MUST listen to this message and configure the testsuite correspondingly
+    Description: TT MUST listen to this message and configure the testsuite correspondingly
     """
     routing_key = "control.session"
 
@@ -562,7 +570,7 @@ class MsgAgentConfigured(Message):
 
 class MsgTestingToolConfigured(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event once session.configuration message has been processed.
 
     Type: Event
 
@@ -625,7 +633,7 @@ class MsgTestingToolComponentShutdown(Message):
 
 class MsgTestSuiteStart(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event and start the test suite right after reception. MsgTestSuiteStarted
 
     Type: Event
 
@@ -634,6 +642,7 @@ class MsgTestSuiteStart(Message):
     Description: tbd
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -653,6 +662,7 @@ class MsgTestSuiteStarted(Message):
     Description: tbd
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -663,7 +673,7 @@ class MsgTestSuiteStarted(Message):
 
 class MsgTestSuiteFinish(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -672,6 +682,7 @@ class MsgTestSuiteFinish(Message):
     Description: tbd
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -682,7 +693,7 @@ class MsgTestSuiteFinish(Message):
 
 class MsgTestCaseReady(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -693,6 +704,7 @@ class MsgTestCaseReady(Message):
         - This message is normally followed by a MsgTestCaseStart (from GUI-> Testing Tool)
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -707,7 +719,7 @@ class MsgTestCaseReady(Message):
 
 class MsgTestCaseStart(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -718,6 +730,7 @@ class MsgTestCaseStart(Message):
         - if testcase_id is Null then testing tool starts previously announced testcase in message
         "testcoordination.testcase.ready",
     """
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -738,6 +751,7 @@ class MsgTestCaseStarted(Message):
     Description:
         - Message used for indicating that testcase has started
     """
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -759,6 +773,8 @@ class MsgTestCaseConfiguration(Message):
         - Message used to indicate GUI and/or automated-iut which configuration to use.
         - IMPORTANT: deprecate this message in favor of MsgConfigurationExecute and MsgConfigurationExecuted
     """
+
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
     _msg_data_template = {
         "_type": "testcoordination.testcase.configuration",
@@ -801,6 +817,8 @@ class MsgConfigurationExecute(Message):
     Description:
         - Message used to indicate GUI and/or automated-iut which configuration to use.
     """
+
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -845,6 +863,8 @@ class MsgConfigurationExecuted(Message):
         - Message used for indicating that the IUT has been configured as requested
         - pixit must be included in this message (pixit = Protocol Implementaiton eXtra Information for Testing)
     """
+
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -857,7 +877,7 @@ class MsgConfigurationExecuted(Message):
 
 class MsgTestCaseStop(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -867,6 +887,7 @@ class MsgTestCaseStop(Message):
         - Message used for indicating the testing tool to stop the test case (the one running).
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -877,7 +898,7 @@ class MsgTestCaseStop(Message):
 
 class MsgTestCaseRestart(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -886,6 +907,7 @@ class MsgTestCaseRestart(Message):
     Description: Restart the running test cases.
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -896,7 +918,7 @@ class MsgTestCaseRestart(Message):
 
 class MsgStepStimuliExecute(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -907,6 +929,7 @@ class MsgStepStimuliExecute(Message):
         automated-IUT).
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -930,7 +953,7 @@ class MsgStepStimuliExecute(Message):
 
 class MsgStepStimuliExecuted(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -940,6 +963,7 @@ class MsgStepStimuliExecuted(Message):
         - Used to indicate stimuli has been executed by user (and it's user-assisted iut) or by automated-iut
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -963,6 +987,7 @@ class MsgStepCheckExecute(Message):
         automated-IUT).
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -998,6 +1023,7 @@ class MsgStepCheckExecuted(Message):
         - Not used in CoAP testing Tool (analysis of traces is done post mortem)
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1009,7 +1035,7 @@ class MsgStepCheckExecuted(Message):
 
 class MsgStepVerifyExecute(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -1020,6 +1046,7 @@ class MsgStepVerifyExecute(Message):
         automated-IUT).
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1042,7 +1069,7 @@ class MsgStepVerifyExecute(Message):
 
 class MsgStepVerifyExecuted(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -1052,6 +1079,7 @@ class MsgStepVerifyExecuted(Message):
         - Message generated by user (GUI or automated-IUT) declaring if the IUT VERIFY verifies the expected behaviour.
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1076,6 +1104,7 @@ class MsgStepVerifyExecuted(Message):
     #         - Not used in CoAP Testing Tool.
     #     """
     #
+    # # TODO change to control.testsuite
     #     routing_key = "control.testcoordination"
     #
     #     _msg_data_template = {
@@ -1085,7 +1114,7 @@ class MsgStepVerifyExecuted(Message):
 
 class MsgTestCaseFinished(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -1096,6 +1125,7 @@ class MsgTestCaseFinished(Message):
         - This message is followed by a verdict.
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1108,7 +1138,7 @@ class MsgTestCaseFinished(Message):
 
 class MsgTestCaseSkip(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -1120,6 +1150,7 @@ class MsgTestCaseSkip(Message):
         - node (mandatory): node requesting to skip test case
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1132,7 +1163,7 @@ class MsgTestCaseSkip(Message):
 
 class MsgTestCaseSelect(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -1142,6 +1173,7 @@ class MsgTestCaseSelect(Message):
 
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1152,7 +1184,7 @@ class MsgTestCaseSelect(Message):
 
 class MsgTestSuiteAbort(Message):
     """
-    Requirements: Testing Tool MUST listen to event
+    Requirements: TT MUST listen to event
 
     Type: Event
 
@@ -1161,6 +1193,7 @@ class MsgTestSuiteAbort(Message):
     Description: Event test suite ABORT
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1180,6 +1213,7 @@ class MsgTestCaseAbort(Message):
     Description: Event for current test case ABORT
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1201,6 +1235,7 @@ class MsgTestSuiteGetStatus(Message):
         - Format for the response not standardised.
     """
 
+    # TODO change to control.testsuite.request
     routing_key = "control.testcoordination.service"
 
     _msg_data_template = {
@@ -1221,6 +1256,7 @@ class MsgTestSuiteGetStatusReply(MsgReply):
         - Format for the response not standardised.
     """
 
+    # TODO change to control.testsuite.request.reply
     routing_key = "control.testcoordination.service.reply"
 
     _msg_data_template = {
@@ -1245,6 +1281,7 @@ class MsgTestSuiteGetTestCases(Message):
     Description: TBD
     """
 
+    # TODO change to control.testsuite.request
     routing_key = "control.testcoordination.service"
 
     _msg_data_template = {
@@ -1263,6 +1300,7 @@ class MsgTestSuiteGetTestCasesReply(MsgReply):
     Description: TBD
     """
 
+    # TODO change to control.testsuite.reply
     routing_key = "control.testcoordination.service.reply"
 
     _msg_data_template = {
@@ -1293,7 +1331,7 @@ class MsgTestSuiteGetTestCasesReply(MsgReply):
 
 class MsgTestCaseVerdict(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -1302,6 +1340,7 @@ class MsgTestCaseVerdict(Message):
     Description: Used to indicate to the GUI (or automated-iut) which is the final verdict of the testcase.
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1329,7 +1368,7 @@ class MsgTestCaseVerdict(Message):
 
 class MsgTestSuiteReport(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -1338,6 +1377,7 @@ class MsgTestSuiteReport(Message):
     Description: Used to indicate to the GUI (or automated-iut) the final results of the test session.
     """
 
+    # TODO change to control.testsuite
     routing_key = "control.testcoordination"
 
     _msg_data_template = {
@@ -1445,7 +1485,7 @@ class MsgSniffingStop(Message):
     }
 
 
-class MsgSniffingStoptReply(MsgReply):
+class MsgSniffingStopReply(MsgReply):
     """
     Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
 
@@ -1714,7 +1754,7 @@ class MsgDissectionDissectCaptureReply(MsgReply):
 
 class MsgDissectionAutoDissect(Message):
     """
-    Requirements: Testing Tool MUST publish event
+    Requirements: TT MUST publish event
 
     Type: Event
 
@@ -1991,9 +2031,19 @@ class MsgPerformanceStats(Message):
 
 
 message_types_dict = {
+    # CORE API
+    "ochestrator.version.request" : MsgOrchestratorVersionReq, # any -> SO
+
+    "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
+    "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
+    "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
+    "testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
+    "testingtool.terminate": MsgTestingToolTerminate,  # orchestrator -> TestingTool
+    "testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
     "log": MsgSessionLog,  # Any -> Any
     "chat": MsgSessionChat,  # GUI_x -> GUI_y
-    "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
+
+
     "agent.configured": MsgAgentConfigured,  # TestingTool -> GUI
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
     "tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
@@ -2001,12 +2051,13 @@ message_types_dict = {
     "packet.sniffed.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
     "packet.to_inject.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
     "session.interop.configuration": MsgInteropSessionConfiguration,  # Orchestrator -> TestingTool
-    "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
+
     "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
     "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
-    "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
-    "testingtool.terminate": MsgTestingToolTerminate,  # orchestrator -> TestingTool
-    "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
+
+
+    "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool TODO depricate this in favor of "testsuite.start"
+
     "testcoordination.testsuite.started": MsgTestSuiteStarted,  # Testing Tool -> GUI
     "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
     "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
@@ -2034,11 +2085,12 @@ message_types_dict = {
     "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,  # TestingTool -> GUI (reply)
     "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
     "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
-    "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
+    "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI TODO depricate this in favor of "testsuite.report"
+
     "sniffing.start": MsgSniffingStart,  # Testing Tool Internal
     "sniffing.start.reply": MsgSniffingStartReply,  # Testing Tool Internal
     "sniffing.stop": MsgSniffingStop,  # Testing Tool Internal
-    "sniffing.stop.reply": MsgSniffingStoptReply,  # Testing Tool Internal
+    "sniffing.stop.reply": MsgSniffingStopReply,  # Testing Tool Internal
     "sniffing.getcapture": MsgSniffingGetCapture,  # Testing Tool Internal
     "sniffing.getlastcapture": MsgSniffingGetCaptureLast,  # Testing Tool Internal
     "analysis.interop.testcase.analyze": MsgInteropTestCaseAnalyze,  # Testing Tool Internal
