@@ -276,6 +276,193 @@ class MsgOrchestratorVersionReq(Message):
     }
 
 
+class MsgOrchestratorUsersList(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for returning user list of SO
+    """
+    routing_key = "control.orchestrator.users.list.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.users.list.request"
+    }
+
+
+class MsgOrchestratorUserAdd(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for adding a user to SO
+    """
+    routing_key = "control.orchestrator.users.add.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.users.add.request"
+    }
+
+
+class MsgOrchestratorUserDelete(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for deleting a user from SO
+    """
+    routing_key = "control.orchestrator.users.delete.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.users.delete.request"
+    }
+
+
+class MsgOrchestratorUserGet(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for getting a user from SO
+    """
+    routing_key = "control.orchestrator.users.get.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.users.get.request"
+    }
+
+
+class MsgOrchestratorSessionsList(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for listing sessions from SO
+    """
+    routing_key = "control.orchestrator.sessions.list.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.sessions.list.request"
+    }
+
+
+class MsgOrchestratorSessionsGet(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for getting a session from SO
+    """
+    routing_key = "control.orchestrator.sessions.get.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.sessions.get.request"
+    }
+
+
+class MsgOrchestratorSessionsAdd(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for adding a session to SO
+    """
+    routing_key = "control.orchestrator.sessions.add.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.sessions.add.request"
+    }
+
+
+class MsgOrchestratorSessionsDelete(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for deleting a session to SO
+    """
+    routing_key = "control.orchestrator.sessions.delete.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.sessions.delete.request"
+    }
+
+
+class MsgOrchestratorSessionsUpdate(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for updating a session from SO
+    """
+    routing_key = "control.orchestrator.sessions.update.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.sessions.update.request"
+    }
+
+
+class MsgOrchestratorTestsGet(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for getting tests from SO
+    """
+    routing_key = "control.orchestrator.tests.get.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.tests.get.request"
+    }
+
+
+class MsgOrchestratorTestsGetContributorName(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for getting tests from SO with contributor and name
+    """
+    routing_key = "control.orchestrator.tests.get_contributor_name.service"
+
+    _msg_data_template = {
+        "_type": "orchestrator.tests.get_contributor_name.request"
+    }
+
+
 # # # # # # UI API messages # # # # # # # #
 
 class MsgUiRequestTextInput(Message):
@@ -297,6 +484,7 @@ class MsgUiRequestTextInput(Message):
              "type": "text"},
         ]
     }
+
 
 # # # # # # AGENT MESSAGES # # # # # #
 
@@ -1796,7 +1984,7 @@ class MsgDissectionAutoDissect(Message):
     Type: Event
 
     Pub/Sub: Testing Tool -> GUI
-    
+
     Description: Used to indicate to the GUI the dissection of the exchanged packets.
         - GUI MUST display this info during execution:
             - interop session
