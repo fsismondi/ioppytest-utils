@@ -269,10 +269,10 @@ class MsgOrchestratorVersionReq(Message):
 
     Description: Message for returning current version of SO
     """
-    routing_key = "orchestrator.version.list.request.service"
+    routing_key = "orchestrator.version.request.service"
 
     _msg_data_template = {
-        "_type": "ochestrator.version.request"
+        "_type": "orchestrator.version.request"
     }
 
 
