@@ -7,8 +7,12 @@ try:
 except:
     from .messages import *
 
-VERSION = '0.0.6'
+VERSION = '0.0.7'
 AMQP_EXCHANGE = 'amq.topic'
+
+
+class AmqpSynchCallTimeoutError(Exception):
+    pass
 
 
 def publish_message(connection, message):
@@ -95,7 +99,7 @@ def amqp_request(connection, request_message, component_id):
         else:
             # clean up
             channel.queue_delete(reply_queue_name)
-            raise TimeoutError(
+            raise AmqpSynchCallTimeoutError(
                 "Response timeout! rkey: %s , request type: %s" % (
                     request_message.routing_key,
                     request_message._type
