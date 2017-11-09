@@ -269,7 +269,7 @@ class MsgOrchestratorVersionReq(Message):
 
     Description: Message for returning current version of SO
     """
-    routing_key = "control.orchestrator.service"
+    routing_key = "orchestrator.version.list.request.service"
 
     _msg_data_template = {
         "_type": "ochestrator.version.request"
@@ -286,7 +286,7 @@ class MsgOrchestratorUsersList(Message):
 
     Description: Message for returning user list of SO
     """
-    routing_key = "control.orchestrator.users.list.service"
+    routing_key = "control.orchestrator.users.list.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.users.list.request"
@@ -303,7 +303,8 @@ class MsgOrchestratorUserAdd(Message):
 
     Description: Message for adding a user to SO
     """
-    routing_key = "control.orchestrator.users.add.service"
+
+    routing_key = "control.orchestrator.users.add.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.users.add.request"
@@ -320,7 +321,8 @@ class MsgOrchestratorUserDelete(Message):
 
     Description: Message for deleting a user from SO
     """
-    routing_key = "control.orchestrator.users.delete.service"
+
+    routing_key = "control.orchestrator.users.delete.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.users.delete.request"
@@ -337,7 +339,8 @@ class MsgOrchestratorUserGet(Message):
 
     Description: Message for getting a user from SO
     """
-    routing_key = "control.orchestrator.users.get.service"
+
+    routing_key = "control.orchestrator.users.get.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.users.get.request"
@@ -354,7 +357,7 @@ class MsgOrchestratorSessionsList(Message):
 
     Description: Message for listing sessions from SO
     """
-    routing_key = "control.orchestrator.sessions.list.service"
+    routing_key = "control.orchestrator.sessions.list.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.list.request"
@@ -371,7 +374,7 @@ class MsgOrchestratorSessionsGet(Message):
 
     Description: Message for getting a session from SO
     """
-    routing_key = "control.orchestrator.sessions.get.service"
+    routing_key = "control.orchestrator.sessions.get.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.get.request"
@@ -388,7 +391,7 @@ class MsgOrchestratorSessionsAdd(Message):
 
     Description: Message for adding a session to SO
     """
-    routing_key = "control.orchestrator.sessions.add.service"
+    routing_key = "control.orchestrator.sessions.add.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.add.request"
@@ -405,7 +408,8 @@ class MsgOrchestratorSessionsDelete(Message):
 
     Description: Message for deleting a session to SO
     """
-    routing_key = "control.orchestrator.sessions.delete.service"
+
+    routing_key = "control.orchestrator.sessions.delete.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.delete.request"
@@ -422,8 +426,8 @@ class MsgOrchestratorSessionsUpdate(Message):
 
     Description: Message for updating a session from SO
     """
-    routing_key = "control.orchestrator.sessions.update.service"
 
+    routing_key = "control.orchestrator.sessions.update.request.service"
     _msg_data_template = {
         "_type": "orchestrator.sessions.update.request"
     }
@@ -439,7 +443,7 @@ class MsgOrchestratorTestsGet(Message):
 
     Description: Message for getting tests from SO
     """
-    routing_key = "control.orchestrator.tests.get.service"
+    routing_key = "control.orchestrator.tests.get.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.tests.get.request"
@@ -456,7 +460,7 @@ class MsgOrchestratorTestsGetContributorName(Message):
 
     Description: Message for getting tests from SO with contributor and name
     """
-    routing_key = "control.orchestrator.tests.get_contributor_name.service"
+    routing_key = "control.orchestrator.tests.get_contributor_name.request.service"
 
     _msg_data_template = {
         "_type": "orchestrator.tests.get_contributor_name.request"
@@ -2256,8 +2260,21 @@ class MsgPerformanceStats(Message):
 
 
 message_types_dict = {
-    # CORE API
-    "ochestrator.version.request": MsgOrchestratorVersionReq,  # any -> SO
+    # CORE API - SO
+    "control.orchestrator.users.list.request.service": MsgOrchestratorUsersList,  # any -> SO
+    "orchestrator.version.list.request.service": MsgOrchestratorVersionReq,  # any -> SO
+    "control.orchestrator.users.add.request.service": MsgOrchestratorUserAdd,  # any -> SO
+    "control.orchestrator.users.delete.request.service": MsgOrchestratorUserDelete,  # any -> SO
+    "control.orchestrator.users.get.request.service": MsgOrchestratorUserGet,  # any -> SO
+    "control.orchestrator.sessions.list.request.service": MsgOrchestratorSessionsList,  # any -> SO
+    "control.orchestrator.sessions.get.request.service": MsgOrchestratorSessionsGet,  # any -> SO
+    "control.orchestrator.sessions.add.request.service": MsgOrchestratorSessionsAdd,  # any -> SO
+    "control.orchestrator.sessions.delete.request.service": MsgOrchestratorSessionsDelete,  # any -> SO
+    "control.orchestrator.sessions.update.request.service": MsgOrchestratorSessionsUpdate,  # any -> SO
+    "control.orchestrator.tests.get.request.service": MsgOrchestratorTestsGet,  # any -> SO
+    "control.orchestrator.tests.get_contributor_name.request.service": MsgOrchestratorTestsGetContributorName,
+
+    # CORE API - TT<->SO, TT<->SO
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
