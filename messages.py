@@ -2261,18 +2261,18 @@ class MsgPerformanceStats(Message):
 
 message_types_dict = {
     # CORE API - SO
-    "control.orchestrator.users.list.request.service": MsgOrchestratorUsersList,  # any -> SO
-    "orchestrator.version.list.request.service": MsgOrchestratorVersionReq,  # any -> SO
-    "control.orchestrator.users.add.request.service": MsgOrchestratorUserAdd,  # any -> SO
-    "control.orchestrator.users.delete.request.service": MsgOrchestratorUserDelete,  # any -> SO
-    "control.orchestrator.users.get.request.service": MsgOrchestratorUserGet,  # any -> SO
-    "control.orchestrator.sessions.list.request.service": MsgOrchestratorSessionsList,  # any -> SO
-    "control.orchestrator.sessions.get.request.service": MsgOrchestratorSessionsGet,  # any -> SO
-    "control.orchestrator.sessions.add.request.service": MsgOrchestratorSessionsAdd,  # any -> SO
-    "control.orchestrator.sessions.delete.request.service": MsgOrchestratorSessionsDelete,  # any -> SO
-    "control.orchestrator.sessions.update.request.service": MsgOrchestratorSessionsUpdate,  # any -> SO
-    "control.orchestrator.tests.get.request.service": MsgOrchestratorTestsGet,  # any -> SO
-    "control.orchestrator.tests.get_contributor_name.request.service": MsgOrchestratorTestsGetContributorName,
+    "orchestrator.users.list.request": MsgOrchestratorUsersList,  # any -> SO
+    "orchestrator.version.list.request": MsgOrchestratorVersionReq,  # any -> SO
+    "orchestrator.users.add.request": MsgOrchestratorUserAdd,  # any -> SO
+    "orchestrator.users.delete.request": MsgOrchestratorUserDelete,  # any -> SO
+    "orchestrator.users.get.request": MsgOrchestratorUserGet,  # any -> SO
+    "orchestrator.sessions.list.request": MsgOrchestratorSessionsList,  # any -> SO
+    "orchestrator.sessions.get.request": MsgOrchestratorSessionsGet,  # any -> SO
+    "orchestrator.sessions.add.request": MsgOrchestratorSessionsAdd,  # any -> SO
+    "orchestrator.sessions.delete.request": MsgOrchestratorSessionsDelete,  # any -> SO
+    "orchestrator.sessions.update.request": MsgOrchestratorSessionsUpdate,  # any -> SO
+    "orchestrator.tests.get.request": MsgOrchestratorTestsGet,  # any -> SO
+    "orchestrator.tests.get_contributor_name.request": MsgOrchestratorTestsGetContributorName,
 
     # CORE API - TT<->SO, TT<->SO
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
