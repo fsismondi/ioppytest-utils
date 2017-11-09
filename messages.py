@@ -257,9 +257,18 @@ class MsgErrorReply(MsgReply):
     }
 
 
-# # # # # # CORE API # # # # #
+# # # # # # CORE API messages # # # # #
 
 class MsgOrchestratorVersionReq(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> SO
+
+    Description: Message for returning current version of SO
+    """
     routing_key = "control.orchestrator.service"
 
     _msg_data_template = {
@@ -267,7 +276,30 @@ class MsgOrchestratorVersionReq(Message):
     }
 
 
+# # # # # # UI API messages # # # # # # # #
+
+class MsgUiRequestTextInput(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting action or information to user
+    """
+    routing_key = "ui.any.request"
+
+    _msg_data_template = {
+        "_type": "ui.any.request.text.input",
+        "fields": [
+            {"name": "input_name",
+             "type": "text"},
+        ]
+    }
+
 # # # # # # AGENT MESSAGES # # # # # #
+
 
 class MsgAgentTunStart(Message):
     """
@@ -1634,6 +1666,7 @@ class MsgInteropTestCaseAnalyzeReply(MsgReply):
             - more values elements MAY be added to the list
 
     """
+    routing_key = MsgInteropTestCaseAnalyze.routing_key + ".reply"
 
     _msg_data_template = {
         "_type": "analysis.interop.testcase.analyze.reply",
@@ -1709,6 +1742,8 @@ class MsgDissectionDissectCaptureReply(MsgReply):
 
     Description: TBD
     """
+
+    routing_key = MsgDissectionDissectCapture.routing_key + ".reply"
 
     _frames_example = [
         {
@@ -2056,7 +2091,7 @@ message_types_dict = {
     "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
 
     # TODO depricate this in favor of "testsuite.start"
-    "testcoordination.testsuite.start": MsgTestSuiteStart,# GUI -> TestingTool
+    "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
 
     "testcoordination.testsuite.started": MsgTestSuiteStarted,  # Testing Tool -> GUI
     "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
@@ -2086,7 +2121,7 @@ message_types_dict = {
     "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
     "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
 
-    #TODO depricate this in favor of "testsuite.report"
+    # TODO depricate this in favor of "testsuite.report"
     "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
 
     "sniffing.start": MsgSniffingStart,  # Testing Tool Internal
