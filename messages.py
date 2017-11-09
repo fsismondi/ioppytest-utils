@@ -2262,7 +2262,7 @@ class MsgPerformanceStats(Message):
 message_types_dict = {
     # CORE API - SO
     "orchestrator.users.list.request": MsgOrchestratorUsersList,  # any -> SO
-    "orchestrator.version.list.request": MsgOrchestratorVersionReq,  # any -> SO
+    "orchestrator.version.request": MsgOrchestratorVersionReq,  # any -> SO
     "orchestrator.users.add.request": MsgOrchestratorUserAdd,  # any -> SO
     "orchestrator.users.delete.request": MsgOrchestratorUserDelete,  # any -> SO
     "orchestrator.users.get.request": MsgOrchestratorUserGet,  # any -> SO
