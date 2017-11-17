@@ -134,6 +134,14 @@ class Message(object):
         for field in sorted(self._msg_data.keys()):
             resp[field] = getattr(self, field)
 
+        return resp
+
+    def to_odict(self):
+        resp = {}
+        # let's use sorted so API returns items inside always in the same order
+        for field in sorted(self._msg_data.keys()):
+            resp[field] = getattr(self, field)
+
         return OrderedDict(sorted(resp.items(), key=lambda t: t[0]))  # sorted by key
 
     def to_json(self):
@@ -1750,6 +1758,26 @@ class MsgSniffingGetCapture(Message):
     }
 
 
+class MsgTest(Message):
+    """
+        Requirements: test message
+
+        Type: x
+
+        Pub/Sub: x -> x
+
+        Description: tbd
+        """
+
+    routing_key = "control.service.::.some.random.test.message"
+
+    _msg_data_template = {
+        "_type":'some.random.test.message',
+        "description": "this is a test message",
+
+    }
+
+
 class MsgSniffingGetCaptureReply(MsgReply):
     """
     Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
@@ -2273,8 +2301,8 @@ message_types_dict = {
     "orchestrator.sessions.update.request": MsgOrchestratorSessionsUpdate,  # any -> SO
     "orchestrator.tests.get.request": MsgOrchestratorTestsGet,  # any -> SO
     "orchestrator.tests.get_contributor_name.request": MsgOrchestratorTestsGetContributorName,
-
     # CORE API - TT<->SO, TT<->SO
+    "some.random.test.message":MsgTest,
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
@@ -2283,7 +2311,6 @@ message_types_dict = {
     "testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
     "log": MsgSessionLog,  # Any -> Any
     "chat": MsgSessionChat,  # GUI_x -> GUI_y
-
     # ioppytest testing tool implementation specific
     "agent.configured": MsgAgentConfigured,  # TestingTool -> GUI
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
@@ -2294,10 +2321,8 @@ message_types_dict = {
     "session.interop.configuration": MsgInteropSessionConfiguration,  # Orchestrator -> TestingTool
     "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
     "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
-
     # TODO depricate this in favor of "testsuite.start"
     "testcoordination.testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
-
     "testcoordination.testsuite.started": MsgTestSuiteStarted,  # Testing Tool -> GUI
     "testcoordination.testsuite.finish": MsgTestSuiteFinish,  # GUI -> TestingTool
     "testcoordination.testcase.ready": MsgTestCaseReady,  # TestingTool -> GUI
@@ -2325,10 +2350,8 @@ message_types_dict = {
     "testcoordination.testsuite.getstatus.reply": MsgTestSuiteGetStatusReply,  # TestingTool -> GUI (reply)
     "testcoordination.testsuite.gettestcases": MsgTestSuiteGetTestCases,  # GUI -> TestingTool
     "testcoordination.testsuite.gettestcases.reply": MsgTestSuiteGetTestCasesReply,  # TestingTool -> GUI (reply)
-
     # TODO depricate this in favor of "testsuite.report"
     "testcoordination.testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
-
     "sniffing.start": MsgSniffingStart,  # Testing Tool Internal
     "sniffing.start.reply": MsgSniffingStartReply,  # Testing Tool Internal
     "sniffing.stop": MsgSniffingStop,  # Testing Tool Internal
@@ -2340,7 +2363,6 @@ message_types_dict = {
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
     "dissection.dissectcapture.reply": MsgDissectionDissectCaptureReply,  # Testing Tool Internal
     "dissection.autotriggered": MsgDissectionAutoDissect,  # TestingTool -> GUI
-
     # PRIVACY TESTING TOOL -> Reference: Luca Lamorte (UL)
     "privacy.analyze": MsgPrivacyAnalyze,  # TestingTool internal
     "privacy.analyze.reply": MsgPrivacyAnalyzeReply,  # TestingTool internal (reply)
@@ -2351,7 +2373,6 @@ message_types_dict = {
     "privacy.configuration.get.reply": MsgPrivacyGetConfigurationReply,  # TestingTool -> GUI (reply),
     "privacy.configuration.set": MsgPrivacySetConfiguration,  # GUI -> TestingTool,
     "privacy.configuration.set.reply": MsgPrivacySetConfigurationReply,  # GUI -> TestingTool (reply),
-
     # PERFORMANCE TESTING TOOL -> Reference: Eduard Bröse (EANTC)
     "performance.heartbeat": MsgPerformanceHeartbeat,  # Perf. Submodules -> Timeline Controller
     "performance.configuration": MsgPerformanceConfiguration,  # Orchestrator -> Timeline Controller
