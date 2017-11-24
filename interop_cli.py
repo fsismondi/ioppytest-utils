@@ -39,6 +39,8 @@ MESSAGE_TYPES_NOT_ECHOED = [
     MsgPacketInjectRaw,
 ]
 
+CONNECTION_SETUP_RETRIES = 3
+
 session_profile = OrderedDict(
     {
         'user_name': "Walter White",
@@ -624,12 +626,7 @@ def _connection_ok():
 def _echo_context():
     table = []
     for key, val in {**session_profile, **state}.items():
-        #     [  ('Session parameters', session_profile),
-        #     #('click context', click.get_current_context()),
-        #     ('CLI states', pprint.pformat(state))
-        # ]:
         table.append((key, list_to_str(val)))
-    # click.echo(click.style('%s: \n %s' % (index, val), fg='cyan'))
     _echo_list_as_table(table)
 
 
@@ -638,9 +635,16 @@ def _set_up_connection():
 
     # conn for repl publisher
     try:
+        retries_left = CONNECTION_SETUP_RETRIES
+        while retries_left > 0:
+            try:
+                state['connection'] = pika.BlockingConnection(pika.URLParameters(session_profile['amqp_url']))
+                state['channel'] = state['connection'].channel()
+                break
+            except pika.exceptions.ConnectionClosed:
+                retries_left -= 1
+                _echo_session_helper("Couldnt establish connection, retrying .. %s/%s "%(CONNECTION_SETUP_RETRIES-retries_left,CONNECTION_SETUP_RETRIES))
 
-        state['connection'] = pika.BlockingConnection(pika.URLParameters(session_profile['amqp_url']))
-        state['channel'] = state['connection'].channel()
     except pika.exceptions.ProbableAccessDeniedError:
         _echo_error('Probable access denied error. Is provided AMQP_URL correct?')
         state['connection'] = None
@@ -877,7 +881,7 @@ def _echo_list_of_dicts_as_table(l):
 def _echo_report_as_table(report_dict):
     try:
 
-        assert type(report_dict) is OrderedDict
+        assert type(report_dict) is dict
 
         testcases = [(k, v) for k, v in report_dict.items() if k.lower().startswith('td')]
 
