@@ -94,18 +94,18 @@ class NullLogHandler(logging.Handler):
 class AmqpSniffer(threading.Thread):
     COMPONENT_ID = 'amqp_sniffer_%s' % uuid.uuid1()
     DEFAULT_EXCHAGE = 'amq.topic'
+    DEFAULT_URL = 'amqp://guest:guest@localhost'
 
-    def __init__(self, conn, exchange=None, topics=None):
+    def __init__(self, url=None, exchange=None, topics=None):
 
         threading.Thread.__init__(self)
 
-        if exchange:
-            self.exchange = exchange
-        else:
-            self.exchange = self.DEFAULT_EXCHAGE
+        self.exchange = exchange if exchange else self.DEFAULT_EXCHAGE
+
+        self.url = url if url else self.DEFAULT_URL
 
         # queues & default exchange declaration
-        self.connection = conn
+        self.connection = pika.BlockingConnection(pika.URLParameters(self.url))
         self.channel = self.connection.channel()
         self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
         self.channel.queue_declare(queue=self.services_queue_name,
@@ -756,7 +756,7 @@ if __name__ == '__main__':
 
     cli.start()
 
-    amqp_listener = AmqpSniffer(connection, AMQP_EXCHANGE, None)  # if None subscribe to all messages
+    amqp_listener = AmqpSniffer(AMQP_URL, AMQP_EXCHANGE, ['#'])  # if None subscribe to all messages
     amqp_listener.start()
 
     # interrumpted
