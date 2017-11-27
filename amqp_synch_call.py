@@ -154,7 +154,19 @@ if __name__ == '__main__':
         }
     ))
 
-    connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
-    m = MsgSniffingGetCapture()
-    r = amqp_request(connection, m, 'someImaginaryComponent')
-    print(repr(r))
+    retries_left = 3
+    while retries_left > 0:
+        try:
+            connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+            m = MsgTest()
+            publish_message(connection, m)
+            break
+        except pika.exceptions.ConnectionClosed:
+            retries_left -= 1
+            print('retrying..')
+            time.sleep(0.2)
+
+    # r = amqp_request(connection, m, 'someImaginaryComponent')
+    # print(repr(r))
+
+
