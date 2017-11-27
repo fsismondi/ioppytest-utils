@@ -120,7 +120,7 @@ class Message(object):
         if "_api_version" not in self._msg_data:
             self._msg_data["_api_version"] = API_VERSION
 
-        # add values as objects attributes
+        # add values as object's attributes
         for key in self._msg_data:
             setattr(self, key, self._msg_data[key])
 
