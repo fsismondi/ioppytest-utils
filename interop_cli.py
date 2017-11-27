@@ -5,11 +5,16 @@ import base64
 import logging
 import threading
 import traceback
-from tabulate import tabulate
-from messages import *
-
 import click
 from click_repl import register_repl, ExitReplException
+
+# for using it as library and as a __main__
+try:
+    from messages import *
+    from tabulate import tabulate
+except:
+    from .messages import *
+    from .tabulate import tabulate
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
 
