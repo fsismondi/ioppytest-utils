@@ -7,7 +7,7 @@ from messages import *
 
 gitlab_url = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages.py'
 doc_parser = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages_doc.py'
-header = """CORE API Events
+header = """Events (core API)
 
 This section describes the format of the messages used in F-Interop.
 

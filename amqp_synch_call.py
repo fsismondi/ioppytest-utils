@@ -56,13 +56,11 @@ def amqp_request(connection, request_message, component_id):
     channel = None
 
     try:
-        channel = connection.channel()
-
         response = None
         reply_queue_name = 'amqp_rpc_%s@%s' % (str(uuid.uuid4())[:8], component_id)
 
+        channel = connection.channel()
         result = channel.queue_declare(queue=reply_queue_name, auto_delete=True)
-
         callback_queue = result.method.queue
 
         # bind and listen to reply_to topic
