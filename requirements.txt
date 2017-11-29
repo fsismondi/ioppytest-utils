@@ -1,4 +1,6 @@
-pika==0.11.0
-six==1.11.0
 click==6.7
 click_repl==0.1.2
+pika==0.11.0
+prompt_toolkit==1.0.15
+six==1.11.0
+wcwidth==0.1.7
