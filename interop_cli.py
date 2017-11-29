@@ -5,8 +5,11 @@ import base64
 import logging
 import threading
 import traceback
+
 import click
-from click_repl import register_repl, ExitReplException
+from click_repl import ExitReplException
+from click_repl import repl as repl_base
+from prompt_toolkit.history import FileHistory
 
 # for using it as library and as a __main__
 try:
@@ -288,6 +291,30 @@ def cli():
 
 
 @cli.command()
+def repl():
+    """
+    Interactive shell
+    """
+    prompt_kwargs = {
+        'history': FileHistory('tmp/myrepl-history'),
+    }
+
+    _echo_welcome_message()
+    _pre_configuration()
+    _echo_session_helper("\nYou can press TAB for the available commands at any time \n")
+
+    _echo_session_helper("\nThe command <action [param]> needs to be used for executing the test actions\n")
+    _echo_session_helper(
+        "\nNote that <action suggested> will help you navigate through the session by executing the "
+        "actions the backend normally expects for a standard session flow :)\n")
+    _init_action_suggested()
+
+    _set_up_connection()
+
+    repl_base(click.get_current_context(), prompt_kwargs=prompt_kwargs)
+
+
+@cli.command()
 def connect():
     """
     Connect to an AMQP session and start consuming messages
@@ -541,7 +568,7 @@ def enter_debug_context():
 @click.argument('message', nargs=-1)
 def chat(message):
     """
-    Send chat message, usefull for user-to-user test sessions
+    Send chat message, useful for user-to-user test sessions
     """
 
     if not _connection_ok():
@@ -648,7 +675,8 @@ def _set_up_connection():
                 break
             except pika.exceptions.ConnectionClosed:
                 retries_left -= 1
-                _echo_session_helper("Couldnt establish connection, retrying .. %s/%s "%(CONNECTION_SETUP_RETRIES-retries_left,CONNECTION_SETUP_RETRIES))
+                _echo_session_helper("Couldnt establish connection, retrying .. %s/%s " % (
+                    CONNECTION_SETUP_RETRIES - retries_left, CONNECTION_SETUP_RETRIES))
 
     except pika.exceptions.ProbableAccessDeniedError:
         _echo_error('Probable access denied error. Is provided AMQP_URL correct?')
@@ -1106,6 +1134,7 @@ if __name__ == "__main__":
         pass  # use default
 
     try:
+        #
         url = '%s?%s&%s' % (
             str(os.environ['AMQP_URL']),
             "heartbeat_interval=600",
@@ -1114,19 +1143,6 @@ if __name__ == "__main__":
         session_profile.update({'amqp_url': url})
     except KeyError as e:
         pass  # use default
-
-    register_repl(cli)
-
-    _echo_welcome_message()
-    _echo_session_helper("\nNow please provide the session setup parameters to the CLI \n")
-    _pre_configuration()
-    _echo_session_helper(
-        "\nPlease type <connect> to connect the CLI to the backend and start running the interop tests! \n")
-    _echo_session_helper("\nYou can press TAB for the available commands at any time \n")
-    _echo_session_helper("\nThe command <action [param]> needs to be used for executing the test actions\n")
-    _echo_session_helper("\nNote that <action suggested> will help you navigate through the session by executing the "
-                         "actions the backend normally expects for a standard session flow :)\n")
-    _init_action_suggested()
 
     try:
         cli()
