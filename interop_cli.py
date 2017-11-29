@@ -14,9 +14,11 @@ from prompt_toolkit.history import FileHistory
 # for using it as library and as a __main__
 try:
     from messages import *
+    from event_bus_utils import AmqpListener
     from tabulate import tabulate
 except:
     from .messages import *
+    from .event_bus_utils import AmqpListener
     from .tabulate import tabulate
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
@@ -85,112 +87,6 @@ def _init_action_suggested():
     state['suggested_cmd'] = 'ts_start'
 
 
-class AmqpListener(threading.Thread):
-    COMPONENT_ID = 'amqp_listener_%s' % uuid.uuid1()
-    DEFAULT_EXCHAGE = 'amq.topic'
-
-    def __init__(self, amqp_url, amqp_exchange, topics, callback):
-
-        threading.Thread.__init__(self)
-
-        if callback is None:
-            self.message_dipatcher = print
-        else:
-            self.message_dipatcher = callback
-
-        try:
-            self.connection = pika.BlockingConnection(pika.URLParameters(amqp_url))
-            self.channel = self.connection.channel()
-        except pika.exceptions.ProbableAccessDeniedError:
-            self.message_dipatcher('Probable access denied error. Is provided AMQP_URL correct?')
-            self.exit()
-
-        if amqp_exchange:
-            self.exchange = amqp_exchange
-        else:
-            self.exchange = self.DEFAULT_EXCHAGE
-
-        # queues & default exchange declaration
-        self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
-        self.channel.queue_declare(queue=self.services_queue_name,
-                                   auto_delete=True,
-                                   arguments={'x-max-length': 200})
-
-        if topics:  # subscribe only to passed list
-            for t in topics:
-                self.channel.queue_bind(exchange=self.exchange,
-                                        queue=self.services_queue_name,
-                                        routing_key=t)
-
-        else:  # subscribe to all events
-            self.channel.queue_bind(exchange=self.exchange,
-                                    queue=self.services_queue_name,
-                                    routing_key='#')
-        # Hello world message
-        m = MsgTestingToolComponentReady(
-            component=self.COMPONENT_ID,
-            description="%s is READY" % self.COMPONENT_ID
-
-        )
-
-        self.channel.basic_publish(
-            body=m.to_json(),
-            routing_key=m.routing_key,
-            exchange=self.exchange,
-            properties=pika.BasicProperties(
-                content_type='application/json',
-            )
-        )
-
-        self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(self.on_request, queue=self.services_queue_name)
-
-    def stop(self):
-        self.channel.queue_delete(self.services_queue_name)
-        self.channel.stop_consuming()
-        self.connection.close()
-
-    def on_request(self, ch, method, props, body):
-
-        props_dict = {
-            'content_type': props.content_type,
-            'delivery_mode': props.delivery_mode,
-            'correlation_id': props.correlation_id,
-            'reply_to': props.reply_to,
-            'message_id': props.message_id,
-            'timestamp': props.timestamp,
-            'user_id': props.user_id,
-            'app_id': props.app_id,
-        }
-
-        m = None
-        try:
-            m = Message.from_json(body)
-            m.update_properties(**props_dict)
-            m.routing_key = method.routing_key
-            self.message_dipatcher(m)
-
-        except NonCompliantMessageFormatError as e:
-            self.message_dipatcher('%s got a non compliant message error %s' % (self.__class__.__name__, e))
-
-        except Exception as e:
-            pass
-            # self.message_dipatcher('Error : %s' % str(e))
-            # self.message_dipatcher(str(body))
-
-        finally:
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-    def run(self):
-        self.message_dipatcher("Starting thread listening on the event bus..")
-        for i in range(1, 4):
-            try:
-                self.channel.start_consuming()
-            except pika.exceptions.ConnectionClosed as err:
-                self.message_dipatcher(err)
-                self.message_dipatcher('Unexpected connection closed, retrying %s/%s' % (i, 4))
-
-        self.message_dipatcher('Bye byes!')
 
 
 def amqp_request(channel, request_message, component_id):

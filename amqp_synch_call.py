@@ -1,5 +1,6 @@
 import os
 import pika
+import logging
 
 # for using it as library and as a __main__
 try:
@@ -13,6 +14,9 @@ AMQP_EXCHANGE = 'amq.topic'
 
 class AmqpSynchCallTimeoutError(Exception):
     pass
+
+# IMPORTANT deprecate usage of this in favour of event_bus_utils
+logging.warning("deprecate usage of this in favour of event_bus_utils.py")
 
 
 def publish_message(connection, message):
