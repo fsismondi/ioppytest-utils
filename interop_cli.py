@@ -70,8 +70,8 @@ state = {
     'channel': None,
 }
 profile_choices = {
-    'protocol': ['coap', '6lowpan'],
-    'node': ['coap_client', 'coap_server', 'both']
+    'protocol': ['coap', '6lowpan', 'onem2m'],
+    'node': ['coap_client', 'coap_server']
 }
 
 # e.g. MsgTestingToolConfigured is normally followed by a test suite start (ts_start)
@@ -85,8 +85,6 @@ UI_suggested_actions = {
 
 def _init_action_suggested():
     state['suggested_cmd'] = 'ts_start'
-
-
 
 
 def amqp_request(channel, request_message, component_id):
@@ -590,10 +588,13 @@ def _set_up_connection():
             _echo_log_message('amqp listener thread doesnt want to stop, lets terminate it..')
             th.terminate()
 
-    amqp_listener_thread = AmqpListener(session_profile['amqp_url'],
-                                        session_profile['amqp_exchange'],
-                                        DEFAULT_TOPIC_SUBSCRIPTIONS,
-                                        _message_handler)
+    amqp_listener_thread = AmqpListener(
+        amqp_url=session_profile['amqp_url'],
+        amqp_exchange=session_profile['amqp_exchange'],
+        callback=_message_handler,
+        topics=DEFAULT_TOPIC_SUBSCRIPTIONS,
+    )
+
     amqp_listener_thread.start()
     state['amqp_listener_thread'] = amqp_listener_thread
 
