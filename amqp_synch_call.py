@@ -170,5 +170,3 @@ if __name__ == '__main__':
 
     # r = amqp_request(connection, m, 'someImaginaryComponent')
     # print(repr(r))
-
-
