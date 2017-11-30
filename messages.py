@@ -107,9 +107,17 @@ class Message(object):
         )
 
         try:
+            # TODO deprecate .service in favour of .request
             if self.routing_key.endswith(".service"):
+                import logging
+                logging.warning('(!) deprecate .service in favour of .request')
                 self._properties["reply_to"] = "%s.%s" % (self.routing_key, "reply")
                 self._properties["correlation_id"] = self._properties["message_id"]
+
+            elif self.routing_key.endswith(".request"):
+                self._properties["reply_to"] = self.routing_key.replace(".request", ".reply")
+                self._properties["correlation_id"] = self._properties["message_id"]
+
         except AttributeError:
             pass
 
@@ -228,8 +236,16 @@ class MsgReply(Message):
 
     def __init__(self, request_message, **kwargs):
         assert request_message
+        assert hasattr(request_message, "routing_key")
 
-        self.routing_key = request_message.routing_key + ".reply"
+        # TODO (!) deprecate .service in favour of .request
+        if request_message.routing_key.endswith(".service"):
+            import logging
+            logging.warning('(!) deprecate .service in favour of .request')
+            self.routing_key = request_message.routing_key + ".reply"
+
+        elif self.routing_key.endswith(".request"):
+            self.routing_key = self.routing_key.replace(".request", ".reply")
 
         # if not data template, then let's build one for a reply
         # (possible when creating a MsgReply directly and not by using subclass)
@@ -277,7 +293,7 @@ class MsgOrchestratorVersionReq(Message):
 
     Description: Message for returning current version of SO
     """
-    routing_key = "control.orchestrator.version.request.service"
+    routing_key = "control.orchestrator.version.request"
 
     _msg_data_template = {
         "_type": "orchestrator.version.request"
@@ -294,7 +310,7 @@ class MsgOrchestratorUsersList(Message):
 
     Description: Message for returning user list of SO
     """
-    routing_key = "control.orchestrator.users.list.request.service"
+    routing_key = "control.orchestrator.users.list.request"
 
     _msg_data_template = {
         "_type": "orchestrator.users.list.request"
@@ -312,7 +328,7 @@ class MsgOrchestratorUserAdd(Message):
     Description: Message for adding a user to SO
     """
 
-    routing_key = "control.orchestrator.users.add.request.service"
+    routing_key = "control.orchestrator.users.add.request"
 
     _msg_data_template = {
         "_type": "orchestrator.users.add.request"
@@ -330,7 +346,7 @@ class MsgOrchestratorUserDelete(Message):
     Description: Message for deleting a user from SO
     """
 
-    routing_key = "control.orchestrator.users.delete.request.service"
+    routing_key = "control.orchestrator.users.delete.request"
 
     _msg_data_template = {
         "_type": "orchestrator.users.delete.request"
@@ -348,7 +364,7 @@ class MsgOrchestratorUserGet(Message):
     Description: Message for getting a user from SO
     """
 
-    routing_key = "control.orchestrator.users.get.request.service"
+    routing_key = "control.orchestrator.users.get.request"
 
     _msg_data_template = {
         "_type": "orchestrator.users.get.request"
@@ -365,7 +381,7 @@ class MsgOrchestratorSessionsList(Message):
 
     Description: Message for listing sessions from SO
     """
-    routing_key = "control.orchestrator.sessions.list.request.service"
+    routing_key = "control.orchestrator.sessions.list.request"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.list.request"
@@ -382,7 +398,7 @@ class MsgOrchestratorSessionsGet(Message):
 
     Description: Message for getting a session from SO
     """
-    routing_key = "control.orchestrator.sessions.get.request.service"
+    routing_key = "control.orchestrator.sessions.get.request"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.get.request"
@@ -399,7 +415,7 @@ class MsgOrchestratorSessionsAdd(Message):
 
     Description: Message for adding a session to SO
     """
-    routing_key = "control.orchestrator.sessions.add.request.service"
+    routing_key = "control.orchestrator.sessions.add.request"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.add.request"
@@ -417,7 +433,7 @@ class MsgOrchestratorSessionsDelete(Message):
     Description: Message for deleting a session to SO
     """
 
-    routing_key = "control.orchestrator.sessions.delete.request.service"
+    routing_key = "control.orchestrator.sessions.delete.request"
 
     _msg_data_template = {
         "_type": "orchestrator.sessions.delete.request"
@@ -435,7 +451,7 @@ class MsgOrchestratorSessionsUpdate(Message):
     Description: Message for updating a session from SO
     """
 
-    routing_key = "control.orchestrator.sessions.update.request.service"
+    routing_key = "control.orchestrator.sessions.update.request"
     _msg_data_template = {
         "_type": "orchestrator.sessions.update.request"
     }
@@ -451,7 +467,7 @@ class MsgOrchestratorTestsGet(Message):
 
     Description: Message for getting tests from SO
     """
-    routing_key = "control.orchestrator.tests.get.request.service"
+    routing_key = "control.orchestrator.tests.get.request"
 
     _msg_data_template = {
         "_type": "orchestrator.tests.get.request"
@@ -468,7 +484,7 @@ class MsgOrchestratorTestsGetContributorName(Message):
 
     Description: Message for getting tests from SO with contributor and name
     """
-    routing_key = "control.orchestrator.tests.get_contributor_name.request.service"
+    routing_key = "control.orchestrator.tests.get_contributor_name.request"
 
     _msg_data_template = {
         "_type": "orchestrator.tests.get_contributor_name.request"
@@ -487,13 +503,87 @@ class MsgUiRequestTextInput(Message):
 
     Description: Message for requesting action or information to user
     """
-    routing_key = "ui.any.request"
+    routing_key = "ui.user.all.request"
 
     _msg_data_template = {
-        "_type": "ui.any.request.text.input",
+        "_type": "ui.user.all.request.text.input",
         "fields": [
-            {"name": "input_name",
-             "type": "text"},
+            {
+                "name": "input_name",
+                "type": "text"
+            },
+        ]
+    }
+
+
+class MsgUiRequestConfirmationButton(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting confirmation button
+    """
+    routing_key = "ui.user.all.request"
+
+    _msg_data_template = {
+        "_type": "MsgUiRequestConfirmationButton",
+        "fields": [
+            {
+                "name": "Please confirm that Uruguay is the best country in the world",
+                "type": "button",
+                "value": True
+            },
+        ]
+    }
+
+
+class MsgUiDisplay(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message to display in user interface
+    """
+    routing_key = "ui.user.all.display"
+
+    _msg_data_template = {
+        "_type": "ui.user.all.display",
+        "fields": [
+            {
+                "name": "display_markdown_text",
+                "type": "p",
+                "value": "Hello World!"
+            },
+        ]
+    }
+
+
+class MsgUiDisplayMarkdownText(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for displaying Mardown text to user interface
+    """
+    routing_key = "ui.user.all.display"
+
+    _msg_data_template = {
+        "_type": "ui.user.all.display",
+        "fields": [
+            {
+                "name": "display_markdown_text",
+                "type": "p",
+                "value": "Hello World!"
+            },
         ]
     }
 
@@ -683,7 +773,7 @@ class MsgSessionChat(Message):
     _msg_data_template = {
         "_type": "chat",
         "user_name": "Ringo",
-        "iut_node": "tbd",
+        "node": "tbd",
         "description": "I've got blisters on my fingers!"
     }
 
@@ -1772,7 +1862,7 @@ class MsgTest(Message):
     routing_key = "control.service.::.some.random.test.message"
 
     _msg_data_template = {
-        "_type":'some.random.test.message',
+        "_type": 'some.random.test.message',
         "description": "this is a test message",
 
     }
@@ -2288,7 +2378,7 @@ class MsgPerformanceStats(Message):
 
 
 message_types_dict = {
-    # CORE API - SO
+    # CORE API: SO
     "orchestrator.users.list.request": MsgOrchestratorUsersList,  # any -> SO
     "orchestrator.version.request": MsgOrchestratorVersionReq,  # any -> SO
     "orchestrator.users.add.request": MsgOrchestratorUserAdd,  # any -> SO
@@ -2301,8 +2391,12 @@ message_types_dict = {
     "orchestrator.sessions.update.request": MsgOrchestratorSessionsUpdate,  # any -> SO
     "orchestrator.tests.get.request": MsgOrchestratorTestsGet,  # any -> SO
     "orchestrator.tests.get_contributor_name.request": MsgOrchestratorTestsGetContributorName,
-    # CORE API - TT<->SO, TT<->SO
-    "some.random.test.message":MsgTest,
+
+    # CORE API: TT<->GUI
+    "ui.user.all.display": MsgUiDisplay,  # TT -> GUI
+
+    # CORE API: TT<->SO
+    "some.random.test.message": MsgTest,
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
@@ -2311,7 +2405,9 @@ message_types_dict = {
     "testsuite.report": MsgTestSuiteReport,  # TestingTool -> GUI
     "log": MsgSessionLog,  # Any -> Any
     "chat": MsgSessionChat,  # GUI_x -> GUI_y
-    # ioppytest testing tool implementation specific
+
+    # ioppytest API (testing tool implementation specific)
+
     "agent.configured": MsgAgentConfigured,  # TestingTool -> GUI
     "tun.start": MsgAgentTunStart,  # TestingTool -> Agent
     "tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
