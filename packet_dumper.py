@@ -241,7 +241,7 @@ class AmqpDataPacketDumper:
         except Exception as e:
             logger.error(e)
 
-        print('Messages dumped : ' + str(self.messages_dumped))
+        #print('Messages dumped : ' + str(self.messages_dumped))
 
     def dumps_rotate(self):
 
@@ -298,7 +298,8 @@ class AmqpDataPacketDumper:
                     logger.error(e)
 
             else:
-                logger.info('drop amqp message: ' + repr(m))
+                #logger.info('drop amqp message: ' + repr(m))
+                pass
 
         except NonCompliantMessageFormatError as e:
             print('* * * * * * API VALIDATION ERROR * * * * * * * ')
