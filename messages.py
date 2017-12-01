@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.1'
+API_VERSION = '1.0.2'
 
 
 # TODO use metaclasses instead?
@@ -192,11 +192,6 @@ class Message(object):
         else:
             raise NonCompliantMessageFormatError("Not a Json")
 
-        # check fist if it's a response
-        if "ok" in message_dict:
-            # cannot build a complete reply message just from the json representation
-            return
-
         return cls.from_dict(message_dict)
 
     @classmethod
@@ -207,11 +202,6 @@ class Message(object):
         :raises NonCompliantMessageFormatError: If the message cannot be build from the provided json
         """
         assert type(message_dict) is dict
-
-        # check fist if it's a response
-        if "ok" in message_dict:
-            # cannot build a complete reply message just from the json representation
-            return
 
         message_type = message_dict["_type"]
 
