@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.2'
+API_VERSION = '0.1.70'
 
 
 # TODO use metaclasses instead?
@@ -2443,7 +2443,9 @@ message_types_dict = {
     "sniffing.stop": MsgSniffingStop,  # Testing Tool Internal
     "sniffing.stop.reply": MsgSniffingStopReply,  # Testing Tool Internal
     "sniffing.getcapture": MsgSniffingGetCapture,  # Testing Tool Internal
+    "sniffing.getcapture.reply": MsgSniffingGetCaptureReply,  # Testing Tool Internal
     "sniffing.getlastcapture": MsgSniffingGetCaptureLast,  # Testing Tool Internal
+    "sniffing.getlastcapture.reply": MsgSniffingGetCaptureLastReply,  # Testing Tool Internal
     "analysis.interop.testcase.analyze": MsgInteropTestCaseAnalyze,  # Testing Tool Internal
     "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,  # Testing Tool Internal
     "dissection.dissectcapture": MsgDissectionDissectCapture,  # Testing Tool Internal
