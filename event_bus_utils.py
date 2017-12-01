@@ -104,6 +104,7 @@ class AmqpListener(threading.Thread):
 
         except Exception as e:
             logging.error(e)
+            logging.error('message received:\n\tr_key: %s\n\t%s'%(method.routing_key,body))
 
         finally:
             ch.basic_ack(delivery_tag=method.delivery_tag)
