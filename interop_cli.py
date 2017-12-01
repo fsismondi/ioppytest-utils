@@ -447,15 +447,47 @@ def enter_debug_context():
 
     """
     global message_handles_options
-    debug_actions = {
-        'send_skip_tc_coap_core_11': send_skip_tescase_coap_core_11,
-        'snif1': snif1,
-        'snif2': snif2,
-        'snif3': snif3,
-    }
-    message_handles_options.update(debug_actions)
 
-    _echo_session_helper("Entering debugger context, added the following actions: %s" % debug_actions)
+    # TODO group cmds
+    @cli.command()
+    def sniffer_start():
+        """
+        Sniffer start
+        """
+        _snif_start()
+
+    @cli.command()
+    def sniffer_stop():
+        """
+        Sniffer stop
+        """
+        _snif_start()
+
+    @cli.command()
+    def sniffer_get_last_capture():
+        """
+        Sniffer get last capture
+        """
+        _snif_get_last_capture()
+
+
+    @cli.command()
+    @click.argument('testcase_id')
+    def testcase_skip(testcase_id):
+        """
+        skip a particular testcase
+        """
+        _tescase_skip(testcase_id)
+
+    @cli.command()
+    @click.argument('text')
+    def ui_display_markdown_text(text):
+        """
+        Sniffer get last capture
+        """
+        _ui_send_markdown_display(text)
+
+    _echo_session_helper("Entering debugger context, added extra CMDs, please type --help for more info")
 
 
 @cli.command()
@@ -936,34 +968,52 @@ def _echo_log_message(msg):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # debugging actions
 
-def send_skip_tescase_coap_core_11():
-    _echo_input("Executing debug message %s" % "send_skip_tescase_coap_core_11")
+def _tescase_skip(testcase_id):
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
 
     msg = MsgTestCaseSkip(
-        testcase_id='TD_COAP_CORE_11'
+        testcase_id=testcase_id
     )
     publish_message(msg)
 
 
-def snif1():
-    _echo_input("Executing debug message %s" % "start sniffing, file name PCAP_TEST.pcap")
-    msg = MsgSniffingStart(capture_id='PCAP_TEST',
+def _snif_start(testcase_id = None):
+    if testcase_id is None:
+        testcase_id = 'PCAP_TEST'
+
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+    msg = MsgSniffingStart(capture_id=testcase_id,
                            filter_if='tun0',
                            filter_proto='udp')
     publish_message(msg)
 
 
-def snif2():
-    _echo_input("Executing debug message %s" % "stop sniffing")
+def _snif_stop():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
     msg = MsgSniffingStop()
     publish_message(msg)
 
 
-def snif3():
-    _echo_input("Executing debug message %s" % "get last sniffed file")
+def _snif_get_last_capture():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
     msg = MsgSniffingGetCaptureLast()
     publish_message(msg)
 
+
+def _ui_send_markdown_display(text=None):
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+    msg = MsgUiDisplayMarkdownText()
+
+    _echo_input(type(text))
+    _echo_input(type(msg.fields))
+    _echo_input(msg.fields)
+    if text:
+        body = msg.fields.pop()
+        body['value'] = text
+        msg.fields.append(body)
+
+    publish_message(msg)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # some auxiliary functions
