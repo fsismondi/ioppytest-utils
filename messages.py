@@ -224,32 +224,36 @@ class MsgReply(Message):
     Routing key, corr_id and _type are generated based on the request message
     """
 
-    def __init__(self, request_message, **kwargs):
-        assert request_message
-        assert hasattr(request_message, "routing_key")
+    def __init__(self, request_message=None, **kwargs):
 
-        # TODO (!) deprecate .service in favour of .request
-        if request_message.routing_key.endswith(".service"):
+        if request_message and hasattr(request_message, "routing_key"):
+            # TODO (!) deprecate .service in favour of .request
+            if request_message.routing_key.endswith(".service"):
+                import logging
+                logging.warning('(!) messages library | deprecate .service in favour of .request')
+                self.routing_key = request_message.routing_key + ".reply"
+
+            elif self.routing_key.endswith(".request"):
+                self.routing_key = self.routing_key.replace(".request", ".reply")
+
+            # if not data template, then let's build one for a reply
+            # (possible when creating a MsgReply directly and not by using subclass)
+            if not hasattr(self, "_msg_data_template"):
+                self._msg_data_template = {
+                    "_type": request_message._type,
+                    "ok": True,
+                }
+
+            super(MsgReply, self).__init__(**kwargs)
+
+            # overwrite correlation id template and attribute
+            self._properties["correlation_id"] = request_message.correlation_id
+            self.correlation_id = request_message.correlation_id
+
+        else:   # note this doesnt generate amqp properties
             import logging
-            logging.warning('(!) deprecate .service in favour of .request')
-            self.routing_key = request_message.routing_key + ".reply"
-
-        elif self.routing_key.endswith(".request"):
-            self.routing_key = self.routing_key.replace(".request", ".reply")
-
-        # if not data template, then let's build one for a reply
-        # (possible when creating a MsgReply directly and not by using subclass)
-        if not hasattr(self, "_msg_data_template"):
-            self._msg_data_template = {
-                "_type": request_message._type,
-                "ok": True,
-            }
-
-        super(MsgReply, self).__init__(**kwargs)
-
-        # overwrite correlation id template and attribute
-        self._properties["correlation_id"] = request_message.correlation_id
-        self.correlation_id = request_message.correlation_id
+            logging.warning('(!) messages library | generating reply message without corr_id')
+            super(MsgReply, self).__init__(**kwargs)
 
 
 class MsgErrorReply(MsgReply):
