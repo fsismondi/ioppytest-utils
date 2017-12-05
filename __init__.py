@@ -34,7 +34,6 @@ def get_from_environment(variable, default):
 
 if __name__ == '__main__':
     # example of use for save_pcap_from_base64 function
-    #base_64_pcap_value = '1MOyoQIABAAAAAAAAAAAAMgAAABlAAAASJQxWTqkAwA5AAAAOQAAAGAOcR8AERFAu7sAAAAAAAAAAAAAAAAAAbu7AAAAAAAAAAAAAAAAAALk2RYzABGuhFAEANS0dGVzdA=='
-    from examples_pcap_base64 import PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64
-    base_64_pcap_value = PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64
+    from examples_pcap_base64 import PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,PCAP_ONEM2M_TD_M2M_NH_06
+    base_64_pcap_value = PCAP_ONEM2M_TD_M2M_NH_06
     save_pcap_from_base64('test.pcap', base_64_pcap_value)
