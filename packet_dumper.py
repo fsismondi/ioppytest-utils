@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 VERSION = '0.0.2'
 
+
 def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=None, dump_dir=None):
     def signal_int_handler(self, frame):
         logger.info('got SIGINT, stopping dumper..')
@@ -154,11 +155,10 @@ class AmqpDataPacketDumper:
                                 routing_key='control.session')
 
         # publish Hello message in bus
+        m = MsgTestingToolComponentReady(component=self.COMPONENT_ID)
         self.channel.basic_publish(
-            body=json.dumps({'_type': '%s.info' % self.COMPONENT_ID,
-                             'value': '%s is up!' % self.COMPONENT_ID, }
-                            ),
-            routing_key='control.%s.info' % self.COMPONENT_ID,
+            body=m.to_json(),
+            routing_key=m.routing_key,
             exchange=self.exchange,
             properties=pika.BasicProperties(
                 content_type='application/json',
@@ -177,13 +177,13 @@ class AmqpDataPacketDumper:
 
         self.pcap_15_4_dumper = Dumper(
             filename=os.path.join(self.dump_dir, self.DEFAULT_802154_DUMP_FILENAME_WR),
-            snaplen=200,
+            snaplen=2000,
             network=DLT_IEEE802_15_4_NOFCS
         )
 
         self.pcap_raw_ip_dumper = Dumper(
             filename=os.path.join(self.dump_dir, self.DEFAULT_RAWIP_DUMP_FILENAME_WR),
-            snaplen=200,
+            snaplen=2000,
             network=DLT_RAW
         )
 
@@ -241,7 +241,7 @@ class AmqpDataPacketDumper:
         except Exception as e:
             logger.error(e)
 
-        #print('Messages dumped : ' + str(self.messages_dumped))
+        logger.info('Messages dumped : ' + str(self.messages_dumped))
 
     def dumps_rotate(self):
 
