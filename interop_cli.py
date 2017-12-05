@@ -583,8 +583,11 @@ def _connection_ok():
 
 def _echo_context():
     table = []
-    for key, val in {**session_profile, **state}.items():
-        table.append((key, list_to_str(val)))
+    d = {}
+    d.update(session_profile)
+    d.update(state)
+    for key, val in d.items():
+        table.append((key, list_to_str(str(val))))
     _echo_list_as_table(table)
 
 
