@@ -1005,9 +1005,7 @@ def _ui_send_markdown_display(text=None):
 
     msg = MsgUiDisplayMarkdownText()
 
-    _echo_input(type(text))
-    _echo_input(type(msg.fields))
-    _echo_input(msg.fields)
+    _echo_input(text)
     if text:
         body = msg.fields.pop()
         body['value'] = text
