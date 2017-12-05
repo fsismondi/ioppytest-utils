@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.70'
+API_VERSION = '0.1.71'
 
 
 # TODO use metaclasses instead?
@@ -252,8 +252,16 @@ class MsgReply(Message):
 
         else:   # note this doesnt generate amqp properties
             import logging
-            logging.warning('(!) messages library | generating reply message without corr_id')
+            logging.warning('(!) messages library | lazy response built, generating reply message without corr_id')
             super(MsgReply, self).__init__(**kwargs)
+
+    def correlate_to(self, request_message):
+        """
+        add to reply message the right correlation information to request
+        """
+        # overwrite correlation id template and attribute
+        self._properties["correlation_id"] = request_message.correlation_id
+        self.correlation_id = request_message.correlation_id
 
 
 class MsgErrorReply(MsgReply):
