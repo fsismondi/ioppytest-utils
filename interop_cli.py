@@ -1082,11 +1082,15 @@ if __name__ == "__main__":
         pass  # use default
 
     try:
-        #
-        url = '%s?%s&%s' % (
+        #url = str(os.environ['AMQP_URL'])
+
+        url = '%s?%s&%s&%s&%s&%s' % (
             str(os.environ['AMQP_URL']),
             "heartbeat_interval=600",
-            "blocked_connection_timeout=300"
+            "blocked_connection_timeout=300",
+            "retry_delay=1",
+            "socket_timeout=1",
+            "connection_attempts=3"
         )
         session_profile.update({'amqp_url': url})
     except KeyError as e:
