@@ -96,8 +96,13 @@ class Message(object):
     def __init__(self, **kwargs):
         global API_VERSION
 
-        # hard copy the message template
-        self._msg_data = {k: v for k, v in self._msg_data_template.items()}
+        try:
+            # hard copy the message template
+            self._msg_data = {k: v for k, v in self._msg_data_template.items()}
+        except AttributeError: # if message is built directly using Message class then there's no data template
+            self._msg_data={}
+            self._msg_data_template={}
+
 
         # init properties
         self._properties = dict(
@@ -173,8 +178,9 @@ class Message(object):
 
     def update_properties(self, **kwargs):
         for key, value in kwargs.items():
-            if key in self._properties:
-                setattr(self, key, value)
+            # if key in self._properties:
+            #     setattr(self, key, value)
+            setattr(self, key, value)
 
     @classmethod
     def from_json(cls, body):
@@ -250,7 +256,7 @@ class MsgReply(Message):
             self._properties["correlation_id"] = request_message.correlation_id
             self.correlation_id = request_message.correlation_id
 
-        else:   # note this doesnt generate amqp properties
+        else:  # note this doesnt generate amqp properties
             import logging
             logging.warning('(!) messages library | lazy response built, generating reply message without corr_id')
             super(MsgReply, self).__init__(**kwargs)
@@ -508,7 +514,7 @@ class MsgUiRequestTextInput(Message):
     routing_key = "ui.user.all.request"
 
     _msg_data_template = {
-        "_type": "ui.user.all.request.text.input",
+        "_type": "ui.message.type.to.be.deprecated",
         "fields": [
             {
                 "name": "input_name",
@@ -531,10 +537,10 @@ class MsgUiRequestConfirmationButton(Message):
     routing_key = "ui.user.all.request"
 
     _msg_data_template = {
-        "_type": "MsgUiRequestConfirmationButton",
+        "_type": "ui.message.type.to.be.deprecated",
         "fields": [
             {
-                "name": "Please confirm that Uruguay is the best country in the world",
+                "name": "Please confirm that Uruguay es el mejor pais",
                 "type": "button",
                 "value": True
             },
@@ -555,10 +561,11 @@ class MsgUiDisplay(Message):
     routing_key = "ui.user.all.display"
 
     _msg_data_template = {
-        "_type": "ui.user.all.display",
+        "_type": "ui.message.type.to.be.deprecated",
+        "level": None,
+        "tags": [],
         "fields": [
             {
-                "name": "display_markdown_text",
                 "type": "p",
                 "value": "Hello World!"
             },
@@ -579,10 +586,11 @@ class MsgUiDisplayMarkdownText(Message):
     routing_key = "ui.user.all.display"
 
     _msg_data_template = {
-        "_type": "ui.user.all.display",
+        "_type": "ui.message.type.to.be.deprecated",
+        #"level": None,
+        #"tags": [],
         "fields": [
             {
-                "name": "display_markdown_text",
                 "type": "p",
                 "value": "Hello World!"
             },
@@ -719,7 +727,7 @@ class MsgTestingToolTerminate(Message):
 
     _msg_data_template = {
         "_type": "testingtool.terminate",
-        "description": "Event TERMINATE testing tool execution"
+        "description": "Command TERMINATE testing tool execution"
     }
 
 
@@ -737,7 +745,7 @@ class MsgTestingToolReady(Message):
 
     _msg_data_template = {
         "_type": "testingtool.ready",
-        "description": "Event Testing tool READY to start test suite."
+        "description": "Testing tool READY to start test suite."
     }
 
 
@@ -889,7 +897,7 @@ class MsgAgentConfigured(Message):
 
     _msg_data_template = {
         "_type": "agent.configured",
-        "description": "Event agent successfully CONFIGURED",
+        "description": "Agent successfully CONFIGURED",
         'name': 'agent_TT'
     }
 
@@ -909,7 +917,7 @@ class MsgTestingToolConfigured(Message):
 
     _msg_data_template = {
         "_type": "testingtool.configured",
-        "description": "Event Testing tool CONFIGURED",
+        "description": "Testing tool CONFIGURED",
         "session_id": "TBD",
         "testing_tools": "f-interop/interoperability-coap",
     }
@@ -951,7 +959,7 @@ class MsgTestingToolComponentShutdown(Message):
     _msg_data_template = {
         "_type": "testingtool.component.shutdown",
         "component": "SomeComponent",
-        "description": "Event Component SHUTDOWN. Bye!"
+        "description": "Component SHUTDOWN. Bye!"
     }
 
     # # # # # # TEST COORDINATION MESSAGES # # # # # #
@@ -973,7 +981,7 @@ class MsgTestSuiteStart(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testsuite.start",
-        "description": "Event test suite START"
+        "description": "Test suite START command"
     }
 
 
@@ -993,7 +1001,7 @@ class MsgTestSuiteStarted(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testsuite.started",
-        "description": "Event test suite STARTED"
+        "description": "Test suite STARTED"
     }
 
 
@@ -1013,7 +1021,7 @@ class MsgTestSuiteFinish(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testsuite.finish",
-        "description": "Event test suite FINISH"
+        "description": "Test suite FINISH command"
     }
 
 
@@ -1061,7 +1069,7 @@ class MsgTestCaseStart(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testcase.start",
-        "description": "Event test case START",
+        "description": "Test case START command",
         "testcase_id": "TBD",
     }
 
@@ -1082,7 +1090,7 @@ class MsgTestCaseStarted(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testcase.started",
-        "description": "Event test case STARTED",
+        "description": "Test case STARTED",
         "testcase_id": "TBD",
     }
 
@@ -1195,7 +1203,7 @@ class MsgConfigurationExecuted(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.configuration.executed",
-        "description": "Event IUT has been configured",
+        "description": "IUT has been configured",
         "node": "coap_server",
         "ipv6_address": "tbd"  # example of pixit
     }
@@ -1238,7 +1246,7 @@ class MsgTestCaseRestart(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testcase.restart",
-        "description": "Event test case RESTART"
+        "description": "Test case RESTART command"
     }
 
 
@@ -1294,7 +1302,7 @@ class MsgStepStimuliExecuted(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.step.stimuli.executed",
-        "description": "Event step (stimuli) EXECUTED",
+        "description": "Step (stimuli) EXECUTED",
         "node": "coap_client",
         "node_execution_mode": "user_assisted",
     }
@@ -1410,7 +1418,7 @@ class MsgStepVerifyExecuted(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.step.verify.executed",
-        "description": "Event step (verify) EXECUTED",
+        "description": "Step (verify) EXECUTED",
         "response_type": "bool",
         "verify_response": True,
         "node": "coap_client",
@@ -1524,7 +1532,7 @@ class MsgTestSuiteAbort(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testsuite.abort",
-        "description": "Event test suite ABORT"
+        "description": "Test suite ABORT command"
     }
 
 
@@ -1544,7 +1552,7 @@ class MsgTestCaseAbort(Message):
 
     _msg_data_template = {
         "_type": "testcoordination.testcase.abort",
-        "description": "Event ABORT current testcase"
+        "description": "Test case ABORT (current testcase) command"
     }
 
 
@@ -2398,6 +2406,7 @@ message_types_dict = {
     "ui.user.all.display": MsgUiDisplay,  # TT -> GUI
 
     # CORE API: TT<->SO
+    "ui.message.type.to.be.deprecated": MsgUiDisplay,  # temporary message TODO delete this
     "some.random.test.message": MsgTest,
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
