@@ -324,7 +324,7 @@ def _handle_action_testsuite_start():
 
 def _handle_action_testcase_start():
     if click.confirm('Do you want START test case?'):
-        msg = MsgTestCaseStart()
+        msg = MsgTestCaseStart()  # TODO no testcase id input?
         publish_message(msg)
 
 
@@ -450,40 +450,46 @@ def enter_debug_context():
 
     # TODO group cmds
     @cli.command()
-    def sniffer_start():
+    def _sniffer_start():
         """
         Sniffer start
         """
         _snif_start()
 
     @cli.command()
-    def sniffer_stop():
+    def _sniffer_stop():
         """
         Sniffer stop
         """
         _snif_start()
 
     @cli.command()
-    def sniffer_get_last_capture():
+    def _sniffer_get_last_capture():
         """
         Sniffer get last capture
         """
         _snif_get_last_capture()
 
+    @cli.command()
+    def _configure_perf_tt():
+        """
+        Send example configuration message for perf TT
+        """
+        _send_configuration_default_message_for_performance_testsuite()
 
     @cli.command()
     @click.argument('testcase_id')
-    def testcase_skip(testcase_id):
+    def _testcase_skip(testcase_id):
         """
-        skip a particular testcase
+        Skip a particular testcase
         """
         _tescase_skip(testcase_id)
 
     @cli.command()
     @click.argument('text')
-    def ui_display_markdown_text(text):
+    def _ui_display_markdown_text(text):
         """
-        Sniffer get last capture
+        Send message to GUI
         """
         _ui_send_markdown_display(text)
 
@@ -741,10 +747,18 @@ def _echo_dispatcher(msg):
         _echo_data_message(msg)
     elif isinstance(msg, MsgSessionChat):
         _echo_chat_message(msg)
-    elif isinstance(msg, Message):  # default echo for objects of Message type
+    elif isinstance(msg, MsgSessionConfiguration):
+        # fixme hanlde extremly long fields in a more generic way
+        msg.configuration = ['...ommited fields...']  # this fields is normally monstrously big
         _echo_backend_message(msg)
     elif isinstance(msg, dict):
         click.echo(click.style(repr(msg), fg=COLOR_DEFAULT))
+    elif isinstance(msg, (MsgUiDisplay, MsgUiDisplayMarkdownText, MsgUiRequestConfirmationButton)):
+        _echo_gui_message(msg)
+
+    # default echo for objects of Message type
+    elif isinstance(msg, Message):
+        _echo_backend_message(msg)
     else:
         click.echo(click.style(msg, fg=COLOR_DEFAULT))
 
@@ -961,6 +975,11 @@ def _echo_data_message(msg):
     )
 
 
+def _echo_gui_message(msg):
+    click.echo(
+        click.style("[UI message]\n\tMessage: %s \n\tFields: %s " % (repr(msg)[:70], str(msg.fields)[:70]), fg=COLOR_SESSION_LOG))
+
+
 def _echo_log_message(msg):
     if isinstance(msg, MsgSessionLog):
         click.echo(click.style("[log][%s] %s" % (msg.component, list_to_str(msg.message)), fg=COLOR_SESSION_LOG))
@@ -980,7 +999,7 @@ def _tescase_skip(testcase_id):
     publish_message(msg)
 
 
-def _snif_start(testcase_id = None):
+def _snif_start(testcase_id=None):
     if testcase_id is None:
         testcase_id = 'PCAP_TEST'
 
@@ -1003,18 +1022,31 @@ def _snif_get_last_capture():
     publish_message(msg)
 
 
+def _send_configuration_default_message_for_performance_testsuite():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+    from message_examples import PERF_TT_CONFIGURATION
+    message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION) # builds a config for the perf TT
+    publish_message(message)
+
+
 def _ui_send_markdown_display(text=None):
     _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
 
     msg = MsgUiDisplayMarkdownText()
 
     _echo_input(text)
+
     if text:
-        body = msg.fields.pop()
-        body['value'] = text
-        msg.fields.append(body)
+        fields = [
+            {
+                'type': 'p',
+                'value': text
+            }
+        ]
+        msg.fields = fields
 
     publish_message(msg)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # some auxiliary functions
@@ -1082,7 +1114,7 @@ if __name__ == "__main__":
         pass  # use default
 
     try:
-        #url = str(os.environ['AMQP_URL'])
+        # url = str(os.environ['AMQP_URL'])
 
         url = '%s?%s&%s&%s&%s&%s' % (
             str(os.environ['AMQP_URL']),
