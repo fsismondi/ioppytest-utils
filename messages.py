@@ -501,6 +501,15 @@ class MsgOrchestratorTestsGetContributorName(Message):
 
 # # # # # # UI API messages # # # # # # # #
 
+class MsgUiReply(Message):
+    routing_key = "ui.user.all.reply"
+
+    _msg_data_template = {
+        "_type": "ui.message.type.to.be.deprecated",
+        "fields": [
+        ]
+    }
+
 class MsgUiRequestTextInput(Message):
     """
     Requirements: ...
@@ -515,6 +524,7 @@ class MsgUiRequestTextInput(Message):
 
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
+        "tags": [],
         "fields": [
             {
                 "name": "input_name",
@@ -538,6 +548,7 @@ class MsgUiRequestConfirmationButton(Message):
 
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
+        "tags": [],
         "fields": [
             {
                 "name": "Please confirm that Uruguay es el mejor pais",
@@ -587,8 +598,8 @@ class MsgUiDisplayMarkdownText(Message):
 
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
-        #"level": None,
-        #"tags": [],
+        "level": None,
+        "tags": [],
         "fields": [
             {
                 "type": "p",
@@ -1070,7 +1081,7 @@ class MsgTestCaseStart(Message):
     _msg_data_template = {
         "_type": "testcoordination.testcase.start",
         "description": "Test case START command",
-        "testcase_id": "TBD",
+        "testcase_id": None,
     }
 
 
@@ -2406,8 +2417,8 @@ message_types_dict = {
     "ui.user.all.display": MsgUiDisplay,  # TT -> GUI
 
     # CORE API: TT<->SO
-    "ui.message.type.to.be.deprecated": MsgUiDisplay,  # temporary message TODO delete this
-    "some.random.test.message": MsgTest,
+    "ui.message.type.to.be.deprecated": MsgUiReply,  # temporary message TODO delete this
+
     "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
     "session.configuration": MsgSessionConfiguration,  # GUI-> SO -> TestingTool
     "testingtool.configured": MsgTestingToolConfigured,  # TestingTool -> Orchestrator, GUI
