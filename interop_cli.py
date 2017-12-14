@@ -47,6 +47,9 @@ DEFAULT_TOPIC_SUBSCRIPTIONS = [
 
 MESSAGE_TYPES_NOT_ECHOED = [
     MsgPacketInjectRaw,
+    MsgUiReply,
+    MsgUiDisplay,
+    MsgUiDisplayMarkdownText
 ]
 
 CONNECTION_SETUP_RETRIES = 3
@@ -478,6 +481,20 @@ def enter_debug_context():
         _send_configuration_default_message_for_performance_testsuite()
 
     @cli.command()
+    def _configure_comi_tt():
+        """
+        Send example configuration message for CoMI TT
+        """
+        _send_configuration_default_message_for_comi_testsuite()
+
+    @cli.command()
+    def _configure_coap_tt():
+        """
+        Send example configuration message for CoAP TT
+        """
+        _send_configuration_default_message_for_coap_testsuite()
+
+    @cli.command()
     @click.argument('testcase_id')
     def _testcase_skip(testcase_id):
         """
@@ -492,6 +509,26 @@ def enter_debug_context():
         Send message to GUI
         """
         _ui_send_markdown_display(text)
+
+    @cli.command()
+    @click.argument('text')
+    def _ui_send_confirmation_button(text):
+        """
+        Send button to GUI
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+        msg = MsgUiRequestConfirmationButton()
+
+        _echo_input(text)
+
+        msg.fields = [{
+            "name": text,
+            "type": "button",
+            "value": True
+        }]
+
+        publish_message(msg)
 
     _echo_session_helper("Entering debugger context, added extra CMDs, please type --help for more info")
 
@@ -977,7 +1014,15 @@ def _echo_data_message(msg):
 
 def _echo_gui_message(msg):
     click.echo(
-        click.style("[UI message]\n\tMessage: %s \n\tFields: %s " % (repr(msg)[:70], str(msg.fields)[:70]), fg=COLOR_SESSION_LOG))
+        click.style("[UI message]\n\tMessage: %s \n\ttags: %s\n\tFields: %s \n\tR_key: %s \n\tcorr_id: %s" %
+                    (
+                        repr(msg)[:70],
+                        str(msg.tags),
+                        str(msg.fields)[:70],
+                        msg.routing_key,
+                        msg.correlation_id if hasattr(msg,'correlation_id') else ''
+                    ),
+                    fg=COLOR_SESSION_LOG))
 
 
 def _echo_log_message(msg):
@@ -1025,8 +1070,38 @@ def _snif_get_last_capture():
 def _send_configuration_default_message_for_performance_testsuite():
     _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
     from message_examples import PERF_TT_CONFIGURATION
-    message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION) # builds a config for the perf TT
+    message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)  # builds a config for the perf TT
     publish_message(message)
+
+
+def _send_configuration_default_message_for_comi_testsuite():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+    from message_examples import COMI_TT_CONFIGURATION
+    message = MsgSessionConfiguration(**COMI_TT_CONFIGURATION)  # builds a config message
+    publish_message(message)
+
+
+def _send_configuration_default_message_for_coap_testsuite():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+    from message_examples import COAP_TT_CONFIGURATION
+    message = MsgSessionConfiguration(**COAP_TT_CONFIGURATION)  # builds a config message
+    publish_message(message)
+
+
+def _ui_send_confirmation_button(text=None):
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+    msg = MsgUiRequestConfirmationButton()
+
+    _echo_input(text)
+
+    msg.fields = [{
+        "name": text,
+        "type": "button",
+        "value": True
+    }]
+
+    publish_message(msg)
 
 
 def _ui_send_markdown_display(text=None):
