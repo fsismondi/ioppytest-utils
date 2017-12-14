@@ -1,5 +1,36 @@
 from messages import *
 
+
+
+COMI_TT_CONFIGURATION = {
+    "users": [
+        "u1",
+        "f-interop"
+    ],
+    "configuration": {
+        "testsuite.additional_session_resource": [],
+        "testsuite.testcases": [
+            "http://doc.f-interop.eu/tests/TD_COMI_DUMMY_TEST"
+        ]
+    },
+    "testing_tools": "f-interop/interoperability-comi-single-user"
+}
+
+COAP_TT_CONFIGURATION = {
+    "users": [
+        "u1",
+        "f-interop"
+    ],
+    "configuration": {
+        "testsuite.additional_session_resource": "automated_iut-coap_client-californium",
+        "testsuite.testcases": [
+            "http://doc.f-interop.eu/tests/TD_COAP_CORE_01",
+            "http://doc.f-interop.eu/tests/TD_COAP_CORE_02",
+        ]
+    },
+    "testing_tools": "f-interop/interoperability-coap-single-user"
+}
+
 PERF_TT_CONFIGURATION = {
     "testing_tools": "http://orchestrator.f-interop.eu:8181/tests/f-interop/performance-coapclient",
     "tests": [],
@@ -91,4 +122,4 @@ PERF_TT_CONFIGURATION = {
     }
 }
 
-#message_configuration_example = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)
+# message_configuration_example = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)
