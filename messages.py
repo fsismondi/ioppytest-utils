@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.71'
+API_VERSION = '0.1.72'
 
 
 # TODO use metaclasses instead?
@@ -1216,7 +1216,7 @@ class MsgConfigurationExecuted(Message):
         "_type": "testcoordination.configuration.executed",
         "description": "IUT has been configured",
         "node": "coap_server",
-        "ipv6_address": "tbd"  # example of pixit
+        "ipv6_address": None  # format -> bbbb::2 (if not provided then uses default)
     }
 
 
