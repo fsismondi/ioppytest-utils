@@ -47,9 +47,6 @@ DEFAULT_TOPIC_SUBSCRIPTIONS = [
 
 MESSAGE_TYPES_NOT_ECHOED = [
     MsgPacketInjectRaw,
-    MsgUiReply,
-    MsgUiDisplay,
-    MsgUiDisplayMarkdownText
 ]
 
 CONNECTION_SETUP_RETRIES = 3
@@ -64,6 +61,16 @@ session_profile = OrderedDict(
     }
 )
 
+# TODO handle the lock automatically with an state object
+# def some_dummuy_release():
+#     _echo_log_message('releasing!')
+# def some_dummuy_acquire():
+#     _echo_log_message('acquiring!')
+# state_lock = Message()
+# state_lock.__setattr__('release', some_dummuy_release)
+# state_lock.__setattr__('acquire', some_dummuy_acquire)
+
+state_lock = threading.RLock()
 state = {
     'testcase_id': None,
     'step_id': None,
@@ -90,10 +97,12 @@ def _init_action_suggested():
     state['suggested_cmd'] = 'ts_start'
 
 
-def amqp_request(channel, request_message, component_id):
+def amqp_request(request_message, component_id=COMPONENT_ID):
     """
     NOTE: channel must be a pika channel
     """
+    state_lock.acquire()
+    channel = state['channel']
     amqp_exchange = session_profile['amqp_exchange']
 
     # check first that sender didnt forget about reply to and corr id
@@ -155,6 +164,7 @@ def amqp_request(channel, request_message, component_id):
     finally:
         # clean up
         channel.queue_delete(reply_queue_name)
+        state_lock.release()
 
     return response
 
@@ -168,6 +178,7 @@ def publish_message(message):
 
     for i in range(1, 4):
         try:
+            state_lock.acquire()
             state['channel'].basic_publish(
                 exchange=session_profile['amqp_exchange'],
                 routing_key=message.routing_key,
@@ -180,6 +191,9 @@ def publish_message(message):
             _echo_error(err)
             _echo_error('Unexpected connection closed, retrying %s/%s' % (i, 4))
             _set_up_connection()
+
+        finally:
+            state_lock.acquire()
 
 
 @click.group()
@@ -212,11 +226,15 @@ def repl():
 
 
 @cli.command()
-def connect():
+@click.option('-ll', '--lazy-listener',
+              is_flag=True,
+              default=False,
+              help="lazy-listener doest perform convertion to Messages class")
+def connect(lazy_listener):
     """
     Connect to an AMQP session and start consuming messages
     """
-    _set_up_connection()
+    _set_up_connection(lazy_listener=lazy_listener)
 
 
 @cli.command()
@@ -238,16 +256,11 @@ def download_network_traces():
     _handle_get_testcase_list()
     ls = state['tc_list'].copy()
 
-    try:
-        channel = state['connection'].channel()
-    except Exception as e:
-        _echo_error(e)
-
     for tc_item in ls:
         try:
             tc_id = tc_item['testcase_id']
             msg = MsgSniffingGetCapture(capture_id=tc_id)
-            response = amqp_request(channel, msg, COMPONENT_ID)
+            response = amqp_request(msg, COMPONENT_ID)
 
             if response.ok:
                 save_pcap_from_base64(response.filename, response.value, TEMP_DIR)
@@ -298,11 +311,10 @@ def _handle_get_testcase_list():
     #  requires testing tool to implement GetTestCases feature, see MsgTestSuiteGetTestCases
     if _connection_ok():
 
-        temp_channel = state['connection'].channel()
         request_message = MsgTestSuiteGetTestCases()
 
         try:
-            testcases_list_reponse = amqp_request(temp_channel, request_message, COMPONENT_ID)
+            testcases_list_reponse = amqp_request(request_message, COMPONENT_ID)
         except Exception as e:
             _echo_error('Is testing tool up?')
             _echo_error(e)
@@ -495,6 +507,13 @@ def enter_debug_context():
         _send_configuration_default_message_for_coap_testsuite()
 
     @cli.command()
+    def _get_session_configuration_from_ui():
+        """
+        Get session config from UI
+        """
+        _get_session_configuration()
+
+    @cli.command()
     @click.argument('testcase_id')
     def _testcase_skip(testcase_id):
         """
@@ -573,11 +592,10 @@ def get_session_status():
 
     #  requires testing tool to implement GetStatus feature, see MsgTestSuiteGetStatus
     if _connection_ok():
-        temp_channel = state['connection'].channel()
         request_message = MsgTestSuiteGetStatus()
 
         try:
-            status_resp = amqp_request(temp_channel, request_message, COMPONENT_ID)
+            status_resp = amqp_request(request_message, COMPONENT_ID)
         except Exception as e:
             _echo_error('Is testing tool up?')
             _echo_error(e)
@@ -634,14 +652,14 @@ def _echo_context():
     _echo_list_as_table(table)
 
 
-def _set_up_connection():
-    global state
-
+def _set_up_connection(lazy_listener=False):
     # conn for repl publisher
     try:
         retries_left = CONNECTION_SETUP_RETRIES
+        state_lock.acquire()
         while retries_left > 0:
             try:
+
                 state['connection'] = pika.BlockingConnection(pika.URLParameters(session_profile['amqp_url']))
                 state['channel'] = state['connection'].channel()
                 break
@@ -656,6 +674,9 @@ def _set_up_connection():
         state['channel'] = None
         return
 
+    finally:
+        state_lock.release()
+
     # note we have a separate conn for amqp listener (each pika threads needs a different connection)
     if 'amqp_listener_thread' in state and state['amqp_listener_thread'] is not None:
         _echo_log_message('stopping amqp listener thread')
@@ -666,12 +687,22 @@ def _set_up_connection():
             _echo_log_message('amqp listener thread doesnt want to stop, lets terminate it..')
             th.terminate()
 
-    amqp_listener_thread = AmqpListener(
-        amqp_url=session_profile['amqp_url'],
-        amqp_exchange=session_profile['amqp_exchange'],
-        callback=_message_handler,
-        topics=DEFAULT_TOPIC_SUBSCRIPTIONS,
-    )
+    if lazy_listener:
+        amqp_listener_thread = AmqpListener(
+            amqp_url=session_profile['amqp_url'],
+            amqp_exchange=session_profile['amqp_exchange'],
+            callback=None,
+            topics=DEFAULT_TOPIC_SUBSCRIPTIONS,
+            use_message_typing=False,
+        )
+    else:
+        amqp_listener_thread = AmqpListener(
+            amqp_url=session_profile['amqp_url'],
+            amqp_exchange=session_profile['amqp_exchange'],
+            callback=_message_handler,
+            topics=DEFAULT_TOPIC_SUBSCRIPTIONS,
+            use_message_typing=True,
+        )
 
     amqp_listener_thread.start()
     state['amqp_listener_thread'] = amqp_listener_thread
@@ -1020,7 +1051,7 @@ def _echo_gui_message(msg):
                         str(msg.tags),
                         str(msg.fields)[:70],
                         msg.routing_key,
-                        msg.correlation_id if hasattr(msg,'correlation_id') else ''
+                        msg.correlation_id if hasattr(msg, 'correlation_id') else ''
                     ),
                     fg=COLOR_SESSION_LOG))
 
@@ -1086,6 +1117,12 @@ def _send_configuration_default_message_for_coap_testsuite():
     from message_examples import COAP_TT_CONFIGURATION
     message = MsgSessionConfiguration(**COAP_TT_CONFIGURATION)  # builds a config message
     publish_message(message)
+
+
+def _get_session_configuration():
+    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+    req = MsgUiRequestSessionConfiguration()
+    publish_message(req)
 
 
 def _ui_send_confirmation_button(text=None):

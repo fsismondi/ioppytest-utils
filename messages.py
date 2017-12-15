@@ -510,6 +510,7 @@ class MsgUiReply(Message):
         ]
     }
 
+
 class MsgUiRequestTextInput(Message):
     """
     Requirements: ...
@@ -551,11 +552,28 @@ class MsgUiRequestConfirmationButton(Message):
         "tags": [],
         "fields": [
             {
-                "name": "Please confirm that Uruguay es el mejor pais",
+                "name": "test_button",
                 "type": "button",
                 "value": True
             },
         ]
+    }
+
+
+class MsgUiRequestSessionConfiguration(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting configuration message to UI
+    """
+    routing_key = "ui.core.session.configuration.get.request"
+
+    _msg_data_template = {
+        "_type": "ui.core.session.configuration.get.request",
     }
 
 

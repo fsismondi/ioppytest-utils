@@ -24,18 +24,19 @@ class AmqpListener(threading.Thread):
     DEFAULT_EXCHAGE = 'amq.topic'
     DEFAULT_AMQP_URL = 'amqp://guest:guest@locahost/'
 
-    def __init__(self, amqp_url, amqp_exchange, callback, topics=None):
+    def __init__(self, amqp_url, amqp_exchange, callback, topics=None, use_message_typing=True):
 
         self.COMPONENT_ID = 'amqp_listener_%s' % str(uuid.uuid4())[:8]
 
         self.connection = None
         self.channel = None
         self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
+        self.use_message_typing = use_message_typing
 
         threading.Thread.__init__(self)
 
         if callback is None:
-            self.message_dispatcher = print
+            self.message_dispatcher = AmqpListener.default_message_handler
         else:
             self.message_dispatcher = callback
 
@@ -55,6 +56,11 @@ class AmqpListener(threading.Thread):
             self.amqp_url = self.DEFAULT_AMQP_URL
 
         self.amqp_connect()
+
+    @classmethod
+    def default_message_handler(cls,message_as_dict):
+        clean_dict = dict((k, v) for k, v in message_as_dict.items() if v)
+        print(json.dumps(clean_dict,indent=4))
 
     def amqp_connect(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
@@ -106,25 +112,34 @@ class AmqpListener(threading.Thread):
             'app_id': props.app_id,
         }
 
-        try:
-            m = Message.from_json(body)
-            if m is None:
-                raise Exception("Couldnt build message from json %s, amqp props: %s " % (body, props_dict))
-            m.update_properties(**props_dict)
-            m.routing_key = method.routing_key
-            logging.debug('Message in bus: %s'%repr(m))
-            self.message_dispatcher(m)
+        if self.use_message_typing:
+            try:
+                m = Message.from_json(body)
+                if m is None:
+                    raise Exception("Couldnt build message from json %s, amqp props: %s " % (body, props_dict))
+                m.update_properties(**props_dict)
+                m.routing_key = method.routing_key
+                logging.debug('Message in bus: %s'%repr(m))
+                self.message_dispatcher(m)
 
-        except NonCompliantMessageFormatError as e:
-            logging.error('%s got a non compliant message error %s' % (self.__class__.__name__, e))
+            except NonCompliantMessageFormatError as e:
+                logging.error('%s got a non compliant message error %s' % (self.__class__.__name__, e))
 
-        except Exception as e:
-            logging.error(e)
-            logging.error('message received:\n\tr_key: %s\n\t%s' % (method.routing_key, body))
-            raise e
+            except Exception as e:
+                logging.error(e)
+                logging.error('message received:\n\tr_key: %s\n\t%s' % (method.routing_key, body))
+                raise e
 
-        finally:
+            finally:
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+        else:
+            body_dict = json.loads(body.decode('utf-8'), object_pairs_hook=OrderedDict)
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            text_based_message_representation = OrderedDict()
+            text_based_message_representation.update({'routing_key':method.routing_key})
+            text_based_message_representation.update(props_dict)
+            text_based_message_representation.update(body_dict)
+            self.message_dispatcher(text_based_message_representation)
 
     def run(self):
         logging.info("Starting thread listening on the event bus on topics %s" % self.topics)
@@ -169,7 +184,7 @@ def publish_message(connection, message):
             channel.close()
 
 
-def amqp_request(connection, request_message, component_id):
+def amqp_request(connection, request_message, component_id, retries = 10):
     """
     Publishes message into the correct topic (uses Message object metadata)
     Returns reply message.
@@ -181,6 +196,9 @@ def amqp_request(connection, request_message, component_id):
     # check first that sender didnt forget about reply to and corr id
     assert request_message.reply_to
     assert request_message.correlation_id
+    assert retries > 0
+
+    time_between_requests = 0.5
 
     channel = None
 
@@ -207,10 +225,10 @@ def amqp_request(connection, request_message, component_id):
         )
 
         time.sleep(0.2)
-        retries_left = 10
+        retries_left = retries
 
         while retries_left > 0:
-            time.sleep(0.5)
+            time.sleep(time_between_requests)
             method, props, body = channel.basic_get(reply_queue_name)
             if method:
                 channel.basic_ack(method.delivery_tag)
@@ -261,37 +279,48 @@ if __name__ == '__main__':
         print("Callback function received: \n\t" + repr(message_received))
 
 
-    # amqp listener example:
-    amqp_listener_thread = AmqpListener(
-        amqp_url=AMQP_URL,
-        amqp_exchange=AMQP_EXCHANGE,
-        callback=callback_function,
-        topics='#'
-    )
+    # EXAMPLE ON AMQP LISTENER
 
-    try:
-        amqp_listener_thread.start()
-    except Exception as e:
-        print(e)
+    # # amqp listener example:
+    # amqp_listener_thread = AmqpListener(
+    #     amqp_url=AMQP_URL,
+    #     amqp_exchange=AMQP_EXCHANGE,
+    #     callback=callback_function,
+    #     topics='#'
+    # )
+    #
+    # try:
+    #     amqp_listener_thread.start()
+    # except Exception as e:
+    #     print(e)
+    #
+    # # publish message example
+    # retries_left = 3
+    # while retries_left > 0:
+    #     try:
+    #         connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+    #         m = MsgTest()
+    #         publish_message(connection, m)
+    #         break
+    #     except pika.exceptions.ConnectionClosed:
+    #         retries_left -= 1
+    #         print('retrying..')
+    #         time.sleep(0.2)
+    #
+    # # example of a request sent into the bus
+    # m = MsgTestSuiteGetTestCases()
+    # try:
+    #     r = amqp_request(connection, m, 'someImaginaryComponent')
+    #     print("This is the response I got:\n\t" + repr(r))
+    #
+    # except AmqpSynchCallTimeoutError as e:
+    #     print("Nobody answered to our request :'(")
 
-    # publish message example
-    retries_left = 3
-    while retries_left > 0:
-        try:
-            connection = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
-            m = MsgTest()
-            publish_message(connection, m)
-            break
-        except pika.exceptions.ConnectionClosed:
-            retries_left -= 1
-            print('retrying..')
-            time.sleep(0.2)
 
-    # example of a request sent into the bus
-    m = MsgTestSuiteGetTestCases()
-    try:
-        r = amqp_request(connection, m, 'someImaginaryComponent')
-        print("This is the response I got:\n\t" + repr(r))
+    # EXAMPLE ON REQUEST REPLY FOR UI BUTTONS:
+    con = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+    channel = con.channel()
 
-    except AmqpSynchCallTimeoutError as e:
-        print("Nobody answered to our request :'(")
+    ui_request = MsgUiRequestConfirmationButton()
+    ui_reply = amqp_request(con,ui_request,'dummy_component')
+    print(repr(ui_reply))

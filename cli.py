@@ -31,6 +31,8 @@ from pure_pcapy import Dumper, Pkthdr, DLT_IEEE802_15_4, DLT_RAW
 # globals
 message_count = 0
 
+print("THIS CLI IS NOT SUPPORTED ANY MORE")
+logging.warning("THIS CLI IS NOT SUPPORTED ANY MORE")
 
 def print_message(method, props, body):
     global message_count
@@ -547,29 +549,40 @@ if __name__ == '__main__':
         })
 
         service_tat = OrderedDict({
-            'tat0': MsgInteropTestCaseAnalyze(),
+            'tat0': MsgInteropTestCaseAnalyze(
+                protocol='coap',
+            ),
             'tat1': MsgInteropTestCaseAnalyze(
+                protocol='coap',
                 testcase_id="TD_COAP_CORE_01",
-                testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
+                testcase_ref="http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
                 file_enc="pcap_base64",
                 filename="TD_COAP_CORE_01.pcap",
                 value=PCAP_empty_base64,
             ),
             'tat2': MsgInteropTestCaseAnalyze(
+                protocol='coap',
                 testcase_id="TD_COAP_CORE_01",
-                testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_01_v01",
+                testcase_ref="http://doc.f-interop.eu/tests/TD_COAP_CORE_01_v01",
                 file_enc="pcap_base64",
                 filename="TD_COAP_CORE_01.pcap",
                 value=PCAP_TC_COAP_01_base64,
             ),
             # 'tat3': MsgInteropTestCaseAnalyze(
             #     testcase_id="TD_COAP_CORE_04",
-            #     testcase_ref="http://f-interop.paris.inria.fr/tests/TD_COAP_CORE_04_v01",
+            #     testcase_ref="http://doc.f-interop.eu/tests/TD_COAP_CORE_04_v01",
             #     file_enc="pcap_base64",
             #     filename="TD_COAP_CORE_04.pcap",
             #     value=PCAP_COAP_TC4_OVER_TUN_INTERFACE_base64,
             # )
-
+            'tat_onem2m': MsgInteropTestCaseAnalyze(
+                protocol='onem2m',
+                testcase_id="TD_M2M_NH_01",
+                testcase_ref="http://doc.f-interop.eu/tests/TD_M2M_NH_01",
+                file_enc="pcap_base64",
+                filename="TD_M2M_NH_01.pcap",
+                value=PCAP_ONEM2M_TD_M2M_NH_01,
+            ),
         })
 
         service_dissection = OrderedDict({
@@ -679,16 +692,27 @@ if __name__ == '__main__':
             'conf_format_04_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_04', node='eut2'),
             'conf_format_06_eut1': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_06', node='eut1'),
             'conf_format_06_eut2': MsgConfigurationExecute(testcase_id='TD_6LoWPAN_FORMAT_06', node='eut2'),
-            's_hc_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_01', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"), # need to update the target_Address before sending the message!!
-            's_hc_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_03', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
-            's_hc_05_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut2', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
-            's_hc_05_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
-            's_hc_07_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut2', target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
-            's_hc_07_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut1', target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
-            's_format_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_01', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:060d:97f5"),
-            's_format_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_03', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
-            's_format_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_04', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
-            's_format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_06', node='eut1',target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_hc_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_01', node='eut1',
+                                             target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+        # need to update the target_Address before sending the message!!
+            's_hc_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_03', node='eut1',
+                                             target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_hc_05_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut2',
+                                                     target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            's_hc_05_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_05', node='eut1',
+                                                     target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_hc_07_step_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut2',
+                                                     target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
+            's_hc_07_step_02': MsgStepStimuliExecute(step_id='TD_6LoWPAN_HC_07', node='eut1',
+                                                     target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_01': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_01', node='eut1',
+                                                 target_address="fe80:0000:0000:0000:0212:4b00:060d:97f5"),
+            's_format_03': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_03', node='eut1',
+                                                 target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_04': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_04', node='eut1',
+                                                 target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
+            's_format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_FORMAT_06', node='eut1',
+                                                 target_address="fe80:0000:0000:0000:0212:4b00:0433:ed9c"),
             # 'tc_hc_01': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_01'), They have no effect on the iut controller
             # 'tc_hc_02': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_02'),
             # 'tc_hc_03': MsgTestCaseReady(testcase_id='TD_6LoWPAN_HC_03'),
@@ -712,7 +736,6 @@ if __name__ == '__main__':
             # 'format_06': MsgStepStimuliExecute(step_id='TD_6LoWPAN_Format_06', node='6lo_client',
             #                                    target_address="fe80:0000:0000:0000:0212:4b00:0615:a500"),
         })
-
 
         event_type = params[0]
         print(event_type)
