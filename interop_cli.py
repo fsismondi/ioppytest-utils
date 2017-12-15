@@ -465,53 +465,76 @@ def enter_debug_context():
 
     # TODO group cmds
     @cli.command()
-    def _sniffer_start():
+    @click.option('-tc','--testcase-id',default=None, help="testcase id")
+    def _sniffer_start(testcase_id):
         """
         Sniffer start
         """
-        _snif_start()
+        if testcase_id is None:
+            testcase_id = 'PCAP_TEST'
+
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        msg = MsgSniffingStart(capture_id=testcase_id,
+                               filter_if='tun0',
+                               filter_proto='udp')
+        publish_message(msg)
 
     @cli.command()
     def _sniffer_stop():
         """
         Sniffer stop
         """
-        _snif_start()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        msg = MsgSniffingStop()
+        publish_message(msg)
 
     @cli.command()
     def _sniffer_get_last_capture():
         """
         Sniffer get last capture
         """
-        _snif_get_last_capture()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        msg = MsgSniffingGetCaptureLast()
+        publish_message(msg)
 
     @cli.command()
     def _configure_perf_tt():
         """
         Send example configuration message for perf TT
         """
-        _send_configuration_default_message_for_performance_testsuite()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        from message_examples import PERF_TT_CONFIGURATION
+        message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)  # builds a config for the perf TT
+        publish_message(message)
 
     @cli.command()
     def _configure_comi_tt():
         """
         Send example configuration message for CoMI TT
         """
-        _send_configuration_default_message_for_comi_testsuite()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        from message_examples import COMI_TT_CONFIGURATION
+        message = MsgSessionConfiguration(**COMI_TT_CONFIGURATION)  # builds a config message
+        publish_message(message)
 
     @cli.command()
     def _configure_coap_tt():
         """
         Send example configuration message for CoAP TT
         """
-        _send_configuration_default_message_for_coap_testsuite()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        from message_examples import COAP_TT_CONFIGURATION
+        message = MsgSessionConfiguration(**COAP_TT_CONFIGURATION)  # builds a config message
+        publish_message(message)
 
     @cli.command()
     def _get_session_configuration_from_ui():
         """
         Get session config from UI
         """
-        _get_session_configuration()
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        req = MsgUiRequestSessionConfiguration()
+        publish_message(req)
 
     @cli.command()
     @click.argument('testcase_id')
@@ -519,7 +542,12 @@ def enter_debug_context():
         """
         Skip a particular testcase
         """
-        _tescase_skip(testcase_id)
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+        msg = MsgTestCaseSkip(
+            testcase_id=testcase_id
+        )
+        publish_message(msg)
 
     @cli.command()
     @click.argument('text')
@@ -527,7 +555,22 @@ def enter_debug_context():
         """
         Send message to GUI
         """
-        _ui_send_markdown_display(text)
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+        msg = MsgUiDisplayMarkdownText()
+
+        _echo_input(text)
+
+        if text:
+            fields = [
+                {
+                    'type': 'p',
+                    'value': text
+                }
+            ]
+            msg.fields = fields
+
+        publish_message(msg)
 
     @cli.command()
     @click.argument('text')
@@ -547,6 +590,22 @@ def enter_debug_context():
             "value": True
         }]
 
+        publish_message(msg)
+
+    @cli.command()
+    @click.argument('text')
+    def _ui_send_confirmation_button(text):
+        """
+        Send button to GUI
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+        msg = MsgSessionLog(
+            component=COMPONENT_ID,
+            message=text
+        )
+
+        _echo_input(text)
         publish_message(msg)
 
     _echo_session_helper("Entering debugger context, added extra CMDs, please type --help for more info")
@@ -1061,104 +1120,6 @@ def _echo_log_message(msg):
         click.echo(click.style("[log][%s] %s" % (msg.component, list_to_str(msg.message)), fg=COLOR_SESSION_LOG))
     else:
         click.echo(click.style("[%s] %s" % ('log', list_to_str(msg)), fg=COLOR_SESSION_LOG))
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# debugging actions
-
-def _tescase_skip(testcase_id):
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-
-    msg = MsgTestCaseSkip(
-        testcase_id=testcase_id
-    )
-    publish_message(msg)
-
-
-def _snif_start(testcase_id=None):
-    if testcase_id is None:
-        testcase_id = 'PCAP_TEST'
-
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    msg = MsgSniffingStart(capture_id=testcase_id,
-                           filter_if='tun0',
-                           filter_proto='udp')
-    publish_message(msg)
-
-
-def _snif_stop():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    msg = MsgSniffingStop()
-    publish_message(msg)
-
-
-def _snif_get_last_capture():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    msg = MsgSniffingGetCaptureLast()
-    publish_message(msg)
-
-
-def _send_configuration_default_message_for_performance_testsuite():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    from message_examples import PERF_TT_CONFIGURATION
-    message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)  # builds a config for the perf TT
-    publish_message(message)
-
-
-def _send_configuration_default_message_for_comi_testsuite():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    from message_examples import COMI_TT_CONFIGURATION
-    message = MsgSessionConfiguration(**COMI_TT_CONFIGURATION)  # builds a config message
-    publish_message(message)
-
-
-def _send_configuration_default_message_for_coap_testsuite():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    from message_examples import COAP_TT_CONFIGURATION
-    message = MsgSessionConfiguration(**COAP_TT_CONFIGURATION)  # builds a config message
-    publish_message(message)
-
-
-def _get_session_configuration():
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-    req = MsgUiRequestSessionConfiguration()
-    publish_message(req)
-
-
-def _ui_send_confirmation_button(text=None):
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-
-    msg = MsgUiRequestConfirmationButton()
-
-    _echo_input(text)
-
-    msg.fields = [{
-        "name": text,
-        "type": "button",
-        "value": True
-    }]
-
-    publish_message(msg)
-
-
-def _ui_send_markdown_display(text=None):
-    _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
-
-    msg = MsgUiDisplayMarkdownText()
-
-    _echo_input(text)
-
-    if text:
-        fields = [
-            {
-                'type': 'p',
-                'value': text
-            }
-        ]
-        msg.fields = fields
-
-    publish_message(msg)
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # some auxiliary functions
