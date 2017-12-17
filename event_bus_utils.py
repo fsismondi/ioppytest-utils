@@ -19,7 +19,6 @@ class AmqpSynchCallTimeoutError(Exception):
 
 
 class AmqpListener(threading.Thread):
-
     DEFAULT_TOPIC_SUSBCRIPTIONS = ['#']
     DEFAULT_EXCHAGE = 'amq.topic'
     DEFAULT_AMQP_URL = 'amqp://guest:guest@locahost/'
@@ -58,9 +57,9 @@ class AmqpListener(threading.Thread):
         self.amqp_connect()
 
     @classmethod
-    def default_message_handler(cls,message_as_dict):
+    def default_message_handler(cls, message_as_dict):
         clean_dict = dict((k, v) for k, v in message_as_dict.items() if v)
-        print(json.dumps(clean_dict,indent=4))
+        print(json.dumps(clean_dict, indent=4))
 
     def amqp_connect(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
@@ -119,7 +118,7 @@ class AmqpListener(threading.Thread):
                     raise Exception("Couldnt build message from json %s, amqp props: %s " % (body, props_dict))
                 m.update_properties(**props_dict)
                 m.routing_key = method.routing_key
-                logging.debug('Message in bus: %s'%repr(m))
+                logging.debug('Message in bus: %s' % repr(m))
                 self.message_dispatcher(m)
 
             except NonCompliantMessageFormatError as e:
@@ -136,7 +135,7 @@ class AmqpListener(threading.Thread):
             body_dict = json.loads(body.decode('utf-8'), object_pairs_hook=OrderedDict)
             ch.basic_ack(delivery_tag=method.delivery_tag)
             text_based_message_representation = OrderedDict()
-            text_based_message_representation.update({'routing_key':method.routing_key})
+            text_based_message_representation.update({'routing_key': method.routing_key})
             text_based_message_representation.update(props_dict)
             text_based_message_representation.update(body_dict)
             self.message_dispatcher(text_based_message_representation)
@@ -184,7 +183,7 @@ def publish_message(connection, message):
             channel.close()
 
 
-def amqp_request(connection, request_message, component_id, retries = 10):
+def amqp_request(connection, request_message, component_id, retries=10):
     """
     Publishes message into the correct topic (uses Message object metadata)
     Returns reply message.
@@ -322,5 +321,6 @@ if __name__ == '__main__':
     channel = con.channel()
 
     ui_request = MsgUiRequestConfirmationButton()
-    ui_reply = amqp_request(con,ui_request,'dummy_component')
+    print("publishing .. %s" % repr(ui_request))
+    ui_reply = amqp_request(con, ui_request, 'dummy_component')
     print(repr(ui_reply))

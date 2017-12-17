@@ -438,21 +438,30 @@ def action(api_call):
         _echo_dispatcher('Command <action %s> not accepted' % api_call)
 
 
+ignorable_message_types = {
+    'dissections': [MsgDissectionAutoDissect],
+    'packets': [MsgPacketSniffedRaw, MsgPacketInjectRaw],
+    'ui': [MsgUiRequestTextInput,
+           MsgUiRequestConfirmationButton,
+           MsgUiDisplay,
+           MsgUiDisplayMarkdownText,
+           MsgUiReply]
+}
+
+
 @cli.command()
-@click.argument('message_type', type=click.Choice(['dissections']))
+@click.argument('message_type', type=click.Choice(list(ignorable_message_types.keys())))
 def ignore(message_type):
     """
     Do not notify any more on message type
     """
-    message_types = {
-        'dissections': [MsgDissectionAutoDissect],
-        'packets': [MsgPacketSniffedRaw, MsgPacketInjectRaw]
-    }
-
-    if message_type in message_types:
-        for item in message_types[message_type]:
+    try:
+        for item in ignorable_message_types[message_type]:
             _add_to_ignore_message_list(item)
             _echo_dispatcher('Ignore message category %s: (%s)' % (message_type, str(item)))
+    except KeyError as ke:
+        _echo_error('Couldnt add to ignored list..')
+        _echo_error(ke)
 
 
 @cli.command()
@@ -463,9 +472,42 @@ def enter_debug_context():
     """
     global message_handles_options
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #  this build dinamically a REPL call per each message defined in messages library
+
+    dummy_messages_dict = {k: v for (k, v) in globals().items() if 'Msg' in k}
+
+    def _send_dummy_message():
+        ctx = click.get_current_context()
+        message_name = ctx.command.name.replace('_send_', '')
+
+        try:
+            message_t = dummy_messages_dict[message_name]()
+            _echo_input("trying to send message: %s" % repr(message_t))
+            publish_message(message_t)
+
+        except Exception as e:
+            _echo_error("Error found: %s" % e)
+            return
+
+    for message in list(dummy_messages_dict.keys()):
+        name = "_send_%s" % message
+        _echo_session_helper('adding cmd: %s' % name)
+        c = click.Command(
+            name=name,
+            callback=_send_dummy_message,
+            # params=[
+            #     message
+            # ],
+            short_help="Send dummy %s message to bus." % message
+        )
+
+        cli.add_command(c)
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     # TODO group cmds
     @cli.command()
-    @click.option('-tc','--testcase-id',default=None, help="testcase id")
+    @click.option('-tc', '--testcase-id', default=None, help="testcase id")
     def _sniffer_start(testcase_id):
         """
         Sniffer start
@@ -590,6 +632,22 @@ def enter_debug_context():
             "value": True
         }]
 
+        publish_message(msg)
+
+    @cli.command()
+    @click.argument('text')
+    def _ui_send_confirmation_button(text):
+        """
+        Send button to GUI
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+
+        msg = MsgSessionLog(
+            component=COMPONENT_ID,
+            message=text
+        )
+
+        _echo_input(text)
         publish_message(msg)
 
     @cli.command()
@@ -1120,6 +1178,7 @@ def _echo_log_message(msg):
         click.echo(click.style("[log][%s] %s" % (msg.component, list_to_str(msg.message)), fg=COLOR_SESSION_LOG))
     else:
         click.echo(click.style("[%s] %s" % ('log', list_to_str(msg)), fg=COLOR_SESSION_LOG))
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # some auxiliary functions

@@ -239,8 +239,8 @@ class MsgReply(Message):
                 logging.warning('(!) messages library | deprecate .service in favour of .request')
                 self.routing_key = request_message.routing_key + ".reply"
 
-            elif self.routing_key.endswith(".request"):
-                self.routing_key = self.routing_key.replace(".request", ".reply")
+            elif request_message.routing_key.endswith(".request"):
+                self.routing_key = request_message.routing_key.replace(".request", ".reply")
 
             # if not data template, then let's build one for a reply
             # (possible when creating a MsgReply directly and not by using subclass)
