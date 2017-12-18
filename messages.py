@@ -80,7 +80,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '0.1.72'
+API_VERSION = '0.1.73'
 
 
 # TODO use metaclasses instead?
@@ -525,7 +525,7 @@ class MsgUiRequestTextInput(Message):
 
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
-        "tags": [],
+        "tags": {},
         "fields": [
             {
                 "name": "input_name",
@@ -549,7 +549,7 @@ class MsgUiRequestConfirmationButton(Message):
 
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
-        "tags": [],
+        "tags": {},
         "fields": [
             {
                 "name": "test_button",
@@ -592,7 +592,7 @@ class MsgUiDisplay(Message):
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
         "level": None,
-        "tags": [],
+        "tags": {},
         "fields": [
             {
                 "type": "p",
@@ -617,7 +617,7 @@ class MsgUiDisplayMarkdownText(Message):
     _msg_data_template = {
         "_type": "ui.message.type.to.be.deprecated",
         "level": None,
-        "tags": [],
+        "tags": {},
         "fields": [
             {
                 "type": "p",
