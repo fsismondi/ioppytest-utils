@@ -1,7 +1,3 @@
-from messages import *
-
-
-
 COMI_TT_CONFIGURATION = {
     "users": [
         "u1",
@@ -122,4 +118,5 @@ PERF_TT_CONFIGURATION = {
     }
 }
 
+# from messages import *
 # message_configuration_example = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)

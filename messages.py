@@ -103,7 +103,6 @@ class Message(object):
             self._msg_data={}
             self._msg_data_template={}
 
-
         # init properties
         self._properties = dict(
             content_type="application/json",
