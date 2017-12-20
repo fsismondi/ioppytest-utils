@@ -707,7 +707,9 @@ class MsgPacketInjectRaw(Message):
 
     Description: TBD
     """
-    routing_key = None  # depends on the agent_id and the agent interface being used, re-write after creation
+
+    # (!) r.key depends on the agent_id and the agent interface being used, re-write after creation
+    routing_key = 'data.tbd.toAgent.tbd'
 
     _msg_data_template = {
         "_type": "packet.to_inject.raw",
@@ -728,7 +730,9 @@ class MsgPacketSniffedRaw(Message):
 
     Description: TBD
     """
-    routing_key = None  # depends on the agent_id and the agent interface being used, re-write after creation
+
+    # (!) r.key depends on the agent_id and the agent interface being used, re-write after creation
+    routing_key = 'data.tbd.fromAgent.tbd'
 
     _msg_data_template = {
         "_type": "packet.sniffed.raw",

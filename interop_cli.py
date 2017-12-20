@@ -46,7 +46,6 @@ DEFAULT_TOPIC_SUBSCRIPTIONS = [
 ]
 
 MESSAGE_TYPES_NOT_ECHOED = [
-    MsgPacketInjectRaw,
 ]
 
 CONNECTION_SETUP_RETRIES = 3
@@ -179,12 +178,14 @@ def publish_message(message):
     for i in range(1, 4):
         try:
             state_lock.acquire()
-            state['channel'].basic_publish(
+            channel = state['connection'].channel()
+            channel.basic_publish(
                 exchange=session_profile['amqp_exchange'],
                 routing_key=message.routing_key,
                 properties=pika.BasicProperties(**message.get_properties()),
                 body=message.to_json(),
             )
+            channel.close()
             break
 
         except pika.exceptions.ConnectionClosed as err:
@@ -1246,16 +1247,19 @@ if __name__ == "__main__":
         pass  # use default
 
     try:
-        # url = str(os.environ['AMQP_URL'])
+        env_url = str(os.environ['AMQP_URL'])
+        if 'heartbeat_interval' not in env_url:
+            url = '%s?%s&%s&%s&%s&%s' % (
+                env_url,
+                "heartbeat_interval=600",
+                "blocked_connection_timeout=300",
+                "retry_delay=1",
+                "socket_timeout=1",
+                "connection_attempts=3"
+            )
+        else:
+            url = env_url
 
-        url = '%s?%s&%s&%s&%s&%s' % (
-            str(os.environ['AMQP_URL']),
-            "heartbeat_interval=600",
-            "blocked_connection_timeout=300",
-            "retry_delay=1",
-            "socket_timeout=1",
-            "connection_attempts=3"
-        )
         session_profile.update({'amqp_url': url})
     except KeyError as e:
         pass  # use default
