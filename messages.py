@@ -558,6 +558,117 @@ class MsgUiRequestConfirmationButton(Message):
         ]
     }
 
+class MsgUiRequestQuestionRadio(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting confirmation button
+    """
+    routing_key = "ui.user.all.request"
+
+    _msg_data_template = {
+        "_type": "ui.message.type.to.be.deprecated",
+        "tags": {},
+        "fields": [
+            {
+                "name": "True",
+                "type": "radio",
+                "value": True
+            },
+            {
+                "name": "False",
+                "type": "radio",
+                "value": False
+            },
+        ]
+    }
+
+class MsgUiRequestQuestionCheckbox(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting confirmation button
+    """
+    routing_key = "ui.user.all.request"
+
+    _msg_data_template = {
+        "_type": "ui.message.type.to.be.deprecated",
+        "tags": {},
+        "fields": [
+            {
+                "name": "Choice1",
+                "label": "Choice1",
+                "type": "checkbox",
+                "value": 0
+            },
+            {
+                "name": "Choice2",
+                "label": "Choice2",
+                "type": "checkbox",
+                "value": 1
+            },
+        ]
+    }
+
+class MsgUiRequestQuestionSelect(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting confirmation button
+    """
+    routing_key = "ui.user.all.request"
+
+    _msg_data_template = {
+        "_type": "ui.message.type.to.be.deprecated",
+        "tags": {},
+        "fields": [
+            {
+                "name": "ideal_select",
+                "type": "select",
+                "options": [
+                    {"label": "choice 1", "value": 1 },
+                    {"label": "choice 2", "value": 2 },
+                    {"label": "choice 3", "value": 3 },
+                ],
+                "value": 1
+            }
+        ]
+    }
+
+class MsgUiRequestUploadFile(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for requesting confirmation button
+    """
+    routing_key = "ui.user.all.request"
+
+    _msg_data_template = {
+        "_type": "ui.message.type.to.be.deprecated",
+        "tags": {},
+        "fields": [
+            {
+                "name": "upload a file",
+                "type": "file"
+            }
+        ]
+    }
 
 class MsgUiRequestSessionConfiguration(Message):
     """
