@@ -561,6 +561,18 @@ def enter_debug_context():
         publish_message(message)
 
     @cli.command()
+    def _configure_6lowpan_tt():
+        """
+        Send example configuration message for SIXLOWPAN TT
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        from message_examples import SIXLOWPAN_TT_CONFIGURATION
+        message = MsgSessionConfiguration(**SIXLOWPAN_TT_CONFIGURATION)  # builds a config message
+        publish_message(message)
+
+
+
+    @cli.command()
     def _configure_coap_tt():
         """
         Send example configuration message for CoAP TT

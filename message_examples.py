@@ -1,3 +1,17 @@
+SIXLOWPAN_TT_CONFIGURATION = {
+    "users": [
+        "u1",
+        "f-interop"
+    ],
+    "configuration": {
+        "testsuite.testcases": [
+            "http://doc.f-interop.eu/tests/TD_6LoWPAN_HC_01",
+            "http://doc.f-interop.eu/tests/TD_6LoWPAN_HC_02",
+        ]
+    },
+    "testing_tools": "f-interop/interoperability-6lowpan-user-to-user"
+}
+
 COMI_TT_CONFIGURATION = {
     "users": [
         "u1",
