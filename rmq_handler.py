@@ -39,7 +39,7 @@ try:
 except ImportError:
     pass
 
-VERSION = '0.0.7'
+VERSION = '0.0.8'
 
 # defaults vars
 AMQP_URL = 'amqp://guest:guest@localhost'
@@ -214,7 +214,7 @@ class RabbitMQHandler(logging.Handler):
                 )
             )
 
-        except pika.exceptions.ConnectionClosed:
+        except (pika.exceptions.ConnectionClosed, BrokenPipeError):
 
             print("Log handler connection closed. Reconnecting..")
 
