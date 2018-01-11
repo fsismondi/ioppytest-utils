@@ -72,11 +72,11 @@ class MessagesLibraryTests(unittest.TestCase):
         method, props, body = self.channel.basic_get(self.queue_for_post_validation)
 
         while method:
-            logging.info('got a message')
             message_count += 1
+            logging.info('parsing message %s, number: %s' % (method.routing_key,message_count))
             self.channel.basic_ack(method.delivery_tag)
 
-            # load w/o properties
+            # api call 1 - load w/o properties
             message = Message.load(
                 json_body=body.decode('utf-8'),
                 routing_key=method.routing_key,
@@ -84,7 +84,9 @@ class MessagesLibraryTests(unittest.TestCase):
 
             )
 
-            # load w/ properties
+            assert message, 'load w/o properties didnt work for %s' % (body.decode('utf-8'), method.routing_key)
+
+            # api call 2 - load w/ properties
             props_dict = {
                 'content_type': props.content_type,
                 'delivery_mode': props.delivery_mode,
@@ -95,17 +97,25 @@ class MessagesLibraryTests(unittest.TestCase):
                 'user_id': props.user_id,
                 'app_id': props.app_id,
             }
-            # load w/o properties
+
             message = Message.load(
                 json_body=body.decode('utf-8'),
                 routing_key=method.routing_key,
                 properties=props_dict,
 
             )
+            assert message, 'load WITH properties didnt work for %s' % (body.decode('utf-8'), method.routing_key)
 
-            logging.info(repr(message))
+            # api call 3 - load using pika dependent api call
+            message = Message.load_from_pika(
+                method,
+                props,
+                body,
+            )
+            #print(repr(message))
+            assert message, 'load pika properties didnt work for %s' % (body.decode('utf-8'), method.routing_key)
+
             method, props, body = self.channel.basic_get(self.queue_for_post_validation)
 
         if len(self.serializable_messages_types) != message_count:
             self.fail('expecting %s messages, but got %s' % (len(self.serializable_messages_types), message_count))
-

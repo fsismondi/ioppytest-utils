@@ -192,25 +192,8 @@ class Message(object):
         :param properties: Used for building more complete complex representation (e.g. for reply_to corre_id params)
         :return: The python Message object or subclass (e.g. MsgPacketSniffedRaw)
 
-        Properties argument can be any of the following
-            1. dict of all the properties, example for creating the dict from pika props:
-            2. properties pika object itself
-
-        def on_request(self, ch, method, props, body):
-            props_dict = {
-                        'content_type': props.content_type,
-                        'delivery_mode': props.delivery_mode,
-                        'correlation_id': props.correlation_id,
-                        'reply_to': props.reply_to,
-                        'message_id': props.message_id,
-                        'timestamp': props.timestamp,
-                        'user_id': props.user_id,
-                        'app_id': props.app_id,
-            }
-
-
-        example fromAgent.coap_client.packet.raw -> matches fromAgent.*.packet.raw, hence returns MsgPacketSniffedRaw
-
+        about r_key matching mechanism:
+            fromAgent.coap_client.packet.raw -> matches fromAgent.*.packet.raw -> returns MsgPacketSniffedRaw
 
         # We can use the Message class to build Message objects from json + rkey:
         >>> m=MsgSniffingGetCapture()
@@ -242,14 +225,37 @@ class Message(object):
         elif type(properties) is dict:
             props_dict.update(properties)
         else:
-            pass
-            # TODO parse pika and kombu type of properties
+            raise NotImplementedError('Incompatible properties input or not yet supported')
 
         # let's update the messages properties
         if properties:
             built_message.update_properties(**props_dict)
 
         return built_message
+
+    @classmethod
+    def load_from_pika(cls, method, props, body):
+        """
+        Builds a python object representation of the AMQP message based on the ones defined by the event bus API.
+        Takes as arguments pika objects method, properties and body returned by channel.basic_consume method
+        """
+        global rk_pattern_to_message_type_map
+
+        props_dict = {
+            'content_type': props.content_type,
+            'delivery_mode': props.delivery_mode,
+            'correlation_id': props.correlation_id,
+            'reply_to': props.reply_to,
+            'message_id': props.message_id,
+            'timestamp': props.timestamp,
+            'user_id': props.user_id,
+            'app_id': props.app_id,
+        }
+
+        routing_key = method.routing_key
+        json_body = body.decode('utf-8')
+
+        return Message.load(json_body, routing_key, props_dict)
 
     @classmethod
     def from_json(cls, body):
@@ -1146,6 +1152,7 @@ class MsgTestingToolConfigured(Message):
         "session_id": "TBD",
         "testing_tools": "f-interop/interoperability-coap",
     }
+
 
 # TODO deprecate this message
 class MsgSessionCreated(Message):
@@ -2508,7 +2515,7 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "orchestrator.tests.get_contributor_name.request": MsgOrchestratorTestsGetContributorName,  # any -> SO
 
         # TODO deprecate this
-        "orchestrator.session.created":MsgSessionCreated, # SO -> any
+        "orchestrator.session.created": MsgSessionCreated,  # SO -> any
 
         # CORE API: TT <-> GUI
         "ui.core.session.get.request": MsgUiRequestSessionConfiguration,  # TT -> GUI
