@@ -45,6 +45,7 @@ if(env.JOB_NAME =~ 'utils/'){
             sh '''
                 echo installing python dependencies...
                 sudo -H python3 -m pip -qq install -r requirements.txt
+                sudo -H python3 -m pip pip pytest
             '''
             }
         }
