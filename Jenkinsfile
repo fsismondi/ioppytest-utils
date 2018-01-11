@@ -60,6 +60,14 @@ if(env.JOB_NAME =~ 'utils/'){
             '''
         }
       }
+
+      stage("other tests"){
+        gitlabCommitStatus("other tests"){
+            sh '''
+                python3 -m messages_doc
+            '''
+        }
+      }
     }
 }
 

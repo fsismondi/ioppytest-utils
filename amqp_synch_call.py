@@ -104,7 +104,7 @@ def amqp_request(connection, request_message, component_id):
             raise AmqpSynchCallTimeoutError(
                 "Response timeout! rkey: %s , request type: %s" % (
                     request_message.routing_key,
-                    request_message._type
+                    type(request_message)
                 )
             )
 

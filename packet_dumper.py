@@ -265,30 +265,15 @@ class AmqpDataPacketDumper:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
         try:
-
-            props_dict = {
-                'content_type': props.content_type,
-                'delivery_mode': props.delivery_mode,
-                'correlation_id': props.correlation_id,
-                'reply_to': props.reply_to,
-                'message_id': props.message_id,
-                'timestamp': props.timestamp,
-                'user_id': props.user_id,
-                'app_id': props.app_id,
-            }
-
-            m = Message.from_json(body)
-            m.update_properties(**props_dict)
+            m = Message.load_from_pika(method, props, body)
             logger.info('got event: %s' % type(m))
 
             if isinstance(m, MsgTestingToolTerminate):
                 ch.stop_consuming()
                 self.stop()
 
-            if isinstance(m, MsgPacketSniffedRaw):
-
+            elif isinstance(m, MsgPacketSniffedRaw):
                 self.dump_packet(m)
-
                 try:  # rotate files each X messages dumped
                     if self.messages_dumped != 0 and self.messages_dumped % self.QUANTITY_MESSAGES_PER_PCAP == 0:
                         self.dumps_rotate()
@@ -298,7 +283,6 @@ class AmqpDataPacketDumper:
                     logger.error(e)
 
             else:
-                #logger.info('drop amqp message: ' + repr(m))
                 pass
 
         except NonCompliantMessageFormatError as e:
