@@ -10,7 +10,7 @@ try:
 except:
     from .messages import *
 
-VERSION = '0.0.8'
+VERSION = '0.0.9'
 AMQP_EXCHANGE = 'amq.topic'
 
 
@@ -59,8 +59,8 @@ class AmqpListener(threading.Thread):
     @classmethod
     def default_message_handler(cls, message_as_dict):
         clean_dict = dict((k, v) for k, v in message_as_dict.items() if v)
-        print('-'*120)
-        print(' %s : %s *' %('routing_key',clean_dict.pop('routing_key')))
+        print('-' * 120)
+        print('%s : %s' % ('routing_key', clean_dict.pop('routing_key')))
         print('-' * 120)
         print(json.dumps(clean_dict, indent=4, sort_keys=True))
 
