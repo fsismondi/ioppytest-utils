@@ -39,12 +39,12 @@ if(env.JOB_NAME =~ 'utils/'){
           }
       }
 
-      stage("Testing Tool dependencies"){
-        gitlabCommitStatus("Testing Tool dependencies"){
+      stage("install dependencies"){
+        gitlabCommitStatus("install dependencies"){
             withEnv(["DEBIAN_FRONTEND=noninteractive"]){
             sh '''
                 echo installing python dependencies...
-                python3 -m pip -qq install -r requirements.txt
+                sudo -H python3 -m pip -qq install -r requirements.txt
             '''
             }
         }
