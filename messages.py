@@ -333,7 +333,7 @@ class RoutingKeyToMessageMap:
         for key in self.rkey_to_message_dict.keys():
             if self.equals(key, routing_key):
                 return self.rkey_to_message_dict[key]
-        raise KeyError("%s not found" % routing_key)
+        raise KeyError("%s not found in mapping rkey patterns -> messages table" % routing_key)
 
     @classmethod
     def equals(cls, r1, r2):
@@ -1147,7 +1147,7 @@ class MsgTestingToolConfigured(Message):
         "testing_tools": "f-interop/interoperability-coap",
     }
 
-
+# TODO deprecate this message
 class MsgSessionCreated(Message):
     """
     Requirements: Session Orchestrator MUST publish message on common-services channel (on every session creation)
@@ -1159,7 +1159,7 @@ class MsgSessionCreated(Message):
     Description: The goal is to notify viz tools about new sessions
     """
 
-    routing_key = "session.created"
+    routing_key = "orchestrator.session.created"
 
     _msg_data_template = {
         "description": "A new session has been created",
@@ -2507,10 +2507,14 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "orchestrator.tests.get.request": MsgOrchestratorTestsGet,  # any -> SO
         "orchestrator.tests.get_contributor_name.request": MsgOrchestratorTestsGetContributorName,  # any -> SO
 
+        # TODO deprecate this
+        "orchestrator.session.created":MsgSessionCreated, # SO -> any
+
         # CORE API: TT <-> GUI
         "ui.core.session.get.request": MsgUiRequestSessionConfiguration,  # TT -> GUI
         "ui.user.*.display": MsgUiDisplay,  # TT -> GUI
         "ui.user.*.request": MsgUiRequest,  # TT -> GUI
+        "ui.user.*.reply": MsgUiReply,  # GUI -> TT
 
         # misc
         "log.*.*": MsgSessionLog,  # Any -> Any
