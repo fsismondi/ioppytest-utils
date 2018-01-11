@@ -59,7 +59,10 @@ class AmqpListener(threading.Thread):
     @classmethod
     def default_message_handler(cls, message_as_dict):
         clean_dict = dict((k, v) for k, v in message_as_dict.items() if v)
-        print(json.dumps(clean_dict, indent=4))
+        print('-'*120)
+        print(' %s : %s *' %('routing_key',clean_dict.pop('routing_key')))
+        print('-' * 120)
+        print(json.dumps(clean_dict, indent=4, sort_keys=True))
 
     def amqp_connect(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
