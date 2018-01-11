@@ -694,9 +694,9 @@ class MsgUiRequestSessionConfiguration(Message):
 
     Pub/Sub: TT -> UI
 
-    Description: Message for requesting configuration message to UI
+    Description: Message for requesting session information to UI
     """
-    routing_key = "ui.core.session.configuration.get.request"
+    routing_key = "ui.core.session.get.request"
 
     _msg_data_template = {
     }
