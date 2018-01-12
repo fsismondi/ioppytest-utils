@@ -21,10 +21,9 @@ except ImportError:
     # Fall back to Python 2
     from urlparse import urlparse
 
-
 logger = logging.getLogger(__name__)
 
-VERSION = '0.0.2'
+VERSION = '0.1.0'
 
 
 def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=None, dump_dir=None):
@@ -64,9 +63,11 @@ def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=No
     if topics:
         pcap_amqp_topic_subscriptions = topics
     else:
-        pcap_amqp_topic_subscriptions = ['data.tun.fromAgent.*',
-                                         'data.serial.fromAgent.*']
-
+        pcap_amqp_topic_subscriptions = [
+            MsgTestingToolTerminate.routing_key,
+            '#.fromAgent.#',  # API v.0.1 fixme deprecate this
+            'fromAgent.#',  # API v.1.0
+        ]
     # init pcap_dumper
     pcap_dumper = AmqpDataPacketDumper(
         amqp_url=amqp_url,
@@ -80,8 +81,8 @@ def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=No
 
 class AmqpDataPacketDumper:
     """
-    Sniffs data.serial and dumps into pcap file (assumes that frames are DLT_IEEE802_15_4)
-    Sniffs data.tun and dumps into pcap file (assumes that frames are DLT_RAW)
+    Sniffs data from serial captures from bus and dumps into pcap file (assumes that frames are DLT_IEEE802_15_4)
+    Sniffs data from tun captures from bus and dumps into pcap file (assumes that frames are DLT_RAW)
 
     about pcap header:
         ts_sec: the date and time when this packet was captured. This value is in seconds since January 1,
