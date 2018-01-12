@@ -39,9 +39,6 @@ COLOR_TEST_SESSION_HELPER_MESSAGE = 'yellow'
 TEMP_DIR = 'tmp'
 
 DEFAULT_TOPIC_SUBSCRIPTIONS = [
-    # 'control.testcoordination',
-    # 'control.dissection',
-    # 'control.session',
     '#'
 ]
 
