@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.1, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.4, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.0.1, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.1, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.4, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.0.1", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.4", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.0.1", "description": "Test suite START command"}'
+'{"_api_version": "1.0.4", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.0.1, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.0.4, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class '__main__.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.0.1, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.0.1, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
+MsgErrorReply(_api_version = 1.0.4, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -90,7 +90,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.1'
+API_VERSION = '1.0.4'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -200,10 +200,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.0.1", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.4", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.0.1", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.4", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class '__main__.MsgTestSuiteStart'>
@@ -214,9 +214,19 @@ class Message(object):
 
         props_dict = {}
 
-        # let's build the message object
-        message_type = rk_pattern_to_message_type_map.get_message_type(routing_key)
-        payload_dict = json.loads(json_body)
+        # get message type from predefined rkey patterns
+        try:
+            message_type = rk_pattern_to_message_type_map.get_message_type(routing_key)
+        except KeyError as e:
+            raise NonCompliantMessageFormatError("ROUTING KEY PATTERN not recogized for RKEY=%s \nBODY=%s" %
+                                                 (routing_key, json_body))
+
+        # build message skeleton (all fields as None)
+        default_values_dict = message_type().to_dict()
+        payload_dict = dict.fromkeys(default_values_dict.keys(), None)
+
+        # fill messages from provided json
+        payload_dict.update(json.loads(json_body))
         built_message = message_type(**payload_dict)
 
         # let's process the properties arguments
@@ -339,7 +349,8 @@ class RoutingKeyToMessageMap:
         for key in self.rkey_to_message_dict.keys():
             if self.equals(key, routing_key):
                 return self.rkey_to_message_dict[key]
-        raise KeyError("%s not found in mapping rkey patterns -> messages table" % routing_key)
+        raise KeyError(
+            "Routing Key pattern not found in mapping rkey patterns -> messages table\n RKEY: %s" % routing_key)
 
     @classmethod
     def equals(cls, r1, r2):
@@ -377,19 +388,13 @@ class RoutingKeyToMessageMap:
 class MsgReply(Message):
     """
     Auxiliary class which creates replies messages with fields based on the request.
-    Routing key, corr_id and _type are generated based on the request message
+    Routing key, corr_id are generated based on the request message
     """
 
     def __init__(self, request_message=None, **kwargs):
 
         if request_message and hasattr(request_message, "routing_key"):
-            # TODO (!) deprecate .service in favour of .request
-            if request_message.routing_key.endswith(".service"):
-                import logging
-                logging.warning('(!) messages library | deprecate .service in favour of .request')
-                self.routing_key = request_message.routing_key + ".reply"
-
-            elif request_message.routing_key.endswith(".request"):
+            if request_message.routing_key.endswith(".request"):
                 self.routing_key = request_message.routing_key.replace(".request", ".reply")
 
             # if not data template, then let's build one for a reply
@@ -430,8 +435,8 @@ class MsgErrorReply(MsgReply):
 
     _msg_data_template = {
         "ok": False,
-        "error_message": "Some error message TBD",
-        "error_code": "Some error code TBD"
+        "error_message": None,
+        "error_code": None
     }
 
 
@@ -2227,7 +2232,8 @@ class MsgDissectionDissectCaptureReply(MsgReply):
     _msg_data_template = {
         "ok": True,
         "token": "0lzzb_Bx30u8Gu-xkt1DFE1GmB4",
-        "frames": _frames_example
+        "frames": _frames_example,
+        "frames_simple_text": None
     }
 
 
@@ -2254,6 +2260,7 @@ class MsgDissectionAutoDissect(Message):
     _msg_data_template = {
         "token": "0lzzb_Bx30u8Gu-xkt1DFE1GmB4",
         "frames": _frames_example,
+        "frames_simple_text": None,
         "testcase_id": "TBD",
         "testcase_ref": "TBD"
     }
