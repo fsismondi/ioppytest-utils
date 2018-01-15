@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.4, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.0.4, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.4, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.0.4", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.5", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.0.4", "description": "Test suite START command"}'
+'{"_api_version": "1.0.5", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.0.4, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.0.5, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class '__main__.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.0.4, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.0.4, error_code = Some error code TBD, error_message = Some error message TBD, ok = False, )
+MsgErrorReply(_api_version = 1.0.5, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -90,7 +90,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.4'
+API_VERSION = '1.0.5'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -200,10 +200,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.0.4", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.5", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.0.4", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.5", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class '__main__.MsgTestSuiteStart'>
@@ -320,18 +320,20 @@ class RoutingKeyToMessageMap:
     Lookup is slow but it's due to the fact of using WILDCARDs (no hash mechanism can be used :/ )
 
     example of use:
-        >>> from messages import *
         >>> r_map=RoutingKeyToMessageMap({'fromAgent.*.packet.raw':MsgPacketSniffedRaw })
         >>> r_map
-        {'fromAgent.*.packet.raw': <class 'messages.MsgPacketSniffedRaw'>}
+        {'fromAgent.*.packet.raw': <class '__main__.MsgPacketSniffedRaw'>}
         >>> r_map.get_message_type('fromAgent.agent1.packet.raw')
-        <class 'messages.MsgPacketSniffedRaw'>
-        >>> r_map.get_message_type('blabla.agent1.packet.raw')
+        <class '__main__.MsgPacketSniffedRaw'>
+        >>> r_map.get_message_type('blabla.agent1.packet.raw') #IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
-          File "<stdin>", line 1, in <module>
-          File "/Users/fsismondi/dev/f-interop-utils/messages.py", line 258, in get_message_type
-            raise KeyError("%s not found" % routing_key)
-        KeyError: 'blabla.agent1.packet.raw not found'
+          File "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/doctest.py", line 1320, in __run
+            compileflags, 1), test.globs)
+          File "<doctest __main__.RoutingKeyToMessageMap[3]>", line 1, in <module>
+            r_map.get_message_type('blabla.agent1.packet.raw') #IGNORE_EXCEPTION_DETAIL
+          File "/Users/fsismondi/dev/f-interop-utils/messages.py", line 355, in get_message_type
+            "Routing Key pattern not found in mapping rkey patterns -> messages table, RKEY: %s" %routing_key)
+        KeyError: 'Routing Key pattern not found in mapping rkey patterns -> messages table, RKEY: blabla.agent1.packet.raw'
         >>>
 
     """
@@ -350,7 +352,7 @@ class RoutingKeyToMessageMap:
             if self.equals(key, routing_key):
                 return self.rkey_to_message_dict[key]
         raise KeyError(
-            "Routing Key pattern not found in mapping rkey patterns -> messages table\n RKEY: %s" % routing_key)
+            "Routing Key pattern not found in mapping rkey patterns -> messages table, RKEY: %s" %routing_key)
 
     @classmethod
     def equals(cls, r1, r2):
