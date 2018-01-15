@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.6, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.7, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.0.6, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.6, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.7, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.0.6", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.7", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.0.6", "description": "Test suite START command"}'
+'{"_api_version": "1.0.7", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.0.6, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.0.7, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.0.6, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.0.6, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.0.7, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -90,7 +90,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.6'
+API_VERSION = '1.0.7'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -200,10 +200,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.0.6", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.7", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.0.6", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.7", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
@@ -903,7 +903,10 @@ class MsgAgentTunStart(Message):
 
     Description: Message for triggering start IP tun interface in OS where the agent is running
     """
-    routing_key = "toAgent.someAgentName.ip.tun.start"
+
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "toAgent.*.ip.tun.start"
 
     _msg_data_template = {
         "name": "agent_TT",
@@ -926,7 +929,10 @@ class MsgAgentTunStarted(Message):
 
     Description: TBD
     """
-    routing_key = "fromAgent.someAgentName.ip.tun.started"
+
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "fromAgent.*.ip.tun.started"
 
     _msg_data_template = {
         "name": "agent_TT",
@@ -949,7 +955,10 @@ class MsgAgentSerialStart(Message):
 
     Description: Message for triggering start of serial interface , which communicates with probe 802.15.4
     """
-    routing_key = "toAgent.someAgentName.802154.serial.start"
+
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "toAgent.*.802154.serial.start"
 
     _msg_data_template = {
         "name": "tbd",
@@ -968,7 +977,10 @@ class MsgAgentSerialStarted(Message):
 
     Description: Message for indicating that agent serial interface has been started
     """
-    routing_key = "fromAgent.someAgentName.802154.serial.started"
+
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "fromAgent.*.802154.serial.started"
 
     _msg_data_template = {
         "name": "tbd",
@@ -988,8 +1000,9 @@ class MsgPacketInjectRaw(Message):
     Description: TBD
     """
 
-    # (!) r.key depends on the agent_id and the agent interface being used, re-write after creation
-    routing_key = "toAgent.someAgentName.ip.tun.packet.raw"
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "toAgent.*.ip.tun.packet.raw"
 
     _msg_data_template = {
         "timestamp": "1488586183.45",
@@ -1010,8 +1023,9 @@ class MsgPacketSniffedRaw(Message):
     Description: TBD
     """
 
-    # (!) r.key depends on the agent_id and the agent interface being used, re-write after creation
-    routing_key = "fromAgent.someAgentName.ip.tun.packet.raw"
+    # when publishing message * should be replaced by agent name (coap_client, coap_server)
+    # * normally corresponds to iut role
+    routing_key = "fromAgent.*.ip.tun.packet.raw"
 
     _msg_data_template = {
         "timestamp": "1488586183.45",
