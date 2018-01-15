@@ -2561,13 +2561,11 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "fromAgent.*.802154.serial.packet.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
         "toAgent.*.ip.tun.packet.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
         "toAgent.*.802154.serial.packet.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
-
         "toAgent.*.ip.tun.start": MsgAgentTunStart,  # TestingTool -> Agent
-        # "toAgent.*.802154.serial.start": MsgAgentSerialStart,  # TestingTool -> Agent
         "fromAgent.*.ip.tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
+        "toAgent.*.802154.serial.start": MsgAgentSerialStart,  # TestingTool -> Agent
         "fromAgent.*.802154.serial.started": MsgAgentSerialStarted,  # Agent -> TestingTool
         "fromAgent.*.configured": MsgAgentConfigured,  # TestingTool -> GUI
-
 
         # ioppytest API: TT signals
         "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
@@ -2575,7 +2573,6 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "testingtool.terminate": MsgTestingToolTerminate,  # GUI, orchestrator -> TestingTool
         "testingtool.component.ready": MsgTestingToolComponentReady,  # Testing Tool internal
         "testingtool.component.shutdown": MsgTestingToolComponentShutdown,  # Testing Tool internal
-
 
         # ioppytest API: Test Suite messages (they all trigger interactions into GUI)
         "testsuite.start": MsgTestSuiteStart,  # GUI -> TestingTool
