@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.6, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.6, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.0.5", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.6", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.0.5", "description": "Test suite START command"}'
+'{"_api_version": "1.0.6", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.0.5, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.0.6, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.0.5, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.0.5, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.0.6, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -90,7 +90,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.5'
+API_VERSION = '1.0.6'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -200,10 +200,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.0.5", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.6", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.0.5", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.6", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
@@ -875,7 +875,7 @@ class MsgUiDisplayMarkdownText(MsgUiDisplay):
 
     Pub/Sub: TT -> UI
 
-    Description: Message for displaying Mardown text to user interface
+    Description: Message for displaying Markdown text to user interface
     """
 
     _msg_data_template = {
@@ -918,7 +918,7 @@ class MsgAgentTunStart(Message):
 
 class MsgAgentTunStarted(Message):
     """
-    Description: Message for indicating that agent tun has been started
+    Requirements: Message for indicating that agent tun has been started
 
     Type: Event
 
@@ -939,15 +939,34 @@ class MsgAgentTunStarted(Message):
     }
 
 
-class MsgAgentSerialStarted(Message):
+class MsgAgentSerialStart(Message):
     """
-    Description: Message for indicating that agent serial interface has been started
+    Requirements: Testing Tool MAY implement (if serial interface is needed for the test)
 
     Type: Event
 
     Pub/Sub: Testing Tool -> Agent
 
-    Description: TBD
+    Description: Message for triggering start of serial interface , which communicates with probe 802.15.4
+    """
+    routing_key = "toAgent.someAgentName.802154.serial.start"
+
+    _msg_data_template = {
+        "name": "tbd",
+        "port": "tbd",
+        "boudrate": "tbd",
+    }
+
+
+class MsgAgentSerialStarted(Message):
+    """
+    Requirements: TBD
+
+    Type: Event
+
+    Pub/Sub: Testing Tool -> Agent
+
+    Description: Message for indicating that agent serial interface has been started
     """
     routing_key = "fromAgent.someAgentName.802154.serial.started"
 
@@ -960,7 +979,7 @@ class MsgAgentSerialStarted(Message):
 
 class MsgPacketInjectRaw(Message):
     """
-    Description: Message to be captured by the agent an push into the correct embedded interface (e.g. tun, serial, etc..)
+    Requirements: Message to be captured by the agent an push into the correct embedded interface (e.g. tun, serial, etc..)
 
     Type: Event
 
