@@ -56,7 +56,7 @@ MsgTestCaseSkip(_api_version = 1.0.5, description = Skip testcase, node = someNo
 >>> obj
 MsgTestSuiteStart(_api_version = 1.0.5, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
-<class '__main__.MsgTestSuiteStart'>
+<class 'messages.MsgTestSuiteStart'>
 
 # We can use the library for generating error responses:
 # the request:
@@ -206,7 +206,7 @@ class Message(object):
         '{"_api_version": "1.0.5", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
-        <class '__main__.MsgTestSuiteStart'>
+        <class 'messages.MsgTestSuiteStart'>
 
 
         """
@@ -322,9 +322,9 @@ class RoutingKeyToMessageMap:
     example of use:
         >>> r_map=RoutingKeyToMessageMap({'fromAgent.*.packet.raw':MsgPacketSniffedRaw })
         >>> r_map
-        {'fromAgent.*.packet.raw': <class '__main__.MsgPacketSniffedRaw'>}
+        {'fromAgent.*.packet.raw': <class 'messages.MsgPacketSniffedRaw'>}
         >>> r_map.get_message_type('fromAgent.agent1.packet.raw')
-        <class '__main__.MsgPacketSniffedRaw'>
+        <class 'messages.MsgPacketSniffedRaw'>
         >>> r_map.get_message_type('blabla.agent1.packet.raw') #IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
           File "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/doctest.py", line 1320, in __run
