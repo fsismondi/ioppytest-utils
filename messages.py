@@ -86,6 +86,7 @@ MsgErrorReply(_api_version = 1.0.7, error_code = None, error_message = None, ok 
 """
 
 from collections import OrderedDict
+import logging
 import time
 import json
 import uuid
@@ -352,7 +353,7 @@ class RoutingKeyToMessageMap:
             if self.equals(key, routing_key):
                 return self.rkey_to_message_dict[key]
         raise KeyError(
-            "Routing Key pattern not found in mapping rkey patterns -> messages table, RKEY: %s" %routing_key)
+            "Routing Key pattern not found in mapping rkey patterns -> messages table, RKEY: %s" % routing_key)
 
     @classmethod
     def equals(cls, r1, r2):
@@ -413,8 +414,9 @@ class MsgReply(Message):
             self.correlation_id = request_message.correlation_id
 
         else:  # note this doesnt generate amqp properties
-            import logging
-            logging.warning('(!) messages library | lazy response built, generating reply message without corr_id')
+            logging.warning(
+                '(!) messages library | lazy response built, generating reply message without corr_id for %s' %
+                request_message.routing_key)
             super(MsgReply, self).__init__(**kwargs)
 
     def correlate_to(self, request_message):
