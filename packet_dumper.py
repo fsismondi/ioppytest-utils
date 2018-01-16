@@ -32,7 +32,7 @@ VERSION = '0.1.1'
 ALLOWED_DATA_LINK_TYPES = (DLT_IEEE802_15_4_NOFCS, DLT_RAW)
 
 
-def launch_amqp_data_to_pcap_dumper(dump_dir, filename, dlt, amqp_url, amqp_exchange, topics):
+def launch_amqp_data_to_pcap_dumper(dump_dir, log_level, filename, dlt, amqp_url, amqp_exchange, topics):
     def signal_int_handler(self, frame):
         if pcap_dumper is not None:
             pcap_dumper.stop()
@@ -42,11 +42,12 @@ def launch_amqp_data_to_pcap_dumper(dump_dir, filename, dlt, amqp_url, amqp_exch
     # init pcap_dumper
     pcap_dumper = AmqpDataPacketDumper(
         dump_dir=dump_dir,
+        log_level=log_level,
         filename=filename,
         dlt=dlt,
+        topics=topics,
         amqp_url=amqp_url,
         amqp_exchange=amqp_exchange,
-        topics=topics
     )
 
     # start pcap_dumper
@@ -117,7 +118,6 @@ class AmqpDataPacketDumper:
                  topics=DEFAULT_TOPICS,
                  amqp_url=None,
                  amqp_exchange=None,
-
                  ):
 
         assert dlt in ALLOWED_DATA_LINK_TYPES, 'not accepted dlt %s' % dlt
