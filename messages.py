@@ -414,11 +414,10 @@ class MsgReply(Message):
             self.correlation_id = request_message.correlation_id
 
         else:  # note this doesnt generate amqp properties
-            logging.warning(
-                '(!) messages library | lazy response built, generating reply message without corr_id for request %s' %
-                repr(request_message)[:70]
-            )
             super(MsgReply, self).__init__(**kwargs)
+            logging.warning(
+                '[messages] lazy response built, generating reply message without properties for %s' % repr(self)[:70]
+            )
 
     def correlate_to(self, request_message):
         """
