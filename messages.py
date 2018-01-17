@@ -1120,7 +1120,7 @@ class MsgSessionLog(Message):
 
     Description: Generic descriptor of log messages
     """
-    routing_key = "log.warning.the_drummer"
+    routing_key = "log.*.*"  # e.g log.warning.the_drummer
 
     _msg_data_template = {
         "component": "misc",
@@ -1168,7 +1168,7 @@ class MsgAgentConfigured(Message):
     Description: The goal is to notify GUI when agents are ready to start the session
     """
 
-    routing_key = "fromAgent.someAgentName.configured"
+    routing_key = "fromAgent.*.configured"
 
     _msg_data_template = {
         "description": "Agent successfully CONFIGURED",
