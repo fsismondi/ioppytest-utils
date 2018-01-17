@@ -12,6 +12,7 @@ except:
 
 VERSION = '0.0.9'
 AMQP_EXCHANGE = 'amq.topic'
+MAX_LOG_LINE_LENGTH = 120
 
 
 class AmqpSynchCallTimeoutError(Exception):
@@ -109,7 +110,7 @@ class AmqpListener(threading.Thread):
                 if m is None:
                     raise Exception("Couldnt build message from json %s, rkey: %s " % (body, method.routing_key))
                 m.routing_key = method.routing_key
-                logging.debug('Message in bus: %s' % repr(m))
+                logging.debug('Message in bus: %s' % repr(m)[:MAX_LOG_LINE_LENGTH])
                 self.message_dispatcher(m)
 
             except NonCompliantMessageFormatError as e:
@@ -158,7 +159,7 @@ class AmqpListener(threading.Thread):
                 logging.error(traceback.format_exc())
                 self.amqp_connect()
 
-        logging.info('Bye byes!')
+        logging.info('%s says Bye byes!' % self.COMPONENT_ID)
 
 
 def publish_message(connection, message):

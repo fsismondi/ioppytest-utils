@@ -85,7 +85,7 @@ class AmqpDataPacketDumper:
     DEFAULT_LOG_LEVEL = 10  # 10-> debug
     DEFAULT_FILENAME = "DLT_RAW.pcap"
 
-    QUANTITY_MESSAGES_PER_PCAP = 100
+    QUANTITY_MESSAGES_PER_PCAP = 1000
 
     def dumper_init(self):
         # delete tmp pcap file (the one with ~)
@@ -104,7 +104,7 @@ class AmqpDataPacketDumper:
             network=self.dlt
         )
 
-        # copy filename.pcap~ to filename.pcap
+        # copy filename.pcap~ to filename.pcap, so we have a pcap file in the dir since the bagging, even if it's empty
         shutil.copyfile(
             os.path.join(self.dump_dir, self.pcap_filename_wr),
             os.path.join(self.dump_dir, self.pcap_filename)
