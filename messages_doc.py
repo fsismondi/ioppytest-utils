@@ -109,19 +109,19 @@ TBD listens and consumes the following messages from the bus:
 
     print(head_1)
     for s in services:
-        print(table_row(s._type))
+        print(table_row(s.routing_key))
 
     print()
     print()
     print(head_2)
     for e in events:
-        print(table_row(e._type))
+        print(table_row(e.routing_key))
 
     print()
     print()
     print(head_3)
     for e in events:
-        print(table_row(e._type))
+        print(table_row(e.routing_key))
 
 
 def generate_doc_section_into_file(file_to_write, section, list_of_message_classes):
@@ -130,7 +130,7 @@ def generate_doc_section_into_file(file_to_write, section, list_of_message_class
 
     for msg_class in list_of_message_classes:
 
-        msg_type = msg_class()._type
+        msg_type = msg_class().routing_key
         print('generating doc for %s,%s' % (msg_type, msg_class))
 
         # Message Type

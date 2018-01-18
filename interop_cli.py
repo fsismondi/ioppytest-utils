@@ -39,9 +39,6 @@ COLOR_TEST_SESSION_HELPER_MESSAGE = 'yellow'
 TEMP_DIR = 'tmp'
 
 DEFAULT_TOPIC_SUBSCRIPTIONS = [
-    # 'control.testcoordination',
-    # 'control.dissection',
-    # 'control.session',
     '#'
 ]
 
@@ -156,7 +153,7 @@ def amqp_request(request_message, component_id=COMPONENT_ID):
             raise Exception(
                 "Response timeout! rkey: %s , request type: %s" % (
                     request_message.routing_key,
-                    request_message._type
+                    type(request_message)
                 )
             )
 
@@ -969,7 +966,7 @@ def _echo_backend_message(msg):
     assert isinstance(msg, Message)
 
     try:
-        m = "\n[Session message] [%s] " % msg._type
+        m = "\n[Session message] [%s] " % type(msg)
         if hasattr(m, 'description'):
             m += m.description
 

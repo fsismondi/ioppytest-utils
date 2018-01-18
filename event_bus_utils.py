@@ -10,8 +10,9 @@ try:
 except:
     from .messages import *
 
-VERSION = '0.0.8'
+VERSION = '0.0.9'
 AMQP_EXCHANGE = 'amq.topic'
+MAX_LOG_LINE_LENGTH = 120
 
 
 class AmqpSynchCallTimeoutError(Exception):
@@ -59,7 +60,10 @@ class AmqpListener(threading.Thread):
     @classmethod
     def default_message_handler(cls, message_as_dict):
         clean_dict = dict((k, v) for k, v in message_as_dict.items() if v)
-        print(json.dumps(clean_dict, indent=4))
+        print('-' * 120)
+        print('%s : %s' % ('routing_key', clean_dict.pop('routing_key')))
+        print('-' * 120)
+        print(json.dumps(clean_dict, indent=4, sort_keys=True))
 
     def amqp_connect(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
@@ -100,25 +104,13 @@ class AmqpListener(threading.Thread):
 
     def on_request(self, ch, method, props, body):
 
-        props_dict = {
-            'content_type': props.content_type,
-            'delivery_mode': props.delivery_mode,
-            'correlation_id': props.correlation_id,
-            'reply_to': props.reply_to,
-            'message_id': props.message_id,
-            'timestamp': props.timestamp,
-            'user_id': props.user_id,
-            'app_id': props.app_id,
-        }
-
         if self.use_message_typing:
             try:
-                m = Message.from_json(body)
+                m = Message.load_from_pika(method, props, body)
                 if m is None:
-                    raise Exception("Couldnt build message from json %s, amqp props: %s " % (body, props_dict))
-                m.update_properties(**props_dict)
+                    raise Exception("Couldnt build message from json %s, rkey: %s " % (body, method.routing_key))
                 m.routing_key = method.routing_key
-                logging.debug('Message in bus: %s' % repr(m))
+                logging.debug('Message in bus: %s' % repr(m)[:MAX_LOG_LINE_LENGTH])
                 self.message_dispatcher(m)
 
             except NonCompliantMessageFormatError as e:
@@ -132,6 +124,18 @@ class AmqpListener(threading.Thread):
             finally:
                 ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
+
+            props_dict = {
+                'content_type': props.content_type,
+                'delivery_mode': props.delivery_mode,
+                'correlation_id': props.correlation_id,
+                'reply_to': props.reply_to,
+                'message_id': props.message_id,
+                'timestamp': props.timestamp,
+                'user_id': props.user_id,
+                'app_id': props.app_id,
+            }
+
             body_dict = json.loads(body.decode('utf-8'), object_pairs_hook=OrderedDict)
             ch.basic_ack(delivery_tag=method.delivery_tag)
             text_based_message_representation = OrderedDict()
@@ -155,7 +159,7 @@ class AmqpListener(threading.Thread):
                 logging.error(traceback.format_exc())
                 self.amqp_connect()
 
-        logging.info('Bye byes!')
+        logging.info('%s says Bye byes!' % self.COMPONENT_ID)
 
 
 def publish_message(connection, message):
@@ -246,7 +250,7 @@ def amqp_request(connection, request_message, component_id, retries=10):
             raise AmqpSynchCallTimeoutError(
                 "Response timeout! rkey: %s , request type: %s" % (
                     request_message.routing_key,
-                    request_message._type
+                    type(request_message)
                 )
             )
 

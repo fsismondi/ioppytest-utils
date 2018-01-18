@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import json
 import pika
@@ -10,9 +13,11 @@ from datetime import datetime
 try:
     from messages import *
     from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+    from rmq_handler import RabbitMQHandler, JsonFormatter
 except:
     from .messages import *
     from .pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+    from .rmq_handler import RabbitMQHandler, JsonFormatter
 
 try:
     # For Python 3.0 and later
@@ -21,61 +26,34 @@ except ImportError:
     # Fall back to Python 2
     from urlparse import urlparse
 
-
 logger = logging.getLogger(__name__)
 
-VERSION = '0.0.2'
+VERSION = '0.1.1'
+ALLOWED_DATA_LINK_TYPES = (DLT_IEEE802_15_4_NOFCS, DLT_RAW)
 
 
-def launch_amqp_data_to_pcap_dumper(amqp_url=None, amqp_exchange=None, topics=None, dump_dir=None):
+def launch_amqp_data_to_pcap_dumper(dump_dir, log_level, filename, dlt, amqp_url, amqp_exchange, topics):
     def signal_int_handler(self, frame):
-        logger.info('got SIGINT, stopping dumper..')
-
-        if pcap_dumper:
+        if pcap_dumper is not None:
             pcap_dumper.stop()
 
     signal.signal(signal.SIGINT, signal_int_handler)
 
-    if amqp_url and amqp_exchange:
-        amqp_exchange = amqp_exchange
-        amqp_url = amqp_url
-
-    else:
-        try:
-            amqp_exchange = str(os.environ['AMQP_EXCHANGE'])
-            print('Imported AMQP_EXCHANGE env var: %s' % amqp_exchange)
-        except KeyError as e:
-            amqp_exchange = "amq.topic"
-            print('Cannot retrieve environment variables for AMQP EXCHANGE. Loading default: %s' % amqp_exchange)
-        try:
-            amqp_url = str(os.environ['AMQP_URL'])
-            print('Imported AMQP_URL env var: %s' % amqp_url)
-            p = urlparse(amqp_url)
-            user = p.username
-            server = p.hostname
-            logger.info(
-                "Env variables imported for AMQP connection, User: {0} @ Server: {1} ".format(user,
-                                                                                              server))
-        except KeyError:
-            print('Cannot retrieve environment variables for AMQP connection. Loading defaults..')
-            # load default values
-            amqp_url = "amqp://{0}:{1}@{2}/{3}".format("guest", "guest", "localhost", "/")
-
-    if topics:
-        pcap_amqp_topic_subscriptions = topics
-    else:
-        pcap_amqp_topic_subscriptions = ['data.tun.fromAgent.*',
-                                         'data.serial.fromAgent.*']
-
     # init pcap_dumper
     pcap_dumper = AmqpDataPacketDumper(
+        dump_dir=dump_dir,
+        log_level=log_level,
+        filename=filename,
+        dlt=dlt,
+        topics=topics,
         amqp_url=amqp_url,
         amqp_exchange=amqp_exchange,
-        topics=pcap_amqp_topic_subscriptions,
-        dump_dir=dump_dir,
     )
+
     # start pcap_dumper
     pcap_dumper.run()
+
+    return pcap_dumper
 
 
 class AmqpDataPacketDumper:
@@ -101,50 +79,95 @@ class AmqpDataPacketDumper:
         orig_len: the length of the packet as it appeared on the network when it was captured. If incl_len and
             orig_len differ, the actually saved packet size was limited by snaplen.
     """
-    COMPONENT_ID = 'capture_dumper_%s' % uuid.uuid1()  # uuid in case several dumpers listening to bus
-    DEFAULT_DUMP_DIR = 'tmp'
+    # fixme deprecate old rkey fromats
+    DEFAULT_TOPICS = ['#.fromAgent.#', 'fromAgent.#']
+    DEFAULT_DUMP_DIR = "tmp"
+    DEFAULT_LOG_LEVEL = 10  # 10-> debug
+    DEFAULT_FILENAME = "DLT_RAW.pcap"
 
-    DEFAULT_RAWIP_DUMP_FILENAME = "DLT_RAW.pcap"
-    DEFAULT_802154_DUMP_FILENAME = "DLT_IEEE802_15_4_NO_FCS.pcap"
-    NETWORK_DUMPS = [DEFAULT_802154_DUMP_FILENAME, DEFAULT_RAWIP_DUMP_FILENAME]
+    QUANTITY_MESSAGES_PER_PCAP = 1000
 
-    DEFAULT_RAWIP_DUMP_FILENAME_WR = "DLT_RAW.pcap~"
-    DEFAULT_802154_DUMP_FILENAME_WR = "DLT_IEEE802_15_4_NO_FCS.pcap~"
-    NETWORK_DUMPS_TEMP = [DEFAULT_RAWIP_DUMP_FILENAME_WR, DEFAULT_802154_DUMP_FILENAME_WR]
+    def dumper_init(self):
+        # delete tmp pcap file (the one with ~)
+        full_path_temp_pcap_file = os.path.join(self.dump_dir, self.pcap_filename_wr)
+        # delete previous pcap file
+        full_path_pcap_file = os.path.join(self.dump_dir, self.pcap_filename)
 
-    QUANTITY_MESSAGES_PER_PCAP = 100
+        for f in [full_path_pcap_file, full_path_temp_pcap_file]:
+            if os.path.exists(f):
+                if os.path.isfile(f):
+                    os.remove(f)
 
-    def __init__(self, amqp_url, amqp_exchange, topics, dump_dir=None):
+        self.pcap_dumper = Dumper(
+            filename=os.path.join(self.dump_dir, self.pcap_filename_wr),
+            snaplen=2000,
+            network=self.dlt
+        )
 
+        # copy filename.pcap~ to filename.pcap, so we have a pcap file in the dir since the bagging, even if it's empty
+        shutil.copyfile(
+            os.path.join(self.dump_dir, self.pcap_filename_wr),
+            os.path.join(self.dump_dir, self.pcap_filename)
+        )
+
+    def __init__(self,
+                 dump_dir=DEFAULT_DUMP_DIR,
+                 log_level=DEFAULT_LOG_LEVEL,
+                 filename=DEFAULT_FILENAME,
+                 dlt=DLT_RAW,
+                 topics=DEFAULT_TOPICS,
+                 amqp_url=None,
+                 amqp_exchange=None,
+                 ):
+
+        assert dlt in ALLOWED_DATA_LINK_TYPES, 'not accepted dlt %s' % dlt
+
+        self.COMPONENT_ID = 'capture_dumper_%s' % str(uuid.uuid4())[:8]  # uuid in case several dumpers listening to bus
+        self.dlt = dlt
         self.messages_dumped = 0
-        self.url = amqp_url
-        self.exchange = amqp_exchange
 
-        if dump_dir:
-            self.dump_dir = dump_dir
+        if amqp_url and amqp_exchange:
+            self.url = amqp_url
+            self.exchange = amqp_exchange
         else:
-            self.dump_dir = self.DEFAULT_DUMP_DIR
+            self.url = os.environ.get('AMQP_URL')
+            self.exchange = os.environ.get('AMQP_EXCHANGE')
 
+        self.pcap_filename = filename
+        self.pcap_filename_wr = self.pcap_filename + "~"
+
+        self.dump_dir = dump_dir
         if not os.path.exists(self.dump_dir):
             os.makedirs(self.dump_dir)
 
         # pcap dumpers
-        self.pcap_15_4_dumper = None
-        self.pcap_raw_ip_dumper = None
-        self.dumpers_init()
+        self.pcap_dumper = None
+        self.dumper_init()
 
         # AMQP stuff
         self.connection = pika.BlockingConnection(pika.URLParameters(self.url))  # queues & default exchange declaration
         self.channel = self.connection.channel()
 
-        self.data_queue_name = 'data@%s' % self.COMPONENT_ID
+        self.data_queue_name = '%s::packet.sniffed.raw' % self.COMPONENT_ID
         self.channel.queue_declare(queue=self.data_queue_name,
                                    auto_delete=True,
                                    arguments={'x-max-length': 1000}
                                    )
 
+        # create my own logger (to avoid file description errors)
+        self.logger = logging.getLogger(self.COMPONENT_ID)
+
+        # AMQP log handler with f-interop's json formatter
+        rabbitmq_handler = RabbitMQHandler(self.url, self.COMPONENT_ID)
+        json_formatter = JsonFormatter()
+        rabbitmq_handler.setFormatter(json_formatter)
+
+        self.logger.addHandler(rabbitmq_handler)
+        self.logger.setLevel(log_level)
+
         # subscribe to data plane channels
-        for t in topics:
+        self.topics = topics
+        for t in self.topics:
             self.channel.queue_bind(exchange=self.exchange,
                                     queue=self.data_queue_name,
                                     routing_key=t)
@@ -152,13 +175,17 @@ class AmqpDataPacketDumper:
         # subscribe to channel where the terminate session message is published
         self.channel.queue_bind(exchange=self.exchange,
                                 queue=self.data_queue_name,
-                                routing_key='control.session')
+                                routing_key=MsgTestingToolTerminate.routing_key)
 
         # publish Hello message in bus
-        m = MsgTestingToolComponentReady(component=self.COMPONENT_ID)
+        msg = MsgTestingToolComponentReady(
+            component=self.COMPONENT_ID,
+            description="%s READY to start test suite." % self.COMPONENT_ID
+
+        )
         self.channel.basic_publish(
-            body=m.to_json(),
-            routing_key=m.routing_key,
+            body=msg.to_json(),
+            routing_key=msg.routing_key,
             exchange=self.exchange,
             properties=pika.BasicProperties(
                 content_type='application/json',
@@ -168,32 +195,15 @@ class AmqpDataPacketDumper:
         self.channel.basic_qos(prefetch_count=1)
         self.channel.basic_consume(self.on_request, queue=self.data_queue_name)
 
-    def dumpers_init(self):
-
-        for net_dump_filename in self.NETWORK_DUMPS_TEMP:
-            full_path = os.path.join(self.dump_dir, net_dump_filename)
-            if os.path.isfile(full_path):
-                os.remove(full_path)
-
-        self.pcap_15_4_dumper = Dumper(
-            filename=os.path.join(self.dump_dir, self.DEFAULT_802154_DUMP_FILENAME_WR),
-            snaplen=2000,
-            network=DLT_IEEE802_15_4_NOFCS
-        )
-
-        self.pcap_raw_ip_dumper = Dumper(
-            filename=os.path.join(self.dump_dir, self.DEFAULT_RAWIP_DUMP_FILENAME_WR),
-            snaplen=2000,
-            network=DLT_RAW
-        )
-
     def dump_packet(self, message):
-
         try:
             t = time.time()
             t_s = int(t)
             t_u_delta = int((t - t_s) * 1000000)
             if 'serial' in message.interface_name:
+                self.logger.info(
+                    'Dumping packet found in %s interface of %s bytes' % (message.interface_name, len(message.data))
+                )
                 raw_packet = bytes(message.data)
                 packet_slip = bytes(message.data_slip)
 
@@ -205,16 +215,20 @@ class AmqpDataPacketDumper:
                     orig_len=len(raw_packet),
                 )
 
-                self.pcap_15_4_dumper.dump(pcap_packet_header, raw_packet)
+                self.pcap_dumper.dump(pcap_packet_header, raw_packet)
 
                 self.messages_dumped += 1
 
+                # copy filename.pcap~ to filename.pcap
                 shutil.copyfile(
-                    os.path.join(self.dump_dir, self.DEFAULT_802154_DUMP_FILENAME_WR),
-                    os.path.join(self.dump_dir, self.DEFAULT_802154_DUMP_FILENAME)
+                    os.path.join(self.dump_dir, self.pcap_filename_wr),
+                    os.path.join(self.dump_dir, self.pcap_filename)
                 )
 
             elif 'tun' in message.interface_name:
+                self.logger.info(
+                    'Dumping packet found in %s interface of %s bytes' % (message.interface_name, len(message.data))
+                )
                 raw_packet = bytes(message.data)
 
                 # lets build pcap header for packet
@@ -225,108 +239,98 @@ class AmqpDataPacketDumper:
                     orig_len=len(raw_packet),
                 )
 
-                self.pcap_raw_ip_dumper.dump(pcap_packet_header, raw_packet)
+                self.pcap_dumper.dump(pcap_packet_header, raw_packet)
 
                 self.messages_dumped += 1
 
+                # copy filename.pcap~ to filename.pcap
                 shutil.copyfile(
-                    os.path.join(self.dump_dir, self.DEFAULT_RAWIP_DUMP_FILENAME_WR),
-                    os.path.join(self.dump_dir, self.DEFAULT_RAWIP_DUMP_FILENAME)
+                    os.path.join(self.dump_dir, self.pcap_filename_wr),
+                    os.path.join(self.dump_dir, self.pcap_filename)
                 )
 
             else:
-                logger.info('Raw packet not dumped to pcap: ' + repr(message))
+                self.logger.info('Raw packet not dumped to pcap: ' + repr(message))
                 return
 
         except Exception as e:
-            logger.error(e)
+            self.logger.error(e)
 
-        logger.info('Messages dumped : ' + str(self.messages_dumped))
+        logging.info("Messages dumped : " + str(self.messages_dumped))
 
     def dumps_rotate(self):
-
-        for net_dump_filename in self.NETWORK_DUMPS:
-            full_path = os.path.join(self.dump_dir, net_dump_filename)
-            if os.path.isfile(full_path):
-                logger.info('rotating file dump: %s' % full_path)
-                shutil.copyfile(
-                    full_path,
-                    os.path.join(self.dump_dir, datetime.now().strftime('%Y%m%d_%H%M%S_') + net_dump_filename),
-                )
+        self.logger.warning(self.pcap_filename)
+        full_path = os.path.join(self.dump_dir, self.pcap_filename)
+        if os.path.isfile(full_path):
+            self.logger.info('rotating file dump: %s' % full_path)
+            self.logger.info(full_path)
+            self.logger.info(full_path)
+            self.logger.info(
+                os.path.join(self.dump_dir, datetime.now().strftime('%Y%m%d_%H%M%S_') + self.pcap_filename))
+            self.logger.info(self.pcap_filename)
+            shutil.copyfile(
+                full_path,
+                os.path.join(self.dump_dir, datetime.now().strftime('%Y%m%d_%H%M%S_') + self.pcap_filename)
+            )
 
     def stop(self):
-        logger.info("Stopping packet dumper..")
+        self.logger.info("Stopping %s..." % self.COMPONENT_ID)
         self.channel.queue_delete(self.data_queue_name)
         self.channel.stop_consuming()
         self.connection.close()
 
     def on_request(self, ch, method, props, body):
-
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
         try:
 
-            props_dict = {
-                'content_type': props.content_type,
-                'delivery_mode': props.delivery_mode,
-                'correlation_id': props.correlation_id,
-                'reply_to': props.reply_to,
-                'message_id': props.message_id,
-                'timestamp': props.timestamp,
-                'user_id': props.user_id,
-                'app_id': props.app_id,
-            }
-
-            m = Message.from_json(body)
-            m.update_properties(**props_dict)
-            logger.info('got event: %s' % type(m))
+            m = Message.load_from_pika(method, props, body)
+            self.logger.info('got event: %s' % type(m))
 
             if isinstance(m, MsgTestingToolTerminate):
                 ch.stop_consuming()
+                self.logger.info('%s got terminate signal. Terminating...' % self.COMPONENT_ID)
                 self.stop()
 
-            if isinstance(m, MsgPacketSniffedRaw):
+            elif isinstance(m, MsgSniffingStop):
+                ch.stop_consuming()
+                self.logger.info('%s got capture stop singal. Stopping...' % self.COMPONENT_ID)
+                self.stop()
+
+            elif isinstance(m, MsgPacketSniffedRaw):
 
                 self.dump_packet(m)
 
                 try:  # rotate files each X messages dumped
                     if self.messages_dumped != 0 and self.messages_dumped % self.QUANTITY_MESSAGES_PER_PCAP == 0:
                         self.dumps_rotate()
-                        self.dumpers_init()
+                        self.dumper_init()
 
                 except Exception as e:
-                    logger.error(e)
+                    self.logger.error(e)
 
             else:
-                #logger.info('drop amqp message: ' + repr(m))
-                pass
+                self.logger.info('drop amqp message: ' + repr(m))
 
         except NonCompliantMessageFormatError as e:
-            print('* * * * * * API VALIDATION ERROR * * * * * * * ')
-            print("AMQP MESSAGE LIBRARY COULD PROCESS JSON MESSAGE")
-            print('* * * * * * * * * * * * * * * * * * * * * * * * *  \n')
+            err_msg = """
+            * * * * * * API VALIDATION ERROR * * * * * * * 
+            AMQP MESSAGE LIBRARY COULD PROCESS JSON MESSAGE
+            * * * * * * * * * * * * * * * * * * * * * * * *
+            """
+            self.logger.error(err_msg)
+            self.logger.error(e)
             # raise NonCompliantMessageFormatError("AMQP MESSAGE LIBRARY COULD PROCESS JSON MESSAGE")
 
         except Exception as e:
-            logger.error(e)
+            self.logger.error(e)
             req_body_dict = json.loads(body.decode('utf-8'), object_pairs_hook=OrderedDict)
-            logger.error("Message: %s, body: %s" % (json.dumps(req_body_dict), str(body)))
+            self.logger.error("Message: %s, body: %s" % (json.dumps(req_body_dict), str(body)))
 
     def run(self):
-        print("Starting thread listening on the event bus")
         self.channel.start_consuming()
-        print('Bye byes!')
 
 
 if __name__ == '__main__':
-
-    import multiprocessing
-
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-
-    p = multiprocessing.Process(target=launch_amqp_data_to_pcap_dumper(), args=())
-    p.start()
-    for i in range(1, 1000):
-        time.sleep(1)
-        print(i)
-    p.join()
+    dumper = AmqpDataPacketDumper()
+    dumper.run()
