@@ -716,6 +716,65 @@ class MsgUiRequestSessionConfiguration(Message):
     }
 
 
+class MsgUiSessionConfigurationReply(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: UI -> TT
+
+    Description: Message for requesting session information to UI
+    """
+
+    """
+    example:
+    
+    [Session message] [<class 'messages.MsgUiSessionConfigurationReply'>] 
+
+    ---------------  ---------------------------------------------------------------------------------------------------
+     login              96QOPB1H
+     testSuiteType      interoperability
+     configuration      {'testsuite.additional_session_resource': 'automated_iut-coap_server-californium'}
+     amqp_url           amqp://96QOPB1H:7OPU5N5E@mq.dev.f-interop.eu:443/396d9c99-3fd9-49dd-9515-a4ba745071c4
+     messagesRequest    {}
+     start_date         2018-01-17T13:51:31.264000+00:00
+     id                 396d9c99-3fd9-49dd-9515-a4ba745071c4
+     users              federico_sismondiojxu
+                         myslice
+     password           7OPU5N5E
+     status             open
+     _api_version
+     logs               {'date': '2018-01-17T13:45:37.438000+00:00', 'type': 'info', 'message': 'Session created loca...
+                         {'date': '2018-01-17T13:45:37.485000+00:00', 'type': 'info', 'message': 'Deploying session'}
+                         {'date': '2018-01-17T13:45:37.577000+00:00', 'type': 'info', 'message': 'Created user at Ses...
+                         {'date': '2018-01-17T13:45:38.027000+00:00', 'type': 'info', 'message': 'Created session at ...
+                         {'date': '2018-01-17T13:45:38.027000+00:00', 'type': 'info', 'message': 'Session deployed'}
+                         {'date': '2018-01-17T13:45:38.078000+00:00', 'type': 'info', 'message': 'Starting session'}
+                         {'date': '2018-01-17T13:45:39.336000+00:00', 'type': 'info', 'message': 'Session started'}
+                         {'date': '2018-01-17T13:51:04.967000+00:00', 'type': 'info', 'message': 'Stopping session'}
+                         {'date': '2018-01-17T13:51:15.665000+00:00', 'type': 'info', 'message': 'Session stopped'}
+                         {'date': '2018-01-17T13:51:15.666000+00:00', 'type': 'info', 'message': 'Messages cleared'}
+                         {'date': '2018-01-17T13:51:15.699000+00:00', 'type': 'info', 'message': 'Stop listening to t...
+                         {'date': '2018-01-17T13:51:31.264000+00:00', 'type': 'info', 'message': 'Starting session'}
+                         {'date': '2018-01-17T13:51:32.462000+00:00', 'type': 'info', 'message': 'Session started'}
+     end_date           2018-01-17T13:51:04.967000+00:00
+     shared             False
+     listen             True
+     messages
+     messagesReply
+     testSuite          http://orchestrator.dev.f-interop.eu:8181/tests/f-interop/interoperability-coap-single-user
+     messagesDisplay    {}
+     slice_id           urn:publicid:IDN+finterop:project1+slice+testing
+    ---------------  ---------------------------------------------------------------------------------------------------
+        
+    """
+    routing_key = "ui.core.session.get.reply"
+
+    _msg_data_template = {
+    }
+
+
 class MsgUiRequestQuestionRadio(MsgUiRequest):
     """
     Requirements: ...
@@ -2563,6 +2622,7 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
 
         # CORE API: TT <-> GUI
         "ui.core.session.get.request": MsgUiRequestSessionConfiguration,  # TT -> GUI
+        "ui.core.session.get.reply": MsgUiSessionConfigurationReply,  # GUI -> TT
         "ui.user.*.display": MsgUiDisplay,  # TT -> GUI
         "ui.user.*.request": MsgUiRequest,  # TT -> GUI
         "ui.user.*.reply": MsgUiReply,  # GUI -> TT
