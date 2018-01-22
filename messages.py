@@ -407,6 +407,11 @@ class MsgReply(Message):
                     "ok": True,
                 }
 
+            elif 'ok' not in self._msg_data_template:
+                self._msg_data_template.update({
+                    "ok": True,
+                })
+
             super(MsgReply, self).__init__(**kwargs)
 
             # overwrite correlation id template and attribute
