@@ -2663,8 +2663,8 @@ class MsgVizWrite(Message):
     """
     routing_key = "viztool-grafana.write_data"
 
-    _msg_data_template = {
-        "stats":    [{
+    _msg_data_template = [
+        {
             "measurement": "name",
             "tags": {},
             "time": 0,
@@ -2672,8 +2672,7 @@ class MsgVizWrite(Message):
                 "value": 0
             }
         }
-        ]
-    }
+    ]
 
 # attention
 rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
