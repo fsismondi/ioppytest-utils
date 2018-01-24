@@ -2664,11 +2664,10 @@ class MsgVizWrite(Message):
     routing_key = "viztool-grafana.write_data"
 
     _msg_data_template = {
-        "mod_name": "unknown",
-        "timestamp": 0,
         "stats":    [{
             "measurement": "name",
             "tags": {},
+            "time": 0,
             "fields": {
                 "value": 0
             }
