@@ -2586,24 +2586,95 @@ class MsgPerformanceSetValues(Message):
     }
 
 
-class MsgPerformanceStats(Message):
+# # # # # #   VIZ TOOL MESSAGES   # # # # # #
+
+class MsgVizInitRequest(Message):
     """
-    Requirements:   Performance Submodules SHOULD emit this event periodically
-                    Visualization module SHOULD listen to this event
+    Requirements:   Implementing Test Tools should send this at start
+                    Visualization Tool MUST listen to this
     Type:           Event
-    Typical_use:    Performance Submodules -> Visualization
-    Description:    During the test execution, the Performance Submodules
+    Typical_use:    Testing Tool -> Visualization Tool
+    Description:    Visualization Tool is waiting for this message
+                    to start init routines
+    """
+    routing_key = "viztool-grafana.init.request"
+
+    _msg_data_template = {}
+
+
+class MsgVizInitReply(Message):
+    """
+    Requirements:   Visualization MUST send this after recieving MsgVizInitRequest
+                    Test Tool MUST listen to this
+    Type:           Event
+    Typical_use:    Visualization Tool -> Testing Tool
+    Description:    This message contains the URL to access the internal Webserver
+                    that serves the Grafana Instance
+    """
+    routing_key = "viztool-grafana.init.reply"
+
+    _msg_data_template = {
+        "ok": True,
+        "url": "http://url-to-access-grafana:1234"
+    }
+
+
+class MsgVizDashboardRequest(Message):
+    """
+    Requirements:   Implementing Test Tools should send this message
+                    after the Visualization Tool has confirmed the initialization
+                    Visualization Tool MUST listen to this
+    Type:           Event
+    Typical_use:    Testing Tool -> Visualization Tool
+    Description:    Visualization Tool is waiting for this message
+                    to configure the Dashboard based on the JSON config
+    """
+    routing_key = "viztool-grafana.set_dashboard.request"
+
+    _msg_data_template = {
+        "config": {}
+    }
+
+
+class MsgVizDashboardReply(Message):
+    """
+    Requirements:   Visualization MUST send this after recieving MsgVizDashboardRequest
+                    Test Tool MUST listen to this
+    Type:           Event
+    Typical_use:    Visualization Tool -> Testing Tool
+    Description:    This message contains the URL to access the internal Webserver
+                    that serves the Grafana Instance
+    """
+    routing_key = "viztool-grafana.set_dashboard.reply"
+
+    _msg_data_template = {
+        "ok": True
+    }
+
+class MsgVizWrite(Message):
+    """
+    Requirements:   Performance Testing Tool SHOULD emit this event periodically
+                    Visualization Tool MUST listen to this event
+    Type:           Event
+    Typical_use:    Performance Testing Tool -> Visualization
+    Description:    During the test execution, the Performance Testing Tool
                     will periodically emit this event carrying current
                     performance statistics/measurements
     """
-    routing_key = "performance.stats"
+    routing_key = "viztool-grafana.write_data"
 
     _msg_data_template = {
         "mod_name": "unknown",
         "timestamp": 0,
-        "stats": {},
+        "stats":    [{
+            "measurement": "name",
+            "tags": {},
+            "fields": {
+                "value": 0
+            }
+        }
+        ]
     }
-
 
 # attention
 rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
