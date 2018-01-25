@@ -40,6 +40,7 @@ except ImportError:
     pass
 
 VERSION = '0.0.8'
+API_VERSION = '1.0.8'
 
 # defaults vars
 AMQP_URL = 'amqp://guest:guest@localhost'
@@ -172,6 +173,7 @@ class JsonFormatter(logging.Formatter):
         try:
             log_record = OrderedDict()
             log_record['component'] = record.name
+            log_record['_api_version'] = API_VERSION
         except NameError:
             log_record = {}
 
