@@ -2651,6 +2651,7 @@ class MsgVizDashboardReply(Message):
         "ok": True
     }
 
+
 class MsgVizWrite(Message):
     """
     Requirements:   Performance Testing Tool SHOULD emit this event periodically
@@ -2673,6 +2674,7 @@ class MsgVizWrite(Message):
             }
         }
     ]
+
 
 # attention
 rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
@@ -2790,8 +2792,15 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         # performance testing tool: internal TT API
         "performance.heartbeat": MsgPerformanceHeartbeat,  # Perf. Submodules -> Timeline Controller
         "performance.configuration": MsgPerformanceConfiguration,  # Orchestrator -> Timeline Controller
-        "performance.stats": MsgPerformanceStats,  # Perf. Submodules -> Visualization
         "performance.setvalues": MsgPerformanceSetValues,  # Timeline Controller -> Perf. Submodules
+
+        # grafana viz tool
+        "viztool-grafana.init.request": MsgVizInitRequest,
+        "viztool-grafana.init.reply": MsgVizInitReply,
+        "viztool-grafana.set_dashboard.request": MsgVizDashboardRequest,
+        "viztool-grafana.set_dashboard.reply": MsgVizDashboardReply,
+        "viztool-grafana.write_data": MsgVizWrite,
+
     }
 )
 
