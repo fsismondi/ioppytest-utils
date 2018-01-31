@@ -995,7 +995,7 @@ def _echo_backend_message(msg):
         return
 
     elif isinstance(msg, MsgTestSuiteReport):
-        _echo_report_as_table(msg.to_dict())
+        _echo_report_as_table(msg.tc_results)
         return
 
     elif isinstance(msg, MsgTestingToolComponentReady):
@@ -1052,33 +1052,31 @@ def _echo_list_of_dicts_as_table(l):
         _echo_error(traceback.format_exc())
 
 
-def _echo_report_as_table(report_dict):
+def _echo_report_as_table(tc_report_list):
     try:
 
-        assert type(report_dict) is dict
+        assert type(tc_report_list) is list
 
-        testcases = [(k, v) for k, v in report_dict.items() if k.lower().startswith('td')]
+        #testcases = [(k, v) for k, v in report_dict.items() if k.lower().startswith('td')]
+        testcases = tc_report_list
 
-        for tc_name, tc_report in testcases:
+        for tc_report in testcases:
             table = []
-            if tc_report:
-                table.append(("Testcase ID", 'Final verdict', 'Description'))
-                table.append((tc_name, tc_report['verdict'], tc_report['description']))
+            table.append(("Testcase ID", 'Final verdict', 'Description'))
+            table.append((tc_report['testcase_id'], tc_report['verdict'], tc_report['description']))
 
-                # testcase report
-                click.echo()
-                click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
-                click.echo()
-                _echo_testcase_partial_verdicts_as_table(tc_report['partial_verdicts'])
-                click.echo()
-            else:
-                _echo_error('No report for testcase %s ' % tc_name)
+            # testcase report
+            click.echo()
+            click.echo(click.style(tabulate(table, headers="firstrow"), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
+            click.echo()
+            _echo_testcase_partial_verdicts_as_table(tc_report['partial_verdicts'])
+            click.echo()
 
     except Exception as e:
         _echo_error('wrong frame format passed?')
         _echo_error(e)
         _echo_error(traceback.format_exc())
-        _echo_error(json.dumps(report_dict))
+        _echo_error(json.dumps(tc_report_list))
 
 
 def _echo_frames_as_table(frames: list):
