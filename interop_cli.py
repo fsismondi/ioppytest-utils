@@ -567,7 +567,15 @@ def enter_debug_context():
         message = MsgSessionConfiguration(**SIXLOWPAN_TT_CONFIGURATION)  # builds a config message
         publish_message(message)
 
-
+    @cli.command()
+    def _test_tat_analyze_6lowpan():
+        """
+        Send example 6lowpan tat analysis request
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        from message_examples import SIXLOWPAN_TAT_ANALYZE
+        message = MsgInteropTestCaseAnalyze(**SIXLOWPAN_TAT_ANALYZE)
+        publish_message(message)
 
     @cli.command()
     def _configure_coap_tt():

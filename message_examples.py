@@ -1,3 +1,13 @@
+from examples_pcap_base64 import PCAP_6LOWPAN_FORMAT_HC_01
+
+SIXLOWPAN_TAT_ANALYZE = {
+    'protocol': '6lowpan',
+    'testcase_id': 'TD_6LOWPAN_FORMAT_HC_01',
+    'file_enc': 'pcap_base64',
+    'filename': 'TD_6LOWPAN_FORMAT_HC_01.pcap',
+    'value': PCAP_6LOWPAN_FORMAT_HC_01,
+}
+
 SIXLOWPAN_TT_CONFIGURATION = {
     "users": [
         "u1",
