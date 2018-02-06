@@ -2,7 +2,7 @@
 Module for building automatically the doc of the API messages in markdown format.
 """
 import inspect
-
+import logging
 from messages import *
 
 gitlab_url = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages.py'
@@ -26,14 +26,22 @@ events = []
 
 def message_amqp_section(file, message_instance):
     file.write("\n\n```amqp")
-    file.write("\n %s" % message_instance)
+    try:
+        file.write("\n %s" % str(message_instance))
+    except Exception as e:
+        logging.error("\n FAILED FOR (!) ->  n %s" % repr(message_instance))
+        logging.error(e)
     file.write("\n ```")
     return
 
 
 def message_json_section(file, message_instance):
     file.write("\n\n```json")
-    file.write("\n %s" % json.dumps(message_instance.to_dict(), indent=4, ))
+    try:
+        file.write("\n %s" % json.dumps(message_instance.to_dict(), indent=4, ))
+    except Exception as e:
+        logging.error("\n FAILED FOR (!) ->  n %s" % repr(message_instance))
+        logging.error(e)
     file.write("\n ```")
     return
 
@@ -137,7 +145,7 @@ def generate_doc_section_into_file(file_to_write, section, list_of_message_class
         f.write('\n\n\n### %s' % (msg_type))
 
         # Header
-        #f.write('\n\n#### Description:\n\n')
+        # f.write('\n\n#### Description:\n\n')
 
         # markdown table header
         f.write("\n| []() | |\n| --- | --- |\n")
@@ -196,21 +204,20 @@ def generate_doc_section_into_file(file_to_write, section, list_of_message_class
         msg_instance = None
 
         # Messages's example AMQP + JSON
-        if 'reply' not in msg_class.__name__.lower():  # Message is not a reply
+        if 'reply' not in msg_class.routing_key:  # Message is not a reply
             msg_instance = msg_class()
 
-        else:  # Message is a reply -> we need to generate it using a request
-            reply_class_name = msg_class.__name__
-            request_class_name = ''
+        else:  # Message is a reply -> we need to generate it using a request (messages.py library API requierement)
 
-            if 'reply' in msg_class.__name__:
-                request_class_name = reply_class_name.replace("reply", '')
-            elif 'Reply' in msg_class.__name__:
-                request_class_name = reply_class_name.replace("Reply", '')
-            else:
+            reply_routing_key = msg_class.routing_key
+            request_routing_key = reply_routing_key.replace("reply", "request")
+            # get message class of request
+            request_class = rk_pattern_to_message_type_map.get_message_type(request_routing_key)
+            if request_class is None:
                 raise Exception('cannot process message event: %s' % msg_type)
-
-            request_instance = globals()[request_class_name]()
+            # create request
+            request_instance = request_class()
+            # create reply
             msg_instance = msg_class(request_message=request_instance)
 
         # add the amqo + json section
@@ -218,7 +225,7 @@ def generate_doc_section_into_file(file_to_write, section, list_of_message_class
         message_json_section(f, msg_instance)
 
         try:
-            if 'service' in msg_instance.routing_key:
+            if 'request' in msg_instance.routing_key:
                 services.append(msg_instance)
             else:
                 events.append(msg_instance)
@@ -232,22 +239,40 @@ if __name__ == '__main__':
         MsgSessionConfiguration,
         MsgTestingToolConfigured,
         MsgTestSuiteStart,
+        MsgStepStimuliExecute,
+        MsgStepStimuliExecuted,
+        MsgStepVerifyExecute,
+        MsgStepVerifyExecuted,
+        MsgTestCaseVerdict,
         MsgTestSuiteReport,
         MsgTestingToolTerminate,
     ]
 
     so_messages = [
-
-        MsgOrchestratorVersionReq
     ]
 
     ui_messages = [
-        MsgUiRequestTextInput
+        MsgUiDisplayMarkdownText,
+        MsgUiRequestTextInput,
+        MsgUiRequestConfirmationButton,
+        MsgUiRequestSessionConfiguration,
+        MsgUiSessionConfigurationReply,
+        MsgUiRequestUploadFile,
+        MsgUiRequestQuestionCheckbox,
+        MsgUiRequestQuestionRadio
+
     ]
 
     results_repo_messages = [
     ]
 
+    viz_tools = [
+        MsgVizInitRequest,
+        MsgVizInitReply,
+        MsgVizDashboardRequest,
+        MsgVizDashboardReply,
+        MsgVizWrite,
+    ]
     resurces_repo_messages = [
     ]
 
@@ -259,5 +284,6 @@ if __name__ == '__main__':
         generate_doc_section_into_file(f, 'Testing Tool events', tt_messages)
         generate_doc_section_into_file(f, 'Results Repository events', results_repo_messages)
         generate_doc_section_into_file(f, 'Resources Repository events', resurces_repo_messages)
+        generate_doc_section_into_file(f, 'Visualization tools events', viz_tools)
 
     print_doc_tables(services, events)
