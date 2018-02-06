@@ -91,7 +91,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.9'
+API_VERSION = '1.0.10'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -1371,7 +1371,7 @@ class MsgTestCaseReady(Message):
     routing_key = "testsuite.testcase.ready"
 
     _msg_data_template = {
-        "description": "Next test case to be executed is TD_COAP_CORE_01",
+        "description": "Test case ready to start",
         "testcase_id": "TD_COAP_CORE_01",
         "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01",
         "objective": "Perform GET transaction(CON mode)",
@@ -2540,7 +2540,7 @@ class MsgPerformanceHeartbeat(Message):
     Requirements:   Timeline Controller MUST listen to event
                     Performance submodules MUST emit event periodically
     Type:           Event
-    Typical_use:    Performance Submodules -> Timeline Controller
+    Pub/Sub:    Performance Submodules -> Timeline Controller
     Description:    The Timeline Controller verifies that all submodules are
                     active and in the correct state
     """
@@ -2554,11 +2554,10 @@ class MsgPerformanceHeartbeat(Message):
 
 class MsgPerformanceConfiguration(Message):
     """
-    Requirements:   Timeline Controller MUST listen to event
-    Type:           Event
-    Typical_use:    Orchestrator -> Timeline Controller
-    Description:    Carries the performance test configuration to the
-                    Timeline Controller
+    Requirements: Timeline Controller MUST listen to event
+    Type: Event
+    Pub/Sub: Orchestrator -> Timeline Controller
+    Description: Carries the performance test configuration to the Timeline Controller
     """
     routing_key = "performance.configuration"
 
@@ -2575,7 +2574,7 @@ class MsgPerformanceSetValues(Message):
     """
     Requirements:   Performance Submodules MUST listen to event
     Type:           Event
-    Typical_use:    Timeline Controller -> Performance Submodules
+    Pub/Sub:    Timeline Controller -> Performance Submodules
     Description:    During the test execution, the Timeline Controller will
                     periodically emit this event to the performance submodules
                     to update dynamic parameters
@@ -2589,46 +2588,15 @@ class MsgPerformanceSetValues(Message):
 
 # # # # # #   VIZ TOOL MESSAGES   # # # # # #
 
-class MsgVizInitRequest(Message):
-    """
-    Requirements:   Implementing Test Tools should send this at start
-                    Visualization Tool MUST listen to this
-    Type:           Event
-    Typical_use:    Testing Tool -> Visualization Tool
-    Description:    Visualization Tool is waiting for this message
-                    to start init routines
-    """
-    routing_key = "viztool-grafana.init.request"
-
-    _msg_data_template = {}
-
-
-class MsgVizInitReply(Message):
-    """
-    Requirements:   Visualization MUST send this after recieving MsgVizInitRequest
-                    Test Tool MUST listen to this
-    Type:           Event
-    Typical_use:    Visualization Tool -> Testing Tool
-    Description:    This message contains the URL to access the internal Webserver
-                    that serves the Grafana Instance
-    """
-    routing_key = "viztool-grafana.init.reply"
-
-    _msg_data_template = {
-        "ok": True,
-        "url": "http://url-to-access-grafana:1234"
-    }
-
-
 class MsgVizDashboardRequest(Message):
     """
-    Requirements:   Implementing Test Tools should send this message
-                    after the Visualization Tool has confirmed the initialization
-                    Visualization Tool MUST listen to this
-    Type:           Event
-    Typical_use:    Testing Tool -> Visualization Tool
-    Description:    Visualization Tool is waiting for this message
-                    to configure the Dashboard based on the JSON config
+    Requirements:
+        - Visualization Tool MUST listen to this.
+        - Test Tools should send this message after the Visualization Tool has  confirmed the initialization
+
+    Type: Event
+    Pub/Sub: Testing Tool -> Visualization Tool
+    Description: Visualization Tool uses this message to configure the Dashboard based on the JSON config
     """
     routing_key = "viztool-grafana.set_dashboard.request"
 
@@ -2637,14 +2605,14 @@ class MsgVizDashboardRequest(Message):
     }
 
 
-class MsgVizDashboardReply(Message):
+class MsgVizDashboardReply(MsgReply):
     """
-    Requirements:   Visualization MUST send this after recieving MsgVizDashboardRequest
-                    Test Tool MUST listen to this
-    Type:           Event
-    Typical_use:    Visualization Tool -> Testing Tool
-    Description:    This message contains the URL to access the internal Webserver
-                    that serves the Grafana Instance
+    Requirements:
+        - Visualization MUST send this after recieving MsgVizDashboardRequest
+        - Test Tool MUST listen to this
+    Type: Event
+    Pub/Sub: Visualization Tool -> Testing Tool
+    Description: This message contains the URL to access the internal Webserver that serves the Grafana Instance
     """
     routing_key = "viztool-grafana.set_dashboard.reply"
 
@@ -2655,13 +2623,13 @@ class MsgVizDashboardReply(Message):
 
 class MsgVizWrite(Message):
     """
-    Requirements:   Performance Testing Tool SHOULD emit this event periodically
-                    Visualization Tool MUST listen to this event
-    Type:           Event
-    Typical_use:    Performance Testing Tool -> Visualization
-    Description:    During the test execution, the Performance Testing Tool
-                    will periodically emit this event carrying current
-                    performance statistics/measurements
+    Requirements:
+        - Performance Testing Tool SHOULD emit this event periodically
+        - Visualization Tool MUST listen to this event
+    Type: Event
+    Pub/Sub: Performance Testing Tool -> Visualization
+    Description:
+        - During the test execution, the Performance Testing Tool MUST periodically emit this event carrying current performance statistics/measurements
     """
     routing_key = "viztool-grafana.write_data"
 
@@ -2672,6 +2640,38 @@ class MsgVizWrite(Message):
         "fields": {
             "value": 0
         }
+    }
+
+
+class MsgVizInitRequest(Message):
+    """
+    Requirements:   Implementing Test Tools should send this at start
+                    Visualization Tool MUST listen to this
+    Type:           Event
+    Pub/Sub:    Testing Tool -> Visualization Tool
+    Description:    Visualization Tool is waiting for this message
+                    to start init routines
+    """
+    routing_key = "viztool-grafana.init.request"
+
+    _msg_data_template = {
+    }
+
+
+class MsgVizInitReply(MsgReply):
+    """
+    Requirements:   Visualization MUST send this after recieving MsgVizInitRequest
+                    Test Tool MUST listen to this
+    Type:           Event
+    Pub/Sub:    Visualization Tool -> Testing Tool
+    Description:    This message contains the URL to access the internal Webserver
+                    that serves the Grafana Instance
+    """
+    routing_key = "viztool-grafana.init.reply"
+
+    _msg_data_template = {
+        "ok": True,
+        "url": "http://url-to-access-grafana:1234"
     }
 
 
