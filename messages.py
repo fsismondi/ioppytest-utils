@@ -1221,25 +1221,6 @@ class MsgSessionConfiguration(Message):
     }
 
 
-class MsgAgentConfigured(Message):
-    """
-    Requirements: Testing Tool SHOULD publish event
-
-    Type: Event
-
-    Pub/Sub: Testing Tool -> GUI
-
-    Description: The goal is to notify GUI when agents are ready to start the session
-    """
-
-    routing_key = "fromAgent.*.configured"
-
-    _msg_data_template = {
-        "description": "Agent successfully CONFIGURED",
-        'name': 'agent_TT'
-    }
-
-
 class MsgTestingToolConfigured(Message):
     """
     Requirements: TT MUST publish event once session.configuration message has been processed.
@@ -2716,7 +2697,6 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "fromAgent.*.ip.tun.started": MsgAgentTunStarted,  # Agent -> TestingTool
         "toAgent.*.802154.serial.start": MsgAgentSerialStart,  # TestingTool -> Agent
         "fromAgent.*.802154.serial.started": MsgAgentSerialStarted,  # Agent -> TestingTool
-        "fromAgent.*.configured": MsgAgentConfigured,  # TestingTool -> GUI
 
         # ioppytest API: TT signals
         "testingtool.ready": MsgTestingToolReady,  # Testing Tool -> GUI
