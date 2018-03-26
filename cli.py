@@ -34,6 +34,7 @@ message_count = 0
 print("THIS CLI IS NOT SUPPORTED ANY MORE")
 logging.warning("THIS CLI IS NOT SUPPORTED ANY MORE")
 
+
 def print_message(method, props, body):
     global message_count
 
