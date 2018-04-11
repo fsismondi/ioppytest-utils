@@ -11,8 +11,9 @@ MINOR = 1
 PATCH = 2
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, PATCH)
 
-name = 'ioppytest-cli'
-description = "Command line interface for interacting with ioppytest testing tool (all interactions happen over AMQP even bus)."
+name = 'ioppytest-utils'
+description = "Command line interface for interacting with ioppytest testing tool " \
+              "(all interactions happen over AMQP even bus)."
 CLASSIFIERS = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -39,12 +40,15 @@ with open("version.py", "w") as f:
 setup(
     name=name,
     author='Federico Sismondi',
-    author_email="federico.sismondi@gmail.com",
+    author_email="federicosismondi@gmail.com",
+    maintainer='Federico Sismondi',
+    maintainer_email="federicosismondi@gmail.com",
     description=description,
     version=VERSION,
     license="??",
     classifiers=CLASSIFIERS,
     packages=find_packages(exclude=["tests"]),
+    py_modules=['tabulate', 'event_bus_utils'],
     long_description=io.open('README.md', 'r', encoding='utf-8').read(),
     install_requires=[
         'click==6.7',

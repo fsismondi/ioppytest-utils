@@ -5,17 +5,17 @@
 About the library:
 -----------------
 
-This module provides the API message formats used in F-Interop.
+This module provides the API message formats used by ioppytest test framework.
 
 The idea is to be able to have an
 - organized and centralized way of dealing with the big amount of messages formats used in the platform;
-- to be able to import (or just copy/paste) these messages formats from any component in the F-Interop platform,
+- to be able to import (or just copy/paste) these messages for interacting with components on the event bus ,
 - re-use this also for the integration testing;
 - to have version control the messages e.g. messages_testcase_start API v1 and API v2;
 - to have a direct way of exporting this as doc.
 
 
-F-Interop conventions:
+Some conventions:
 ---------------------
 - if event is a service request then the routing key (r_key) is someRpcExecutionEvent.request
 - a reply to a service will be on topic/r_key : someRpcExecutionEvent.reply

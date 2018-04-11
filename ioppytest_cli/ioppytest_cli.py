@@ -1,10 +1,13 @@
 import os
+from os.path import expanduser
 import sys
 import pika
+import errno
 import base64
 import logging
 import threading
 import traceback
+
 from collections import OrderedDict
 
 import click
@@ -24,7 +27,9 @@ except:
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
 
-COMPONENT_ID = 'CLI'
+COMPONENT_ID = 'ioppytest-cli'
+
+HOME = expanduser("~")
 
 # click colors:: black (might gray) , red, green, yellow (might be an orange), blue, magenta, cyan, white (might gray)
 COLOR_DEFAULT = 'white'
@@ -96,9 +101,19 @@ def repl():
     """
     Interactive shell, allows user to interact with the ioppytest testing tool
     """
+
+    history_path_file = "{dir}{sep}{comp_name}-history".format(dir=HOME, sep=os.path.sep, comp_name=COMPONENT_ID)
+    if not os.path.exists(os.path.dirname(history_path_file)):
+        try:
+            os.makedirs(os.path.dirname(history_path_file))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
     prompt_kwargs = {
-        'history': FileHistory('tmp/myrepl-history'),
+        'history': FileHistory(history_path_file),
     }
+    _echo_log_message('saving CMD history at: {}'.format(history_path_file))
 
     _echo_welcome_message()
     _pre_configuration()
@@ -216,7 +231,6 @@ def gui_display_message(text_message, user_id):
 
     if user_id:
         msg_display.routing_key = "ui.user.{}.display".format(user_id)
-
 
     _publish_message(msg_display)
     _echo_input("message display sent to {}".format(msg_display.routing_key))
@@ -919,7 +933,7 @@ def _echo_backend_message(msg):
     assert isinstance(msg, Message)
 
     try:
-        m = "\n[Session message] [%s] " % type(msg)
+        m = "\n[Event bus message] [%s] " % type(msg)
         if hasattr(m, 'description'):
             m += m.description
 
