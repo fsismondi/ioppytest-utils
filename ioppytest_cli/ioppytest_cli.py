@@ -24,7 +24,7 @@ except:
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
 
-COMPONENT_ID = 'cli'
+COMPONENT_ID = 'CLI'
 
 # click colors:: black (might gray) , red, green, yellow (might be an orange), blue, magenta, cyan, white (might gray)
 COLOR_DEFAULT = 'white'
@@ -58,15 +58,6 @@ session_profile = OrderedDict(
         'amqp_exchange': "amq.topic",
     }
 )
-
-# TODO handle the lock automatically with an state object
-# def some_dummuy_release():
-#     _echo_log_message('releasing!')
-# def some_dummuy_acquire():
-#     _echo_log_message('acquiring!')
-# state_lock = Message()
-# state_lock.__setattr__('release', some_dummuy_release)
-# state_lock.__setattr__('acquire', some_dummuy_acquire)
 
 state_lock = threading.RLock()
 state = {
@@ -103,7 +94,7 @@ def cli():
 @cli.command()
 def repl():
     """
-    Interactive shell
+    Interactive shell, allows user to interact with the ioppytest testing tool
     """
     prompt_kwargs = {
         'history': FileHistory('tmp/myrepl-history'),
@@ -139,7 +130,7 @@ def connect(lazy_listener):
 @cli.command()
 def exit():
     """
-    Exit test CLI
+    Exits REPL
 
     """
     _exit()
@@ -194,6 +185,7 @@ def gui_request_file_upload(path_to_file, text_message, user_id):
     if user_id:
         msg_request.routing_key = "ui.user.{}.request".format(user_id)
 
+    _echo_input("sending request to {}".format(msg_request.routing_key))
     msg_response = _amqp_request(msg_request, COMPONENT_ID, timeout=WAIT_TIME_FOR_USER_INPUT)
     values_dict = msg_response.fields.pop()  # If there's more than one then GUI fucked up
 
@@ -202,6 +194,32 @@ def gui_request_file_upload(path_to_file, text_message, user_id):
 
     _save_file_from_base64(filename, value, path_to_file)
     _echo_input("saved file {} in path {}".format(filename, path_to_file))
+
+
+@cli.command()
+@click.argument('text-message')
+@click.option('--user-id', default='all', help="User ID in case there are several users in session")
+def gui_display_message(text_message, user_id):
+    """
+    Sends message to GUI
+    """
+    global state
+
+    msg_display = MsgUiDisplay()
+
+    msg_display.fields = [
+        {
+            "name": text_message,
+            "type": "p",
+        }
+    ]
+
+    if user_id:
+        msg_display.routing_key = "ui.user.{}.display".format(user_id)
+
+
+    _publish_message(msg_display)
+    _echo_input("message display sent to {}".format(msg_display.routing_key))
 
 
 @cli.command()
@@ -377,7 +395,7 @@ ignorable_message_types = {
 @click.argument('message_type', type=click.Choice(list(ignorable_message_types.keys())))
 def ignore(message_type):
     """
-    Do not notify any more on message type
+    (REPL only) Do not notify any more on message type
     """
     try:
         for item in ignorable_message_types[message_type]:
@@ -391,7 +409,7 @@ def ignore(message_type):
 @cli.command()
 def enter_debug_context():
     """
-    Provides user with some extra debugging commands
+    (REPL only) Provides user with some extra debugging commands
 
     """
     global message_handles_options
@@ -634,7 +652,7 @@ def chat(message):
 @cli.command()
 def check_connection():
     """
-    Check if AMQP connection is active
+    (REPL only) Check if AMQP connection is active
     """
     conn_ok = _connection_ok()
     _echo_dispatcher('connection is %s' % 'OK' if conn_ok else 'not OK')
@@ -1289,3 +1307,34 @@ def _publish_message(message):
 
         finally:
             state_lock.acquire()
+
+
+def main():
+    try:
+        session_profile.update({'amqp_exchange': str(os.environ['AMQP_EXCHANGE'])})
+    except KeyError as e:
+        pass  # use default
+
+    try:
+        env_url = str(os.environ['AMQP_URL'])
+        if 'heartbeat_interval' not in env_url:
+            url = '%s?%s&%s&%s&%s&%s' % (
+                env_url,
+                "heartbeat_interval=600",
+                "blocked_connection_timeout=300",
+                "retry_delay=1",
+                "socket_timeout=1",
+                "connection_attempts=3"
+            )
+        else:
+            url = env_url
+
+        session_profile.update({'amqp_url': url})
+    except KeyError as e:
+        pass  # use default
+
+    try:
+        cli()
+    except ExitReplException:
+        print('Bye!')
+        sys.exit(0)
