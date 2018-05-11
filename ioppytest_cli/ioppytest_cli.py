@@ -463,6 +463,29 @@ def enter_debug_context():
 
     # TODO group cmds
     @cli.command()
+    @click.option('-s', '--step-id', default='TD_COAP_CORE_01_step_01', help="step id of the STIMULI")
+    @click.option('-ta', '--target-address', default=None, help="taget address")
+    @click.option('-n', '--node', default='coap_client', help="Node id (related to the IUT role)")
+    def _execute_stimuli_step(step_id, target_address, node):
+        """
+        Stimuli to be executed by IUT1, targeting IUT2
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        msg = MsgStepStimuliExecute(
+            node=node,
+            step_id=step_id,
+            target_address=target_address,
+            description="",
+            step_type="stimuli",
+            step_info=[""],
+            testcase_id="",
+            testcase_ref="",
+
+        )
+        _publish_message(msg)
+
+    # TODO group cmds
+    @cli.command()
     @click.option('-tc', '--testcase-id', default=None, help="testcase id")
     def _sniffer_start(testcase_id):
         """

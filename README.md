@@ -1,10 +1,18 @@
+# Contact
+
+Federico Sismondi
+Contact address: federicosismondi(AT)gmail(DOT)com
+
 # Utils
 
 This repo provides some libs and snippets in the form of python modules
-used by several F-Interop components.
+used by several ioppytest components and F-Interop components.
 
+## Installing CLI, lib and other components:
 
-## Using the libs
+pip install 
+
+## For contributing or directly using the source code:
 Libraries in this repo are all self contained what makes it easy to
 import.
 There are several approaches for doing so:

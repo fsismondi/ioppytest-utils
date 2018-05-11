@@ -73,7 +73,7 @@ class MessagesLibraryTests(unittest.TestCase):
 
         while method:
             message_count += 1
-            logging.info('parsing message %s, number: %s' % (method.routing_key,message_count))
+            logging.info('parsing message %s, number: %s' % (method.routing_key, message_count))
             self.channel.basic_ack(method.delivery_tag)
 
             # api call 1 - load w/o properties
@@ -104,7 +104,14 @@ class MessagesLibraryTests(unittest.TestCase):
                 properties=props_dict,
 
             )
-            assert message, 'load WITH properties didnt work for %s' % (body.decode('utf-8'), method.routing_key)
+            assert message, 'load WITH properties didnt work for %s:\n%s)' % \
+                            (method.routing_key, body.decode('utf-8'))
+            assert message.message_id, 'load WITH properties - no message id field- for %s:\n%s)' % \
+                                       (method.routing_key, body.decode('utf-8'))
+            assert message.content_type, 'load WITH properties - no content type field- for %s:\n%s)' % \
+                                         (method.routing_key, body.decode('utf-8'))
+            assert message.timestamp, 'load WITH properties - no timestamp field- for %s:\n%s)' % \
+                                      (method.routing_key, body.decode('utf-8'))
 
             # api call 3 - load using pika dependent api call
             message = Message.load_from_pika(
@@ -112,8 +119,14 @@ class MessagesLibraryTests(unittest.TestCase):
                 props,
                 body,
             )
-            #print(repr(message))
-            assert message, 'load pika properties didnt work for %s' % (body.decode('utf-8'), method.routing_key)
+            assert message, 'load from pika didnt work for %s:\n%s)' % \
+                            (method.routing_key, body.decode('utf-8'))
+            assert message.message_id, 'load from pika didnt work for  - no message id field- for %s:\n%s)' % \
+                                       (method.routing_key, body.decode('utf-8'))
+            assert message.content_type, 'load from pika didnt work for  - no content type field- for %s:\n%s)' % \
+                                         (method.routing_key, body.decode('utf-8'))
+            assert message.timestamp, 'load from pika didnt work for  - no timestamp field- for %s:\n%s)' % \
+                                      (method.routing_key, body.decode('utf-8'))
 
             method, props, body = self.channel.basic_get(self.queue_for_post_validation)
 
