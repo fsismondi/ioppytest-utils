@@ -2705,6 +2705,59 @@ class MsgReportSaveReply(MsgReply):
     }
 
 
+# # # # # #   RESULTS STORE MESSAGES   # # # # # #
+
+class MsgInsertResultRequest(Message):
+    routing_key = "results_store.insert_result.request"
+
+    _msg_data_template = {
+        "resources": [],
+        "owners": [],
+        "session_id": "",
+        "testing_tool_id": "",
+        "timestamp": 0,
+        "type": "",
+        "data": {}
+    }
+
+
+class MsgInsertResultReply(MsgReply):
+    routing_key = "results_store.insert_result.reply"
+
+    _msg_data_template = {
+        "ok": True
+    }
+
+
+class MsgGetResultRequest(Message):
+    routing_key = "results_store.get_result.request"
+
+    _msg_data_template = {}
+
+
+class MsgGetResultReply(MsgReply):
+    routing_key = "results_store.get_result.reply"
+
+    _msg_data_template = {
+        "ok": True,
+        "results": []
+    }
+
+
+class MsgDeleteResultRequest(Message):
+    routing_key = "results_store.delete_result.request"
+
+    _msg_data_template = {}
+
+
+class MsgDeleteResultReply(MsgReply):
+    routing_key = "results_store.delete_result.reply"
+
+    _msg_data_template = {
+        "ok": True
+    }
+
+
 # attention
 rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
     {
@@ -2830,8 +2883,16 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "viztool-grafana.write_data": MsgVizWrite,
 
         # results-store-service API
-        "results_store.session.report.save.request": MsgReportSaveRequest,
-        "results_store.session.report.save.reply": MsgReportSaveReply
+        "results_store.session.report.save.request": MsgReportSaveRequest,  # TestingTool -> RSS
+        "results_store.session.report.save.reply": MsgReportSaveReply,  # RSS -> TestingTool (reply)
+
+        # results-store API
+        "results_store.insert_result.request": MsgInsertResultRequest,  # any on / vhost -> RS
+        "results_store.insert_result.reply": MsgInsertResultReply,  # RS -> any on / vhost (reply)
+        "results_store.get_result.request": MsgGetResultRequest,  # any on / vhost -> RS
+        "results_store.get_result.reply": MsgGetResultReply,  # RS -> any on / vhost (reply)
+        "results_store.delete_result.request": MsgDeleteResultRequest,  # any on / vhost -> RS
+        "results_store.delete_result.reply": MsgDeleteResultReply,  # RS -> any on / vhost (reply)
     }
 )
 
