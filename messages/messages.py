@@ -5,17 +5,17 @@
 About the library:
 -----------------
 
-This module provides the API message formats used in F-Interop.
+This module provides the API message formats used by ioppytest test framework.
 
 The idea is to be able to have an
 - organized and centralized way of dealing with the big amount of messages formats used in the platform;
-- to be able to import (or just copy/paste) these messages formats from any component in the F-Interop platform,
+- to be able to import (or just copy/paste) these messages for interacting with components on the event bus ,
 - re-use this also for the integration testing;
 - to have version control the messages e.g. messages_testcase_start API v1 and API v2;
 - to have a direct way of exporting this as doc.
 
 
-F-Interop conventions:
+Some conventions:
 ---------------------
 - if event is a service request then the routing key (r_key) is someRpcExecutionEvent.request
 - a reply to a service will be on topic/r_key : someRpcExecutionEvent.reply
@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.14, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.0.17, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.0.14, description = Skip testcase, node = someN
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.0.14, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.0.17, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.0.14", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.0.17", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.0.14", "description": "Test suite START command"}'
+'{"_api_version": "1.0.17", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.0.14, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.0.17, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.0.14, description = Test suite START command,
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.0.14, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.0.17, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -91,7 +91,7 @@ import time
 import json
 import uuid
 
-API_VERSION = '1.0.14'
+API_VERSION = '1.0.17'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -201,10 +201,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.0.14", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.17", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.0.14", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.0.17", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
@@ -777,6 +777,28 @@ class MsgUiSessionConfigurationReply(MsgUiReply):
     routing_key = "ui.core.session.get.reply"
 
     _msg_data_template = {
+        "amqp_url": "amqp://WX9D3L5A:5S68CRDC@mq.dev.f-interop.eu:443/277704a1-03c0-467c-b00d-c984976692d7",
+        "logs": [
+            {
+                "date": "2018-05-07T12:50:47.224000+00:00",
+                "message": "Session created locally",
+                "type": "info"
+            },
+        ],
+        "resources": [
+            {}
+        ],
+        "shared": True,
+        "slice_id": "urn:publicid:IDN+finterop:project1+slice+testing",
+        "start_date": "2018-05-07T12:50:48.128000+00:00",
+        "status": "open",
+        "testSuite": "http://orchestrator.dev.f-interop.eu:8181/tests/f-interop/dummy-tool-shared",
+        "testSuiteType": "interoperability",
+        "users": [
+            "federico_sismondiojxu",
+            "myslice",
+            "federicosismondiparu"
+        ]
     }
 
 
@@ -984,8 +1006,8 @@ class MsgAgentTunStart(Message):
         "ipv4_netmask": None,
         # following 3 are used to notify backend when Agent needs to re-route traffic to another interface
         "re_route_packets_if": None,
-        "re_route_packets_prefix ": None,
-        "re_route_packets_host ": None,
+        "re_route_packets_prefix": None,
+        "re_route_packets_host": None,
     }
 
 
@@ -1014,8 +1036,8 @@ class MsgAgentTunStarted(Message):
         "ipv6_no_forwarding": False,
         # following 3 are used to notify backend when Agent needs to re-route traffic to another interface
         "re_route_packets_if": None,
-        "re_route_packets_prefix ": None,
-        "re_route_packets_host ": None,
+        "re_route_packets_prefix": None,
+        "re_route_packets_host": None,
     }
 
 
@@ -1582,7 +1604,7 @@ class MsgStepStimuliExecute(Message):
         "node_execution_mode": "user_assisted",
         "testcase_id": "TBD",
         "testcase_ref": "TBD",
-        "target_address": "TBD"
+        "target_address": None
     }
 
 

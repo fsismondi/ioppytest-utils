@@ -5,7 +5,7 @@ import inspect
 import logging
 from messages import *
 
-gitlab_url = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages.py'
+gitlab_url = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages/messages.py'
 doc_parser = 'https://gitlab.f-interop.eu/f-interop-contributors/utils/blob/master/messages_doc.py'
 header = """Events (core API)
 
@@ -25,7 +25,8 @@ events = []
 
 
 def message_amqp_section(file, message_instance):
-    file.write("\n\n```amqp")
+    #file.write("\n\n```amqp")
+    file.write("\n\n```")
     try:
         file.write("\n %s" % str(message_instance))
     except Exception as e:
@@ -36,7 +37,8 @@ def message_amqp_section(file, message_instance):
 
 
 def message_json_section(file, message_instance):
-    file.write("\n\n```json")
+    #file.write("\n\n```json")
+    file.write("\n\n```")
     try:
         file.write("\n %s" % json.dumps(message_instance.to_dict(), indent=4, ))
     except Exception as e:
