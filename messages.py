@@ -2664,6 +2664,25 @@ class MsgVizInitReply(MsgReply):
     }
 
 
+# # # # # #   RESULTS STORE SERVICE MESSAGES   # # # # # #
+
+class MsgReportSaveRequest(Message):
+    routing_key = "results_store.session.report.save.request"
+
+    _msg_data_template = {
+        "type": "final",
+        "data": {}
+    }
+
+
+class MsgReportSaveReply(MsgReply):
+    routing_key = "results_store.session.report.save.reply"
+
+    _msg_data_template = {
+        "ok": True
+    }
+
+
 # attention
 rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
     {
@@ -2788,6 +2807,9 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "viztool-grafana.set_dashboard.reply": MsgVizDashboardReply,
         "viztool-grafana.write_data": MsgVizWrite,
 
+        # results-store-service API
+        "results_store.session.report.save.request": MsgReportSaveRequest,
+        "results_store.session.report.save.reply": MsgReportSaveReply
     }
 )
 
