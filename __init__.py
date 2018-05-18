@@ -25,7 +25,7 @@ def save_pcap_from_base64(filename, pcap_file_base64, dir=None):
 def get_from_environment(variable, default):
     if variable in os.environ:
         v = os.environ.get(variable)
-        logging.info("Using environment variable %s=%s" % (variable, default))
+        logging.info("Using environment variable %s=%s" % (variable, v))
     else:
         v = default
         logging.warning("Using default variable %s=%s" % (variable, default))

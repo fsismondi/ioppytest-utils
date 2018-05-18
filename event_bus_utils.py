@@ -24,13 +24,18 @@ class AmqpListener(threading.Thread):
     DEFAULT_EXCHAGE = 'amq.topic'
     DEFAULT_AMQP_URL = 'amqp://guest:guest@locahost/'
 
-    def __init__(self, amqp_url, amqp_exchange, callback, topics=None, use_message_typing=True):
+    def __init__(self, amqp_url, amqp_exchange, callback, topics=None, use_message_typing=True, pre_declared_queue=None):
 
         self.COMPONENT_ID = 'amqp_listener_%s' % str(uuid.uuid4())[:8]
 
         self.connection = None
         self.channel = None
-        self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
+        if pre_declared_queue:
+            self.services_queue_name = pre_declared_queue
+            self.queue_is_declared = True
+        else:
+            self.services_queue_name = 'services_queue@%s' % self.COMPONENT_ID
+            self.queue_is_declared = False
         self.use_message_typing = use_message_typing
 
         threading.Thread.__init__(self)
@@ -69,15 +74,15 @@ class AmqpListener(threading.Thread):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.amqp_url))
         self.channel = self.connection.channel()
 
-        # queues & default exchange declaration
-        self.channel.queue_declare(queue=self.services_queue_name,
-                                   auto_delete=True,
-                                   arguments={'x-max-length': 200})
-
-        for t in self.topics:
-            self.channel.queue_bind(exchange=self.exchange,
-                                    queue=self.services_queue_name,
-                                    routing_key=t)
+        # Declare queue if necessary
+        if not self.queue_is_declared:
+            self.channel.queue_declare(queue=self.services_queue_name,
+                                       auto_delete=True,
+                                       arguments={'x-max-length': 200})
+            for t in self.topics:
+                self.channel.queue_bind(exchange=self.exchange,
+                                        queue=self.services_queue_name,
+                                        routing_key=t)
         # Hello world message
         m = MsgTestingToolComponentReady(
             component=self.COMPONENT_ID,
@@ -85,6 +90,7 @@ class AmqpListener(threading.Thread):
 
         )
 
+        # Send hello world message
         self.channel.basic_publish(
             body=m.to_json(),
             routing_key=m.routing_key,
@@ -94,6 +100,7 @@ class AmqpListener(threading.Thread):
             )
         )
 
+        # Start consuming
         self.channel.basic_qos(prefetch_count=1)
         self.channel.basic_consume(self.on_request, queue=self.services_queue_name)
 
