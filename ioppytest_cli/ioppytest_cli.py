@@ -772,6 +772,7 @@ def _set_up_connection(create_listener=True, lazy_listener=False):
         state_lock.acquire()
         while retries_left > 0:
             try:
+                _echo_session_helper("Connecting to %s" % session_profile['amqp_url'])
 
                 state['connection'] = pika.BlockingConnection(pika.URLParameters(session_profile['amqp_url']))
                 state['channel'] = state['connection'].channel()

@@ -1057,9 +1057,9 @@ class MsgAgentSerialStart(Message):
     routing_key = "toAgent.*.802154.serial.start"
 
     _msg_data_template = {
-        "name": "tbd",
-        "port": "tbd",
-        "boudrate": "tbd",
+        "name": None,
+        "port": None,
+        "boudrate": None,
     }
 
 
@@ -1079,9 +1079,9 @@ class MsgAgentSerialStarted(Message):
     routing_key = "fromAgent.*.802154.serial.started"
 
     _msg_data_template = {
-        "name": "tbd",
-        "port": "tbd",
-        "boudrate": "tbd",
+        "name": None,
+        "port": None,
+        "boudrate": None,
     }
 
 
@@ -1199,7 +1199,7 @@ class MsgSessionChat(Message):
 
     _msg_data_template = {
         "user_name": "Ringo",
-        "node": "tbd",
+        "node": "unknown",
         "description": "I've got blisters on my fingers!"
     }
 
@@ -1266,7 +1266,7 @@ class MsgTestingToolConfigured(Message):
 
     _msg_data_template = {
         "description": "Testing tool CONFIGURED",
-        "session_id": "TBD",
+        "session_id": None,
         "testing_tools": "f-interop/interoperability-coap",
     }
 
@@ -1287,8 +1287,8 @@ class MsgSessionCreated(Message):
 
     _msg_data_template = {
         "description": "A new session has been created",
-        "session_id": "TBD",
-        "testing_tools": "TBD",
+        "session_id": None,
+        "testing_tools": None,
     }
 
 
@@ -1426,7 +1426,7 @@ class MsgTestCaseStarted(Message):
 
     _msg_data_template = {
         "description": "Test case STARTED",
-        "testcase_id": "TBD",
+        "testcase_id": None,
     }
 
 
@@ -1447,8 +1447,8 @@ class MsgTestCaseConfiguration(Message):
     _msg_data_template = {
         "configuration_id": "COAP_CFG_01",
         "node": "coap_server",
-        "testcase_id": "TBD",
-        "testcase_ref": "TBD",
+        "testcase_id": None,
+        "testcase_ref": None,
         "description":
             ["CoAP servers running service at [bbbb::2]:5683",
              "CoAP servers are requested to offer the following resources",
@@ -1490,8 +1490,8 @@ class MsgConfigurationExecute(Message):
     _msg_data_template = {
         "configuration_id": "COAP_CFG_01",
         "node": "coap_server",
-        "testcase_id": "TBD",
-        "testcase_ref": "TBD",
+        "testcase_id": None,
+        "testcase_ref": None,
         "description":
             ["CoAP servers running service at [bbbb::2]:5683",
              "CoAP servers are requested to offer the following resources",
@@ -1602,8 +1602,8 @@ class MsgStepStimuliExecute(Message):
         "step_state": "executing",
         "node": "coap_client",
         "node_execution_mode": "user_assisted",
-        "testcase_id": "TBD",
-        "testcase_ref": "TBD",
+        "testcase_id": None,
+        "testcase_ref": None,
         "target_address": None
     }
 
@@ -1656,7 +1656,7 @@ class MsgStepCheckExecute(Message):
             "UTEST Uri-Path option test"
         ],
         "step_state": "executing",
-        "testcase_id": "TBD",
+        "testcase_id": None,
         "testcase_ref": "TBD"
     }
 
@@ -1710,7 +1710,7 @@ class MsgStepVerifyExecute(Message):
         "node": "coap_client",
         "node_execution_mode": "user_assisted",
         "step_state": "executing",
-        "testcase_id": "TBD",
+        "testcase_id": None,
         "testcase_ref": "TBD"
 
     }
@@ -1756,7 +1756,7 @@ class MsgTestCaseFinished(Message):
 
     _msg_data_template = {
         "testcase_id": "TD_COAP_CORE_01",
-        "testcase_ref": "TBD",
+        "testcase_ref": None,
         "description": "Testcase finished"
     }
 
@@ -2374,7 +2374,7 @@ class MsgDissectionAutoDissect(Message):
         "token": "0lzzb_Bx30u8Gu-xkt1DFE1GmB4",
         "frames": _frames_example,
         "frames_simple_text": None,
-        "testcase_id": "TBD",
+        "testcase_id": None,
         "testcase_ref": "TBD"
     }
 
@@ -2441,7 +2441,7 @@ class MsgPrivacyAnalyzeReply(MsgReply):
     _msg_data_template = {
         "ok": True,
         "verdict": _privacy_empty_report,
-        "testcase_id": "TBD",
+        "testcase_id": None,
     }
 
 
@@ -2523,7 +2523,7 @@ class MsgPrivacyGetStatusReply(MsgReply):
 
     _msg_data_template = {
         "verdict": REPORT_EXAMPLE,
-        "status": "TBD",
+        "status": None,
         "ok": True,
 
     }
