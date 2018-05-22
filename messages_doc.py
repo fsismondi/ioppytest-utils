@@ -248,6 +248,16 @@ if __name__ == '__main__':
         MsgTestCaseVerdict,
         MsgTestSuiteReport,
         MsgTestingToolTerminate,
+        MsgSniffingStart,
+        MsgSniffingStop,
+        MsgSniffingGetCapture,
+        MsgSniffingGetCaptureLast,
+        MsgDissectionDissectCapture,
+        MsgDissectionDissectCaptureReply,
+        MsgInteropTestCaseAnalyze,
+        MsgInteropTestCaseAnalyzeReply,
+
+
     ]
 
     so_messages = [

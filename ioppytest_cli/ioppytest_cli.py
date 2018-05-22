@@ -199,6 +199,7 @@ def gui_request_file_upload(path_to_file, text_message, user_id):
 
     if user_id:
         msg_request.routing_key = "ui.user.{}.request".format(user_id)
+        msg_request.reply_to = "ui.user.{}.reply".format(user_id)
 
     _echo_input("sending request to {}".format(msg_request.routing_key))
     msg_response = _amqp_request(msg_request, COMPONENT_ID, timeout=WAIT_TIME_FOR_USER_INPUT)
