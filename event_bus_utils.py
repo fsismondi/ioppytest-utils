@@ -276,7 +276,6 @@ if __name__ == '__main__':
     except KeyError as e:
         AMQP_URL = "amqp://guest:guest@localhost/"
 
-
     def callback_function(message_received):
         print("Callback function received: \n\t" + repr(message_received))
 
@@ -323,7 +322,12 @@ if __name__ == '__main__':
     con = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
     channel = con.channel()
 
-    ui_request = MsgUiRequestConfirmationButton()
-    print("publishing .. %s" % repr(ui_request))
-    ui_reply = amqp_request(con, ui_request, 'dummy_component')
-    print(repr(ui_reply))
+    # ui_request = MsgUiRequestConfirmationButton()
+    # print("publishing .. %s" % repr(ui_request))
+    # ui_reply = amqp_request(con, ui_request, 'dummy_component')
+    # print(repr(ui_reply))
+
+
+    req = MsgUiRequestSessionConfiguration()
+    ui_reply = amqp_request(con, req,'dummy_component')
+    print(ui_reply.users)
