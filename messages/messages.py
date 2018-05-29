@@ -1135,7 +1135,7 @@ class MsgPacketSniffedRaw(Message):
 
 class MsgTestingToolTerminate(Message):
     """
-    Requirements: TT MUST listen to event, and handle a gracefully termination of all it's processes
+    Requirements: TT SHOULD listen to event, and handle a gracefully termination of all it's processes
 
     Type: Event
 
@@ -1152,7 +1152,7 @@ class MsgTestingToolTerminate(Message):
 
 class MsgTestingToolReady(Message):
     """
-    Requirements: TT MUST publish event as soon as TT is up and listening on the event bus
+    Requirements: TT SHOULD publish event as soon as TT is up and listening on the event bus
 
     Type: Event
 
@@ -1225,13 +1225,13 @@ class MsgSessionLog(Message):
 # TODO depricate this in favour of new UI call for getting the config
 class MsgSessionConfiguration(Message):
     """
-    Requirements: TT MUST listen to event, and configure accordingly
+    Requirements: TT SHOULD listen to event, and configure accordingly
 
     Type: Event
 
     Pub/Sub: Orchestrator -> Testing Tool
 
-    Description: TT MUST listen to this message and configure the testsuite correspondingly
+    Description: TT SHOULD listen to this message and configure the testsuite correspondingly
     """
     routing_key = "session.configuration"
 
@@ -1253,7 +1253,7 @@ class MsgSessionConfiguration(Message):
 
 class MsgTestingToolConfigured(Message):
     """
-    Requirements: TT MUST publish event once session.configuration message has been processed.
+    Requirements: TT SHOULD publish event once session.configuration message has been processed.
 
     Type: Event
 
@@ -1271,7 +1271,6 @@ class MsgTestingToolConfigured(Message):
     }
 
 
-# TODO deprecate this message
 class MsgSessionCreated(Message):
     """
     Requirements: Session Orchestrator MUST publish message on common-services channel (on every session creation)
@@ -1314,7 +1313,7 @@ class MsgTestingToolComponentShutdown(Message):
 
 class MsgTestSuiteStart(Message):
     """
-    Requirements: TT MUST listen to event and start the test suite right after reception. MsgTestSuiteStarted
+    Requirements: TT SHOULD listen to event and start the test suite right after reception. MsgTestSuiteStarted
 
     Type: Event
 
@@ -1350,7 +1349,7 @@ class MsgTestSuiteStarted(Message):
 
 class MsgTestSuiteFinish(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1368,7 +1367,7 @@ class MsgTestSuiteFinish(Message):
 
 class MsgTestCaseReady(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -1392,7 +1391,7 @@ class MsgTestCaseReady(Message):
 
 class MsgTestCaseStart(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1526,7 +1525,7 @@ class MsgConfigurationExecuted(Message):
 
     Description:
         - Message used for indicating that the IUT has been configured as requested
-        - pixit must be included in this message (pixit = Protocol Implementaiton eXtra Information for Testing)
+        - pixit SHOULD be included in this message (pixit = Protocol Implementaiton eXtra Information for Testing)
     """
 
     routing_key = "testsuite.testcase.configuration.executed"
@@ -1540,7 +1539,7 @@ class MsgConfigurationExecuted(Message):
 
 class MsgTestCaseStop(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1559,7 +1558,7 @@ class MsgTestCaseStop(Message):
 
 class MsgTestCaseRestart(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1577,7 +1576,7 @@ class MsgTestCaseRestart(Message):
 
 class MsgStepStimuliExecute(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -1610,7 +1609,7 @@ class MsgStepStimuliExecute(Message):
 
 class MsgStepStimuliExecuted(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1686,7 +1685,7 @@ class MsgStepCheckExecuted(Message):
 
 class MsgStepVerifyExecute(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -1718,7 +1717,7 @@ class MsgStepVerifyExecute(Message):
 
 class MsgStepVerifyExecuted(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1741,7 +1740,7 @@ class MsgStepVerifyExecuted(Message):
 
 class MsgTestCaseFinished(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -1763,7 +1762,7 @@ class MsgTestCaseFinished(Message):
 
 class MsgTestCaseSkip(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1786,7 +1785,7 @@ class MsgTestCaseSkip(Message):
 
 class MsgTestCaseSelect(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1805,7 +1804,7 @@ class MsgTestCaseSelect(Message):
 
 class MsgTestSuiteAbort(Message):
     """
-    Requirements: TT MUST listen to event
+    Requirements: TT SHOULD listen to event
 
     Type: Event
 
@@ -1885,7 +1884,7 @@ class MsgTestSuiteGetStatusReply(MsgReply):
 
 class MsgTestSuiteGetTestCases(Message):
     """
-    Requirements: Testing Tool SHOULD (MUST?) implement (other components should not subscribe to event)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
 
     Type: Request (service)
 
@@ -1902,7 +1901,7 @@ class MsgTestSuiteGetTestCases(Message):
 
 class MsgTestSuiteGetTestCasesReply(MsgReply):
     """
-    Requirements: Testing Tool SHOULD (MUST?) implement (other components should not subscribe to event)
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
 
     Type: Reply (service)
 
@@ -1940,7 +1939,7 @@ class MsgTestSuiteGetTestCasesReply(MsgReply):
 
 class MsgTestCaseVerdict(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -1975,7 +1974,7 @@ class MsgTestCaseVerdict(Message):
 
 class MsgTestSuiteReport(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 
@@ -2352,7 +2351,7 @@ class MsgDissectionDissectCaptureReply(MsgReply):
 
 class MsgDissectionAutoDissect(Message):
     """
-    Requirements: TT MUST publish event
+    Requirements: TT SHOULD publish event
 
     Type: Event
 

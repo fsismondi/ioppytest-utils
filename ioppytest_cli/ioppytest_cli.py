@@ -485,7 +485,26 @@ def enter_debug_context():
         )
         _publish_message(msg)
 
-    # TODO group cmds
+    @cli.command()
+    @click.option('-s', '--step-id', default='TD_COAP_CORE_01_step_04', help="step id of the VERIFY")
+    @click.option('-n', '--node', default='coap_client', help="Node id (related to the IUT role)")
+    def _execute_verify_step(step_id, node):
+        """
+        Request IUT to verify a step, normally they respond with a dummy verify ok
+        """
+        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        msg = MsgStepVerifyExecute(
+            node=node,
+            step_id=step_id,
+            description="",
+            step_type="verify",
+            step_info=[""],
+            testcase_id="",
+            testcase_ref="",
+
+        )
+        _publish_message(msg)
+
     @cli.command()
     @click.option('-tc', '--testcase-id', default=None, help="testcase id")
     def _sniffer_start(testcase_id):
