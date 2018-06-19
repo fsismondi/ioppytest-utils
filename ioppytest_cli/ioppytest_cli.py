@@ -213,6 +213,36 @@ def gui_request_file_upload(path_to_file, text_message, user_id):
 
 
 @cli.command()
+@click.argument('path-to-file', type=click.Path(exists=True))
+@click.option('--text-message', default=None, help="Message to be displayed in GUI")
+@click.option('--user-id', default='all', help="User ID in case there are several users in session")
+def gui_send_file_to_download(path_to_file, text_message, user_id):
+    """
+    Sends file to user's GUI. Useful for example to enable users to download reports, pcap files, etc..
+    """
+    global state
+
+    msg_request = MsgUiSendFileToDownload()
+
+    with open(path_to_file, "rb") as file:
+        enc = base64.b64encode(file.read())
+
+    msg_request.fields = [
+        {
+            "name": text_message,
+            "type": "data",
+            "value": enc.decode("utf-8"),
+        }
+    ]
+
+    if user_id:
+        msg_request.routing_key = "ui.user.{}.display".format(user_id)
+
+    _echo_input("sending file to {}".format(msg_request.routing_key))
+    _publish_message(msg_request)
+
+
+@cli.command()
 @click.argument('text-message')
 @click.option('--user-id', default='all', help="User ID in case there are several users in session")
 def gui_display_message(text_message, user_id):
@@ -461,6 +491,28 @@ def enter_debug_context():
 
         cli.add_command(c)
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @cli.command()
+    def _agent_serial_message_inject():
+        data = [65, 216, 206, 205, 171, 255, 255, 156, 237, 51, 4, 0, 75, 18, 0, 65, 96, 0, 0, 0, 0, 6, 58, 64, 254,
+                128, 0,
+                0, 0, 0, 0, 0, 2, 18, 75, 0, 4, 51, 237, 156, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 155, 0,
+                40,
+                63, 0, 0]
+        data_slip = [192, 65, 216, 206, 205, 171, 255, 255, 156, 237, 51, 4, 0, 75, 18, 0, 65, 96, 0, 0, 0, 0, 6, 58,
+                     64,
+                     254, 128, 0, 0, 0, 0, 0, 0, 2, 18, 75, 0, 4, 51, 237, 156, 255, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0,
+                     0, 26, 155, 0, 40, 63, 0, 0, 192]
+        agent_name = click.prompt('enter agent name (e.g. eut2)', type=str)
+        m = MsgPacketInjectRaw(
+            timestamp=1488586183.45,
+            interface_name='/dev/tun/uruguay_noma',
+            data=data,
+            data_slip=data_slip
+        )
+        m.routing_key = m.routing_key.replace('.*.ip.tun.', ".{}.{}.{}.".format(agent_name, '802154', 'serial'))
+        _publish_message(m)
 
     # TODO group cmds
     @cli.command()
