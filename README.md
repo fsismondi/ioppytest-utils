@@ -30,7 +30,7 @@ Essentially it allows you to:
 >>> from messages import *
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.1.3, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.2.0, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -41,24 +41,24 @@ MsgTestCaseSkip(_api_version = 1.1.3, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.1.3, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.2.0, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.1.3", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.2.0", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.1.3", "description": "Test suite START command"}'
+'{"_api_version": "1.2.0", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.1.3, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.2.0, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -70,7 +70,7 @@ MsgTestSuiteStart(_api_version = 1.1.3, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.1.3, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.2.0, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -96,10 +96,10 @@ MsgErrorReply(_api_version = 1.1.3, error_code = None, error_message = None, ok 
 >>> m.routing_key
 'sniffing.getcapture.request'
 >>> m.to_json()
-'{"_api_version": "1.1.3", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.0", "capture_id": "TD_COAP_CORE_01"}'
 >>> json_message = m.to_json()
 >>> json_message
-'{"_api_version": "1.1.3", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.0", "capture_id": "TD_COAP_CORE_01"}'
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> type(obj) # doctest
 <class 'messages.MsgTestSuiteStart'>
@@ -116,7 +116,7 @@ Build a message from a pika's returned values on consume:
 >>> m.routing_key
 'sniffing.getcapture.request'
 >>> m.to_json()
-'{"_api_version": "1.1.3", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.0", "capture_id": "TD_COAP_CORE_01"}'
 ```
 
 
@@ -161,7 +161,7 @@ Sending message..
 [Event bus message] [<class 'messages.messages.MsgTestSuiteStart'>]
 
 ------------  ------------------------
-_api_version  1.1.3
+_api_version  1.2.0
 description   Test suite START command
 ------------  ------------------------
 
@@ -172,22 +172,22 @@ but also for testing internal services provided by the tools
 
 ```
 > _send_MsgTestSuiteGetTestCases
-[User input] trying to send message: MsgTestSuiteGetTestCases(_api_version = 1.1.3, )
+[User input] trying to send message: MsgTestSuiteGetTestCases(_api_version = 1.2.0, )
 Sending message..
 
 [Event bus message] [<class 'messages.messages.MsgTestSuiteGetTestCases'>]
 ------------  -----
-_api_version  1.1.3
+_api_version  1.2.0
 ------------  -----
 
 [log][test_coordinator|amqp_connector] RECEIVED request: <class 'ioppytest.utils.messages.messages.MsgTestSuiteGetTestCases'>
 [log][test_coordinator|amqp_connector] HANDLING request: <class 'ioppytest.utils.messages.messages.MsgTestSuiteGetTestCases'>
-[log][test_coordinator|amqp_connector] PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.1.3, ok = True, tc_list = [OrderedDict([('te
+[log][test_coordinator|amqp_connector] PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.0, ok = True, tc_list = [OrderedDict([('te
 
 [Event bus message] [<class 'messages.messages.MsgTestSuiteGetTestCasesReply'>]
 
 ------------  --------------------------------------------------------------------------------------------------------------------
- _api_version    1.1.3
+ _api_version    1.2.0
  ok              True
  tc_list         {'testcase_id': 'TD_COAP_CORE_01', 'testcase_ref': 'http://doc.f-interop.eu/tests/TD_COAP_CORE_01', 'state': None}
                   {'testcase_id': 'TD_COAP_CORE_02', 'testcase_ref': 'http://doc.f-interop.eu/tests/TD_COAP_CORE_02', 'state': None}
@@ -221,13 +221,13 @@ other example:
 
 ```
 > _send_MsgAgentTunStart
-[User input] trying to send message: MsgAgentTunStart(_api_version = 1.1.3, ipv4_host = None, ipv4_netmask = None, ipv4_network = None, ipv6_host = :3, ipv6_no_forwarding = False, ipv6_prefix = bbbb, name = agent_TT, re_route_packets_host = None, re_route_packets_if = None, re_route_packets_prefix = None, )
+[User input] trying to send message: MsgAgentTunStart(_api_version = 1.2.0, ipv4_host = None, ipv4_netmask = None, ipv4_network = None, ipv6_host = :3, ipv6_no_forwarding = False, ipv6_prefix = bbbb, name = agent_TT, re_route_packets_host = None, re_route_packets_if = None, re_route_packets_prefix = None, )
 Sending message..
 
 [Event bus message] [<class 'messages.messages.MsgAgentTunStart'>]
 
 -----------------------  --------
-_api_version             1.1.3
+_api_version             1.2.0
 ipv4_host
 ipv4_netmask
 ipv4_network
@@ -281,7 +281,7 @@ and the message properties into Message python objects
 [Event bus message] [<class 'messages.messages.MsgTestingToolComponentReady'>]
 
 ------------  -------------------------------
-_api_version  1.1.3
+_api_version  1.2.0
 component     amqp_listener_b49d7db4
 description   amqp_listener_b49d7db4 is READY
 ------------  -------------------------------
@@ -304,7 +304,7 @@ No conversion from json to python objects, no data validation
 routing_key : testsuite.testcases.list.request
 ------------------------------------------------------------------------------------------------------------------------
 {
-    "_api_version": "1.1.3",
+    "_api_version": "1.2.0",
     "content_type": "application/json",
     "correlation_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
     "message_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
@@ -336,13 +336,13 @@ routing_key : log.info.test_coordinator|amqp_connector
     "_api_version": "1.0.8",
     "component": "test_coordinator|amqp_connector",
     "content_type": "application/json",
-    "message": "PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.1.3, ok = True, tc_list = [OrderedDict([('te"
+    "message": "PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.0, ok = True, tc_list = [OrderedDict([('te"
 }
 ------------------------------------------------------------------------------------------------------------------------
 routing_key : testsuite.testcases.list.reply
 ------------------------------------------------------------------------------------------------------------------------
 {
-    "_api_version": "1.1.3",
+    "_api_version": "1.2.0",
     "content_type": "application/json",
     "correlation_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
     "message_id": "619283ab-c6a1-4b91-8a65-8697b665e3a1",
