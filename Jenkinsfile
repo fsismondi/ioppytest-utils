@@ -61,8 +61,16 @@ if(env.JOB_NAME =~ 'utils/'){
         }
       }
 
-      stage("other tests"){
-        gitlabCommitStatus("other tests"){
+      stage("run doctests"){
+        gitlabCommitStatus("run doctests"){
+            sh '''
+                python3 -m ttests/test_doctests.py
+            '''
+        }
+      }
+
+      stage("test doc build"){
+        gitlabCommitStatus("test doc build"){
             sh '''
                 python3 -m messages_doc
             '''

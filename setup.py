@@ -6,11 +6,12 @@ from setuptools import setup, find_packages
 
 MAJOR = 1
 MINOR = 2
-PATCH = 0
+PATCH = 1
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, PATCH)
 
 name = 'ioppytest-utils'
-description = "Command line interface for interacting with ioppytest testing tool " \
+description = "Set of useful packages, modules  and programs for ioppytest components." \
+              "Installs `ioppytest-cli` Command line interface for interacting with ioppytest testing tool " \
               "(all interactions happen over AMQP event bus)."
 CLASSIFIERS = [
     "Development Status :: 3 - Alpha",
@@ -42,8 +43,8 @@ setup(
     version=VERSION,
     license='GPLv3+',
     classifiers=CLASSIFIERS,
-    packages=find_packages(exclude=["tests"]),
-    py_modules=['tabulate', 'event_bus_utils'],
+    packages=['event_bus_utils'],
+    py_modules=['tabulate', 'messages', 'pure_pcapy'],
     long_description=io.open('README.md', 'r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     install_requires=[
