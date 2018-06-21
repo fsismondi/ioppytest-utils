@@ -63,6 +63,7 @@ DLT_IEEE802_15_4_NOFCS = 230
 
 logger = logging.getLogger()
 
+
 class PcapError(Exception):
     """ General Pcap module exception class """
     pass

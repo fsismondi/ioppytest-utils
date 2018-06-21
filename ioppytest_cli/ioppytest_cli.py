@@ -1427,10 +1427,10 @@ def main():
 
     try:
         env_url = str(os.environ['AMQP_URL'])
-        if 'heartbeat_interval' not in env_url:
+        if 'heartbeat' not in env_url:
             url = '%s?%s&%s&%s&%s&%s' % (
                 env_url,
-                "heartbeat_interval=600",
+                "heartbeat=600",
                 "blocked_connection_timeout=300",
                 "retry_delay=1",
                 "socket_timeout=1",

@@ -2,22 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
-import pika
-import signal
 import shutil
-import logging
+import signal
 from datetime import datetime
+
+import pika
 
 # use this as main and also lib:
 try:
     from messages import *
     from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
-    from rmq_handler import RabbitMQHandler, JsonFormatter
+    from event_bus_utils.rmq_handler import RabbitMQHandler, JsonFormatter
 except:
-    from .messages import *
-    from .pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
-    from .rmq_handler import RabbitMQHandler, JsonFormatter
+    from messages import *
+    from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+    from event_bus_utils.rmq_handler import RabbitMQHandler, JsonFormatter
 
 try:
     # For Python 3.0 and later
