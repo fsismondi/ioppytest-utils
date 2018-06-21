@@ -8,7 +8,7 @@ import traceback
 try:
     from messages import *
 except:
-    from messages import *
+    from .messages import *
 
 VERSION = '0.0.10'
 AMQP_EXCHANGE = 'amq.topic'

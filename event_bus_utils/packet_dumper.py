@@ -14,9 +14,9 @@ try:
     from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
     from event_bus_utils.rmq_handler import RabbitMQHandler, JsonFormatter
 except:
-    from messages import *
-    from pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
-    from event_bus_utils.rmq_handler import RabbitMQHandler, JsonFormatter
+    from .messages import *
+    from .pure_pcapy import Dumper, Pkthdr, DLT_RAW, DLT_IEEE802_15_4_NOFCS
+    from .event_bus_utils.rmq_handler import RabbitMQHandler, JsonFormatter
 
 try:
     # For Python 3.0 and later

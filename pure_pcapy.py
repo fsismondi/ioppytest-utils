@@ -62,6 +62,7 @@ DLT_IEEE802_15_4_NOFCS = 230
 
 logger = logging.getLogger()
 
+logger.warning("Soon to be deprecated! Use package instead!")
 
 class PcapError(Exception):
     """ General Pcap module exception class """
