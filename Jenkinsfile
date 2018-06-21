@@ -64,7 +64,7 @@ if(env.JOB_NAME =~ 'utils/'){
       stage("run doctests"){
         gitlabCommitStatus("run doctests"){
             sh '''
-                python3 -m tests/test_doctests.py
+                python3 -m tests.test_doctests
             '''
         }
       }
