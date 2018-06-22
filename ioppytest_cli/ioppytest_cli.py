@@ -493,6 +493,48 @@ def enter_debug_context():
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @cli.command()
+    def _results_store_insert_result():
+        tc_results_example = [
+            {'verdict': 'pass',
+             'description': 'No interoperability error was detected.',
+             'testcase_id': 'TD_COAP_CORE_01',
+             'partial_verdicts': [
+                 ['TD_COAP_CORE_01_step_02', None, 'CHECK step: postponed', ''],
+                 ['TD_COAP_CORE_01_step_03', None, 'CHECK step: postponed', ''],
+                 ['TD_COAP_CORE_01_step_04', 'pass',
+                  'VERIFY step: User informed that the information was displayed correclty on his/her IUT',
+                  ''],
+                 ['tat_check_1', 'pass',
+                  '<Frame   1: [bbbb::1 -> bbbb::2] CoAP [CON 861] GET /test> Match: CoAP(type=0, code=1)'],
+                 ['tat_check_2', 'pass',
+                  '<Frame   2: [bbbb::2 -> bbbb::1] CoAP [ACK 861] 2.05 Content > Match: CoAP(opt=Opt(CoAPOptionContentFormat()))']]},
+            {'verdict': 'pass',
+             'description': 'No interoperability error was detected.',
+             'testcase_id': 'TD_COAP_CORE_02',
+             'partial_verdicts': [
+                 ['TD_COAP_CORE_02_step_02', None, 'CHECK step: postponed', ''],
+                 ['TD_COAP_CORE_02_step_03', None, 'CHECK step: postponed', ''],
+                 ['TD_COAP_CORE_02_step_04', 'pass',
+                  'VERIFY step: User informed that the information was displayed correclty on his/her IUT', ''],
+                 ['tat_check_1', 'pass',
+                  '<Frame   1: [bbbb::1 -> bbbb::2] CoAP [CON 808] DELETE /test> Match: CoAP(type=0, code=4)'],
+                 ['tat_check_2', 'pass',
+                  "<Frame   2: [bbbb::2 -> bbbb::1] CoAP [ACK 808] 2.02 Deleted > Match: CoAP(code=66, mid=0x0328, tok=b'')"]]},
+            {'verdict': 'None', 'description': 'Testcase TD_COAP_CORE_04 was skipped.',
+             'testcase_id': 'TD_COAP_CORE_04', 'partial_verdicts': []},
+        ]
+        m = MsgInsertResultRequest(
+            data=tc_results_example
+        )
+        _publish_message(m)
+
+    @cli.command()
+    def _results_store_get_result():
+        m = MsgGetResultRequest(
+        )
+        _publish_message(m)
+
+    @cli.command()
     def _agent_serial_message_inject():
         data = [65, 216, 206, 205, 171, 255, 255, 156, 237, 51, 4, 0, 75, 18, 0, 65, 96, 0, 0, 0, 0, 6, 58, 64, 254,
                 128, 0,

@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 MAJOR = 1
 MINOR = 2
-PATCH = 1
+PATCH = 3
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, PATCH)
 
 name = 'ioppytest-utils'
@@ -43,10 +43,11 @@ setup(
     version=VERSION,
     license='GPLv3+',
     classifiers=CLASSIFIERS,
-    packages=['event_bus_utils'],
+    packages=['event_bus_utils', 'ioppytest_cli'],
     py_modules=['tabulate', 'messages', 'pure_pcapy'],
     long_description=io.open('README.md', 'r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
+
     install_requires=[
         'click==6.7',
         'click_repl==0.1.2',
