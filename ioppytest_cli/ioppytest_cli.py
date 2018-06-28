@@ -565,7 +565,7 @@ def enter_debug_context():
         """
         Stimuli to be executed by IUT1, targeting IUT2
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         msg = MsgStepStimuliExecute(
             node=node,
             step_id=step_id,
@@ -586,7 +586,7 @@ def enter_debug_context():
         """
         Request IUT to verify a step, normally they respond with a dummy verify ok
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         msg = MsgStepVerifyExecute(
             node=node,
             step_id=step_id,
@@ -608,7 +608,7 @@ def enter_debug_context():
         if testcase_id is None:
             testcase_id = 'PCAP_TEST'
 
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         msg = MsgSniffingStart(capture_id=testcase_id,
                                filter_if='tun0',
                                filter_proto='udp')
@@ -619,7 +619,7 @@ def enter_debug_context():
         """
         Sniffer stop
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         msg = MsgSniffingStop()
         _publish_message(msg)
 
@@ -628,7 +628,7 @@ def enter_debug_context():
         """
         Sniffer get last capture
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         msg = MsgSniffingGetCaptureLast()
         _publish_message(msg)
 
@@ -637,7 +637,7 @@ def enter_debug_context():
         """
         Send example configuration message for perf TT
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         from message_examples import PERF_TT_CONFIGURATION
         message = MsgSessionConfiguration(**PERF_TT_CONFIGURATION)  # builds a config for the perf TT
         _publish_message(message)
@@ -647,7 +647,7 @@ def enter_debug_context():
         """
         Send example configuration message for CoMI TT
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         from message_examples import COMI_TT_CONFIGURATION
         message = MsgSessionConfiguration(**COMI_TT_CONFIGURATION)  # builds a config message
         _publish_message(message)
@@ -657,7 +657,7 @@ def enter_debug_context():
         """
         Send example configuration message for SIXLOWPAN TT
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         from message_examples import SIXLOWPAN_TT_CONFIGURATION
         message = MsgSessionConfiguration(**SIXLOWPAN_TT_CONFIGURATION)  # builds a config message
         _publish_message(message)
@@ -667,7 +667,7 @@ def enter_debug_context():
         """
         Send example 6lowpan tat analysis request
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         from message_examples import SIXLOWPAN_TAT_ANALYZE
         message = MsgInteropTestCaseAnalyze(**SIXLOWPAN_TAT_ANALYZE)
         _publish_message(message)
@@ -677,7 +677,7 @@ def enter_debug_context():
         """
         Send example configuration message for CoAP TT
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         from message_examples import COAP_TT_CONFIGURATION
         message = MsgSessionConfiguration(**COAP_TT_CONFIGURATION)  # builds a config message
         _publish_message(message)
@@ -687,7 +687,7 @@ def enter_debug_context():
         """
         Get session config from UI
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
         req = MsgUiRequestSessionConfiguration()
         _publish_message(req)
 
@@ -697,7 +697,7 @@ def enter_debug_context():
         """
         Skip a particular testcase
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
         msg = MsgTestCaseSkip(
             testcase_id=testcase_id
@@ -710,7 +710,7 @@ def enter_debug_context():
         """
         Send message to GUI
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
         msg = MsgUiDisplayMarkdownText()
 
@@ -733,7 +733,7 @@ def enter_debug_context():
         """
         Send button to GUI
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
         msg = MsgUiRequestConfirmationButton()
 
@@ -753,7 +753,7 @@ def enter_debug_context():
         """
         Send button to GUI
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
         msg = MsgSessionLog(
             component=COMPONENT_ID,
@@ -769,7 +769,7 @@ def enter_debug_context():
         """
         Send button to GUI
         """
-        _echo_input("Executing debug message %s" % sys._getframe().f_code.co_name)
+        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
         msg = MsgSessionLog(
             component=COMPONENT_ID,
@@ -780,6 +780,24 @@ def enter_debug_context():
         _publish_message(msg)
 
     _echo_session_helper("Entering debugger context, added extra CMDs, please type --help for more info")
+
+
+@cli.command()
+@click.option('--target-host', default='bbbb::2', help="ICMPv6 destination address")
+@click.option('--origin-node', default='coap_client', help="Origin Node id (related to the automated IUT role)")
+def _test_automated_iut_reaches_another_other_implementation(target_host, origin_node):
+    """
+    Request automated IUT to send a ping request to a certain ip destination
+    """
+    _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
+    msg = MsgAutomatedIutTestPing(
+        node=origin_node,
+        target_address=target_host
+
+    )
+    resp = _amqp_request(msg, COMPONENT_ID, 15)
+
+    assert resp.ok, '%s cannot reach destination %s' % (origin_node, target_host)
 
 
 @cli.command()

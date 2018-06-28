@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 MAJOR = 1
 MINOR = 2
-PATCH = 3
+PATCH = 4
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, PATCH)
 
 name = 'ioppytest-utils'
