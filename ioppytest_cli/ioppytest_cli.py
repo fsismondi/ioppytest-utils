@@ -5,6 +5,7 @@ import pika
 import errno
 import base64
 import logging
+import datetime
 import threading
 import traceback
 
@@ -1214,8 +1215,9 @@ def _echo_frames_as_table(frames: list):
         for frame in frames:
             table = []
             assert type(frame) is dict
+            timestamp = datetime.datetime.fromtimestamp(int(frame['timestamp'])).strftime('%Y-%m-%d %H:%M:%S')
             table.append(('frame id', frame['id']))
-            table.append(('frame timestamp', frame['timestamp']))
+            table.append(('frame timestamp', timestamp))
             table.append(('frame error', frame['error']))
 
             # frame header print
