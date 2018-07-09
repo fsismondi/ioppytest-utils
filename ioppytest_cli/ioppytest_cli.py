@@ -1208,7 +1208,7 @@ def _echo_report_as_table(tc_report_list):
         _echo_error(json.dumps(tc_report_list))
 
 
-def _echo_frames_as_table(frames: list):
+def _echo_frames_as_table(frames):
     assert type(frames) is list
 
     try:
@@ -1241,7 +1241,7 @@ def _echo_frames_as_table(frames: list):
         _echo_error(traceback.format_exc())
 
 
-def _echo_list_as_table(ls: list, first_row_is_header=False):
+def _echo_list_as_table(ls, first_row_is_header=False):
     list_flat_items = []
     assert type(ls) is list
 
@@ -1257,7 +1257,7 @@ def _echo_list_as_table(ls: list, first_row_is_header=False):
     click.echo()  # new line
 
 
-def _echo_dict_as_table(d: dict):
+def _echo_dict_as_table(d):
     table = []
     for key, value in d.items():
         if type(value) is list:
@@ -1270,7 +1270,7 @@ def _echo_dict_as_table(d: dict):
     click.echo(click.style(tabulate(table), fg=COLOR_TEST_SESSION_HELPER_MESSAGE))
 
 
-def _echo_session_helper(msg: str):
+def _echo_session_helper(msg):
     click.echo(click.style('[Test Assistant] %s' % msg, fg=COLOR_SESSION_ASSISTANCE))
 
 
