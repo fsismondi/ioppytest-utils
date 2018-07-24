@@ -1,12 +1,11 @@
 # Author:
 #     Federico Sismondi <federicosismondi@gmail.com>
 
-import io
-from setuptools import setup, find_packages
+from setuptools import setup
 
 MAJOR = 1
 MINOR = 2
-PATCH = 5
+PATCH = 6
 VERSION = "{}.{}.{}".format(MAJOR, MINOR, PATCH)
 
 name = 'ioppytest-utils'
@@ -32,6 +31,9 @@ CLASSIFIERS = [
 with open("version.py", "w") as f:
     f.write("__version__ = '{}'\n".format(VERSION))
 
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
+
 setup(
     name=name,
     author='Federico Sismondi',
@@ -45,9 +47,8 @@ setup(
     classifiers=CLASSIFIERS,
     packages=['event_bus_utils', 'ioppytest_cli'],
     py_modules=['tabulate', 'messages', 'pure_pcapy'],
-    long_description=io.open('README.md', 'r', encoding='utf-8').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
-
     install_requires=[
         'click==6.7',
         'click_repl==0.1.2',

@@ -817,13 +817,15 @@ class MsgUiRequestQuestionRadio(MsgUiRequest):
         "tags": {},
         "fields": [
             {
-                "name": "True",
+                "name": "some_info",
                 "type": "radio",
+                "label": "choice number 1",
                 "value": True
             },
             {
-                "name": "False",
+                "name": "some_info",
                 "type": "radio",
+                "label": "choice number 2",
                 "value": False
             },
         ]
@@ -2260,6 +2262,10 @@ class MsgInteropTestCaseAnalyze(Message):
 
     PCAP_empty_base64 = "1MOyoQIABAAAAAAAAAAAAMgAAAAAAAAA"
 
+    PCAP_TC_COAP_01_base64 = '1MOyoQIABAAAAAAAAAAAAAAABAAAAAAAGfdPV8tZCAAtAAAALQAAAAIAAABFAAApcawAAEARAAB/AAABfwAAAdYxFj' \
+                             'MAFf4oQgGqAWLatHRlc3TBAhn3T1fHrAgAXgAAAF4AAAACAAAARQAAWlLmAABAEQAAfwAAAX8AAAEWM9YxAEb+WWJF' \
+                             'qgFi2sAhHpEC/1R5cGU6IDAgKENPTikKQ29kZTogMSAoR0VUKQpNSUQ6IDQzNTIxClRva2VuOiA2MmRh'
+
     routing_key = "analysis.interop.testcase.analyze.request"
 
     _msg_data_template = {
@@ -2268,7 +2274,7 @@ class MsgInteropTestCaseAnalyze(Message):
         "testcase_ref": "http://doc.f-interop.eu/tests/TD_COAP_CORE_01",
         "file_enc": "pcap_base64",
         "filename": "TD_COAP_CORE_01.pcap",
-        "value": PCAP_empty_base64,
+        "value": PCAP_TC_COAP_01_base64,
     }
 
 

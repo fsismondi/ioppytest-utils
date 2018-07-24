@@ -749,35 +749,14 @@ def enter_debug_context():
         _publish_message(msg)
 
     @cli.command()
-    @click.argument('text')
-    def _ui_send_confirmation_button(text):
+    def _ui_send_radio_button():
         """
-        Send button to GUI
-        """
-        _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
-
-        msg = MsgSessionLog(
-            component=COMPONENT_ID,
-            message=text
-        )
-
-        _echo_input(text)
-        _publish_message(msg)
-
-    @cli.command()
-    @click.argument('text')
-    def _ui_send_confirmation_button(text):
-        """
-        Send button to GUI
+        Send checkbox example to GUI
         """
         _echo_session_helper("Executing test message function %s" % sys._getframe().f_code.co_name)
 
-        msg = MsgSessionLog(
-            component=COMPONENT_ID,
-            message=text
-        )
+        msg = MsgUiRequestQuestionRadio()
 
-        _echo_input(text)
         _publish_message(msg)
 
     _echo_session_helper("Entering debugger context, added extra CMDs, please type --help for more info")
@@ -854,11 +833,10 @@ def get_session_status():
         _echo_dict_as_table(resp)
 
         list = []
-        list.append(('testcase id', 'testcase ref', 'testcase status'))
+        list.append(('testcase id', 'testcase ref', 'test case objective', 'testcase status'))
         for tc in tc_states:
             if tc:
-                val1, val2, val3, _, _, _ = tc.values()
-                list.append((val1, val2, val3))
+                list.append((tc.values()))
         # print tc states
         _echo_list_as_table(list, first_row_is_header=True)
 

@@ -1,30 +1,35 @@
-# Contact
+Contact
+-------
 
 Federico Sismondi
 Contact address: federicosismondi(AT)gmail(DOT)com
 
-# Utils
+Utils
+-----
 
 This repo provides some libs and snippets in the form of python modules
 used by several ioppytest components and F-Interop components.
 
-## Installing CLI, lib and other components:
+Installing CLI, lib and other components
+------------------------------------------
 
 `pip install ioppytest-utils`
 
 
-## Package `event_bus_utils`
+# Package `event_bus_utils`
+---------------------------
 
 (coming soon)
 
-## Package `messages`:
+# Package `messages`
+--------------------
 
 This packages provides to your code a new abstraction level on
 how to interact with the messages in the bus.
 
 Essentially it allows you to:
 
-### 1. manipulate data using the python syntax
+## 1. manipulate data using the python syntax
 
 ```
 >>> from messages import *
@@ -88,7 +93,7 @@ MsgErrorReply(_api_version = 1.2.5, error_code = None, error_message = None, ok 
 
 ```
 
-### 2. importing/exporting message events from/to json
+## 2. importing/exporting message events from/to json
 
 ```
 # We can use the Message class to build Message objects from json + rkey:
@@ -103,11 +108,10 @@ MsgErrorReply(_api_version = 1.2.5, error_code = None, error_message = None, ok 
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> type(obj) # doctest
 <class 'messages.MsgTestSuiteStart'>
-
 ```
 
 
-### 3. importing messages from event bus using pika's API
+## 3. importing messages from event bus using pika's API
 
 Build a message from a pika's returned values on consume:
 
@@ -120,7 +124,10 @@ Build a message from a pika's returned values on consume:
 ```
 
 
-## cli tool: ioppytest-cli
+# Package cli tool: ioppytest-cli
+---------------------------------
+
+(used from terminal with entrypoint `ioppytest-cli`)
 
  ```
 (my_venv) ➜  ioppytest-cli
@@ -148,7 +155,7 @@ Commands:
 
 
 
-### REPL mode: `ioppytest-cli repl`
+## 1. REPL mode: `ioppytest-cli repl`
 
 this can be used for example for UI actions:
 
@@ -164,7 +171,6 @@ Sending message..
 _api_version  1.2.5
 description   Test suite START command
 ------------  ------------------------
-
 ```
 
 but also for testing internal services provided by the tools
@@ -244,6 +250,7 @@ re_route_packets_prefix
 
 
 press TAB for more info:
+
 ```
 >
    _configure_6lowpan_tt                         Send example configuration message for...
@@ -266,8 +273,7 @@ press TAB for more info:
 ```
 
 
-
-### sniffing the event bus with: `ioppytest-cli connect`
+## sniffing the event bus with: `ioppytest-cli connect`
 
 connects to event bus (amqp vhost), subscribes and consumes any type of
 message in the bus, this component tries to import the json messages
@@ -288,7 +294,7 @@ description   amqp_listener_b49d7db4 is READY
 ```
 
 
-### sniffing w/ lazy listener: `ioppytest-cli connect --ll`
+## sniffing w/ lazy listener: `ioppytest-cli connect --ll`
 
 The same as `ioppytest-cli connect` but no import into `messages`
 objects. It just echos back the json and some amqp properties like
@@ -296,7 +302,8 @@ routing key, message id, correlation id, content type, etc..
 
 No conversion from json to python objects, no data validation
 
-```(my_venv) ➜  ioppytest_cli connect -ll
+```
+(my_venv) ➜  ioppytest_cli connect -ll
 
 [Test Assistant] Connecting to amqp://paul:iamthewalrus@f-interop.rennes.inria.fr/session05?heartbeat=600&blocked_connection_timeout=300&retry_delay=1&socket_timeout=1&connection_attempts=3
 
@@ -482,7 +489,10 @@ routing_key : log.info.test_coordinator|amqp_connector
 }
 ```
 
-## For contributing or directly using the source code:
+
+For contributing or directly using the source code:
+---------------------------------------------------
+
 Libraries in this repo are all self contained what makes it easy to
 import.
 There are several approaches for doing so:
@@ -494,21 +504,25 @@ Please increase the VERSION number when doing so.
 
 2. Submodule it:
 From the top dir of your git repo run:
+
 ```
 git submodule add https://gitlab.f-interop.eu/f-interop-contributors/utils.git <someSubDir>/utils
 ```
 
 commit & push
+
 ```
 git commit -m 'added f-interop's utils git repo as submodule'
 ```
 
 remember when cloning a project with submodules to use --recursive flag
+
 ```
 git clone --recursive ...
 ```
 
 or else, right after cloning you can:
+
 ```
 git submodule update --init --recursive
 ```
@@ -516,11 +530,13 @@ git submodule update --init --recursive
 whenever you find that your utils libraries are not the latests versions
 you can 'bring' those last changes from the main utils repo to your project
 with:
+
 ```
 git submodule update --remote --merge
 ```
 
 after bringing the last changes you can update your project with the last changes by doing:
+
 ```
 git add <someSubDir>/utils
 git commit -m 'updated submodule reference to last commit'
