@@ -153,7 +153,8 @@ def exit():
 
 
 @cli.command()
-def download_network_traces():
+@click.option('--destination', default=TEMP_DIR, help='Destination directory.', show_default=True)
+def download_network_traces(destination):
     """
     Downloads all networks traces generated during the session
     """
@@ -169,8 +170,8 @@ def download_network_traces():
             response = _amqp_request(msg, COMPONENT_ID)
 
             if response.ok:
-                _save_file_from_base64(response.filename, response.value, TEMP_DIR)
-                _echo_input("downloaded network trace %s , into dir: %s" % (response.filename, TEMP_DIR))
+                _save_file_from_base64(response.filename, response.value, destination)
+                _echo_input("downloaded network trace %s , into dir: %s" % (response.filename, destination))
             else:
                 raise Exception(response.error_message)
 
