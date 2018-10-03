@@ -35,7 +35,7 @@ Essentially it allows you to:
 >>> from messages import *
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.5, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.2.8, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -46,24 +46,24 @@ MsgTestCaseSkip(_api_version = 1.2.5, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.5, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.2.8, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.2.5", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.2.8", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.2.5", "description": "Test suite START command"}'
+'{"_api_version": "1.2.8", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.2.5, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.2.8, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -75,7 +75,7 @@ MsgTestSuiteStart(_api_version = 1.2.5, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.2.5, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.2.8, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -101,10 +101,10 @@ MsgErrorReply(_api_version = 1.2.5, error_code = None, error_message = None, ok 
 >>> m.routing_key
 'sniffing.getcapture.request'
 >>> m.to_json()
-'{"_api_version": "1.2.5", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.8", "capture_id": "TD_COAP_CORE_01"}'
 >>> json_message = m.to_json()
 >>> json_message
-'{"_api_version": "1.2.5", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.8", "capture_id": "TD_COAP_CORE_01"}'
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> type(obj) # doctest
 <class 'messages.MsgTestSuiteStart'>
@@ -120,7 +120,7 @@ Build a message from a pika's returned values on consume:
 >>> m.routing_key
 'sniffing.getcapture.request'
 >>> m.to_json()
-'{"_api_version": "1.2.5", "capture_id": "TD_COAP_CORE_01"}'
+'{"_api_version": "1.2.8", "capture_id": "TD_COAP_CORE_01"}'
 ```
 
 
@@ -168,7 +168,7 @@ Sending message..
 [Event bus message] [<class 'messages.messages.MsgTestSuiteStart'>]
 
 ------------  ------------------------
-_api_version  1.2.5
+_api_version  1.2.8
 description   Test suite START command
 ------------  ------------------------
 ```
@@ -178,22 +178,22 @@ but also for testing internal services provided by the tools
 
 ```
 > _send_MsgTestSuiteGetTestCases
-[User input] trying to send message: MsgTestSuiteGetTestCases(_api_version = 1.2.5, )
+[User input] trying to send message: MsgTestSuiteGetTestCases(_api_version = 1.2.8, )
 Sending message..
 
 [Event bus message] [<class 'messages.messages.MsgTestSuiteGetTestCases'>]
 ------------  -----
-_api_version  1.2.5
+_api_version  1.2.8
 ------------  -----
 
 [log][test_coordinator|amqp_connector] RECEIVED request: <class 'ioppytest.utils.messages.messages.MsgTestSuiteGetTestCases'>
 [log][test_coordinator|amqp_connector] HANDLING request: <class 'ioppytest.utils.messages.messages.MsgTestSuiteGetTestCases'>
-[log][test_coordinator|amqp_connector] PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.5, ok = True, tc_list = [OrderedDict([('te
+[log][test_coordinator|amqp_connector] PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.8, ok = True, tc_list = [OrderedDict([('te
 
 [Event bus message] [<class 'messages.messages.MsgTestSuiteGetTestCasesReply'>]
 
 ------------  --------------------------------------------------------------------------------------------------------------------
- _api_version    1.2.5
+ _api_version    1.2.8
  ok              True
  tc_list         {'testcase_id': 'TD_COAP_CORE_01', 'testcase_ref': 'http://doc.f-interop.eu/tests/TD_COAP_CORE_01', 'state': None}
                   {'testcase_id': 'TD_COAP_CORE_02', 'testcase_ref': 'http://doc.f-interop.eu/tests/TD_COAP_CORE_02', 'state': None}
@@ -227,13 +227,13 @@ other example:
 
 ```
 > _send_MsgAgentTunStart
-[User input] trying to send message: MsgAgentTunStart(_api_version = 1.2.5, ipv4_host = None, ipv4_netmask = None, ipv4_network = None, ipv6_host = :3, ipv6_no_forwarding = False, ipv6_prefix = bbbb, name = agent_TT, re_route_packets_host = None, re_route_packets_if = None, re_route_packets_prefix = None, )
+[User input] trying to send message: MsgAgentTunStart(_api_version = 1.2.8, ipv4_host = None, ipv4_netmask = None, ipv4_network = None, ipv6_host = :3, ipv6_no_forwarding = False, ipv6_prefix = bbbb, name = agent_TT, re_route_packets_host = None, re_route_packets_if = None, re_route_packets_prefix = None, )
 Sending message..
 
 [Event bus message] [<class 'messages.messages.MsgAgentTunStart'>]
 
 -----------------------  --------
-_api_version             1.2.5
+_api_version             1.2.8
 ipv4_host
 ipv4_netmask
 ipv4_network
@@ -287,7 +287,7 @@ and the message properties into Message python objects
 [Event bus message] [<class 'messages.messages.MsgTestingToolComponentReady'>]
 
 ------------  -------------------------------
-_api_version  1.2.5
+_api_version  1.2.8
 component     amqp_listener_b49d7db4
 description   amqp_listener_b49d7db4 is READY
 ------------  -------------------------------
@@ -311,7 +311,7 @@ No conversion from json to python objects, no data validation
 routing_key : testsuite.testcases.list.request
 ------------------------------------------------------------------------------------------------------------------------
 {
-    "_api_version": "1.2.5",
+    "_api_version": "1.2.8",
     "content_type": "application/json",
     "correlation_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
     "message_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
@@ -343,13 +343,13 @@ routing_key : log.info.test_coordinator|amqp_connector
     "_api_version": "1.0.8",
     "component": "test_coordinator|amqp_connector",
     "content_type": "application/json",
-    "message": "PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.5, ok = True, tc_list = [OrderedDict([('te"
+    "message": "PUBLISHING to routing_key: testsuite.testcases.list.reply, msg: MsgReply(_api_version = 1.2.8, ok = True, tc_list = [OrderedDict([('te"
 }
 ------------------------------------------------------------------------------------------------------------------------
 routing_key : testsuite.testcases.list.reply
 ------------------------------------------------------------------------------------------------------------------------
 {
-    "_api_version": "1.2.5",
+    "_api_version": "1.2.8",
     "content_type": "application/json",
     "correlation_id": "00393e9e-d255-4309-8a9b-18ec608602f3",
     "message_id": "619283ab-c6a1-4b91-8a65-8697b665e3a1",
@@ -542,3 +542,143 @@ git add <someSubDir>/utils
 git commit -m 'updated submodule reference to last commit'
 git push
 ```
+
+
+TODO:
+=====
+
+using ioppytest console file:
+
+```
+python3 -i console.py
+```
+
+```
+>>> AMQP_URL
+'amqp://paul:iamthewalrus@f-interop.rennes.inria.fr/session05?heartbeat=0&blocked_connection_timeout=2&retry_delay=1&socket_timeout=5&connection_attempts=3'
+
+Document use of ioppytest_cli interactively with python terminal:
+
+ >>> ioppytest_cli.session_profile.update({'amqp_url': AMQP_URL}))
+  File "<stdin>", line 1
+    ioppytest_cli.session_profile.update({'amqp_url': AMQP_URL}))
+                                                                ^
+SyntaxError: invalid syntax
+>>> ioppytest_cli.session_profile.update({'amqp_url': AMQP_URL})
+>>> ioppytest_cli.session_profile.update({'amqp_url': AMQP_URL})
+KeyboardInterrupt
+>>> ioppytest_cli.session_profile
+OrderedDict([('user_name', 'Walter White'), ('protocol', 'coap'), ('node', 'both'), ('amqp_url', 'amqp://paul:iamthewalrus@f-interop.rennes.inria.fr/session05?heartbeat=0&blocked_connection_timeout=2&retry_delay=1&socket_timeout=5&connection_attempts=3'), ('amqp_exchange', 'amq.topic')])
+>>> a=ioppytest_cli._set_up_connection()
+[Test Assistant] Connecting to amqp://paul:iamthewalrus@f-interop.rennes.inria.fr/session05?heartbeat=0&blocked_connection_timeout=2&retry_delay=1&socket_timeout=5&connection_attempts=3
+
+[Event bus message] [<class 'messages.MsgTestingToolComponentReady'>]
+
+>>> ------------  -------------------------------
+_api_version  1.2.8
+component     amqp_listener_47607736
+description   amqp_listener_47607736 is READY
+------------  -------------------------------
+
+>>> ioppytest_cli.download_network_traces()
+
+[Event bus message] [<class 'messages.MsgTestSuiteGetTestCases'>]
+
+------------  -----
+_api_version  1.2.8
+------------  -----
+[Error] Is testing tool up?
+[Error] Response timeout! rkey: testsuite.testcases.list.request , request type: <class 'messages.MsgTestSuiteGetTestCases'>
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/click/core.py", line 722, in __call__
+    return self.main(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/click/core.py", line 697, in main
+    rv = self.invoke(ctx)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/click/core.py", line 895, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/click/core.py", line 535, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/ioppytest_cli/ioppytest_cli.py", line 164, in download_network_traces
+    ls = state['tc_list'].copy()
+KeyError: 'tc_list'
+>>>
+
+```
+
+if ioppytest testing tool is running on a certain AMQP vhost,
+and test case 20 and 21 have been executed.
+Then using ioppytest console provides nice features like ask the
+testing tool for all the pcap files and create a local copy of those:
+
+```
+python3 -i console.py
+```
+
+```
+Project dir: /Users/fsismondi/dev/ioppytest
+ENVIRONMENT VAR not found, using defaulte: INTERACTIVE_SESSION=True
+Env vars for AMQP connection succesfully imported
+URL: amqp://paul:iamthewalrus@f-interop.rennes.inria.fr/session05
+AMQP_EXCHANGE: amq.topic
+Welcome to ttproto console.
+- run as: python3 -i console.py
+- Use [tab] to complete
+- Use help(object) to print help messages.
+- Quit using ctrl+d
+>>> # use AMQP event bus instance where a testing tool is listening to:
+...
+>>>
+KeyboardInterrupt
+>>> AMQP_URL='amqp://5JFKMADK:M49Y8NQZ@mq.f-interop.eu:443/750bcce8-c1e3-4d9a-ba39-efd12d9da7a4'
+>>> ioppytest_cli
+<module 'ioppytest_cli.ioppytest_cli' from '/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/ioppytest_cli/ioppytest_cli.py'>
+
+>>> ioppytest_cli.session_profile.update({'amqp_url': AMQP_URL})
+>>> ioppytest_cli.download_network_traces()
+
+No connection established yet, setting up one..
+
+[Test Assistant] Connecting to amqp://5JFKMADK:M49Y8NQZ@mq.f-interop.eu:443/750bcce8-c1e3-4d9a-ba39-efd12d9da7a4
+testcase_id      testcase_ref                                   objective                                                                                                             state
+---------------  ---------------------------------------------  --------------------------------------------------------------------------------------------------------------------  -----------
+TD_COAP_CORE_01  http://doc.f-interop.eu/tests/TD_COAP_CORE_01  Perform GET transaction(CON mode)                                                                                     skipped
+TD_COAP_CORE_02  http://doc.f-interop.eu/tests/TD_COAP_CORE_02  Perform DELETE transaction (CON mode)                                                                                 skipped
+TD_COAP_CORE_03  http://doc.f-interop.eu/tests/TD_COAP_CORE_03  Perform PUT transaction (CON mode)                                                                                    skipped
+TD_COAP_CORE_04  http://doc.f-interop.eu/tests/TD_COAP_CORE_04  Perform POST transaction (CON mode)                                                                                   skipped
+TD_COAP_CORE_05  http://doc.f-interop.eu/tests/TD_COAP_CORE_05  Perform GET transaction (NON mode)                                                                                    skipped
+TD_COAP_CORE_06  http://doc.f-interop.eu/tests/TD_COAP_CORE_06  Perform DELETE transaction (NON mode)                                                                                 skipped
+TD_COAP_CORE_07  http://doc.f-interop.eu/tests/TD_COAP_CORE_07  Perform PUT transaction (NON mode)                                                                                    skipped
+TD_COAP_CORE_08  http://doc.f-interop.eu/tests/TD_COAP_CORE_08  Perform POST transaction (NON mode)                                                                                   skipped
+TD_COAP_CORE_09  http://doc.f-interop.eu/tests/TD_COAP_CORE_09  Perform GET transaction with separate response(CON mode, no piggyback)                                                skipped
+TD_COAP_CORE_10  http://doc.f-interop.eu/tests/TD_COAP_CORE_10  Perform GET transaction containing non-empty Token (CON mode)                                                         skipped
+TD_COAP_CORE_11  http://doc.f-interop.eu/tests/TD_COAP_CORE_11  Perform GET transaction containing non-empty Token with a separate response (CON mode)                                skipped
+TD_COAP_CORE_12  http://doc.f-interop.eu/tests/TD_COAP_CORE_12  Perform GET transaction using empty Token (CON mode)                                                                  skipped
+TD_COAP_CORE_13  http://doc.f-interop.eu/tests/TD_COAP_CORE_13  Perform GET transaction containing several URI-Path options (CON mode)                                                skipped
+TD_COAP_CORE_14  http://doc.f-interop.eu/tests/TD_COAP_CORE_14  Perform GET transaction containing several URI-Query options (CON mode)                                               skipped
+TD_COAP_CORE_15  http://doc.f-interop.eu/tests/TD_COAP_CORE_15  Perform GET transaction (CON mode, piggybacked response) in a lossy context                                           skipped
+TD_COAP_CORE_16  http://doc.f-interop.eu/tests/TD_COAP_CORE_16  Perform GET transaction (CON mode, delayed response) in a lossy context                                               skipped
+TD_COAP_CORE_17  http://doc.f-interop.eu/tests/TD_COAP_CORE_17  Perform GET transaction with a separate response(NON mode)                                                            skipped
+TD_COAP_CORE_18  http://doc.f-interop.eu/tests/TD_COAP_CORE_18  Perform POST transaction with responses containing several Location-Path option(CON mode)                             skipped
+TD_COAP_CORE_19  http://doc.f-interop.eu/tests/TD_COAP_CORE_19  Perform POST transaction with responses containing several Location-Query option(CON mode)                            skipped
+TD_COAP_CORE_20  http://doc.f-interop.eu/tests/TD_COAP_CORE_20  Perform GET transaction containing the Accept option (CON mode)                                                       finished
+TD_COAP_CORE_21  http://doc.f-interop.eu/tests/TD_COAP_CORE_21  Perform GET transaction containing the Etag option (CON mode)                                                         finished
+TD_COAP_CORE_22  http://doc.f-interop.eu/tests/TD_COAP_CORE_22  Perform GET transaction with responses containing the ETag option requests containing the If-Match option (CON mode)  configuring
+TD_COAP_CORE_23  http://doc.f-interop.eu/tests/TD_COAP_CORE_23  Perform PUT transaction containing the If-None-Match option (CON mode)                                                None
+TD_COAP_CORE_31  http://doc.f-interop.eu/tests/TD_COAP_CORE_31  Perform CoAP Ping (CON mode)                                                                                          skipped
+
+[User input] downloaded network trace TD_COAP_CORE_20.pcap , into dir: tmp
+[User input] downloaded network trace TD_COAP_CORE_21.pcap , into dir: tmp
+
+
+
+```
+
+
+```
+ls tmp/*.pcap
+myrepl-history
+TD_COAP_CORE_20.pcap
+TD_COAP_CORE_21.pcap
+```
+
