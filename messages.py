@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.8, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.2.10, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.2.8, description = Skip testcase, node = someNo
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.8, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.2.10, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.2.8", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.2.10", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.2.8", "description": "Test suite START command"}'
+'{"_api_version": "1.2.10", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.2.8, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.2.10, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.2.8, description = Test suite START command, 
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.2.8, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.2.10, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -82,16 +82,16 @@ MsgErrorReply(_api_version = 1.2.8, error_code = None, error_message = None, ok 
 >>> err.get_properties() # doctest: +SKIP
 '{'timestamp': 1515172549, 'correlation_id': '16257581-06be-4088-a1f6-5672cc73d8f2', 'message_id': '1ec12c2b-33c7-44ad-97b8-5099c4d52e81', 'content_type': 'application/json'}'
 
-
 """
-
 from collections import OrderedDict
 import logging
 import time
 import json
 import uuid
 
-API_VERSION = '1.2.8'
+logger = logging.getLogger(__name__)
+
+API_VERSION = '1.2.10'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -201,10 +201,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.2.8", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.10", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.2.8", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.10", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
@@ -396,6 +396,7 @@ class MsgReply(Message):
     """
     Auxiliary class which creates replies messages with fields based on the request.
     Routing key, corr_id are generated based on the request message
+    When not passing request_message as argument
     """
 
     def __init__(self, request_message=None, **kwargs):
@@ -422,10 +423,11 @@ class MsgReply(Message):
             self._properties["correlation_id"] = request_message.correlation_id
             self.correlation_id = request_message.correlation_id
 
-        else:  # note this doesnt generate amqp properties
+        else:  # note this doesnt copy amqp properties from original
             super(MsgReply, self).__init__(**kwargs)
-            logging.warning(
-                '[messages] lazy response built, generating reply message without properties for %s' % repr(self)[:70]
+            logger.info(
+                '[messages] lazy message reply generated. Do not expect correlation between request and reply amqp'
+                'properties  %s' % repr(self)[:70]
             )
 
     def correlate_to(self, request_message):
