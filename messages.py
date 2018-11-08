@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.10, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.2.11, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.2.10, description = Skip testcase, node = someN
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.10, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.2.11, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.2.10", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.2.11", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.2.10", "description": "Test suite START command"}'
+'{"_api_version": "1.2.11", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.2.10, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.2.11, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.2.10, description = Test suite START command,
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.2.10, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.2.11, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -91,7 +91,7 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-API_VERSION = '1.2.10'
+API_VERSION = '1.2.11'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -201,10 +201,10 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.2.10", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.11", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.2.10", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.11", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
@@ -1008,6 +1008,31 @@ class MsgUiDisplayMarkdownText(MsgUiDisplay):
         ]
     }
 
+
+class MsgUiDisplayIFrame(Message):
+    """
+    Requirements: ...
+
+    Type: Event
+
+    Pub/Sub: TT -> UI
+
+    Description: Message for displaying iframing GUI and external server
+    """
+
+    routing_key = "ui.user.all.display"
+
+    _msg_data_template = {
+        "level": None,
+        "tags": {},
+        "fields": [
+            {
+                "type": "iframe",
+                "name": "my_iframe",
+                "value": "https://www.w3schools.com"
+            },
+        ]
+    }
 
 # # # # # # AGENT MESSAGES # # # # # #
 

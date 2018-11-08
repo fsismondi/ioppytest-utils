@@ -117,7 +117,7 @@ def repl():
     _echo_log_message('saving CMD history at: {}'.format(history_path_file))
 
     _echo_welcome_message()
-    _pre_configuration()
+    #_pre_configuration()
     _echo_session_helper("\nYou can press TAB for the available commands at any time \n")
 
     _echo_session_helper("\nThe command <action [param]> needs to be used for executing the test actions\n")
@@ -267,6 +267,28 @@ def gui_display_message(text_message, user_id):
 
     _publish_message(msg_display)
     _echo_input("message display sent to {}".format(msg_display.routing_key))
+
+
+@cli.command()
+@click.option('--url', default="https://www.w3schools.com", help="")
+def gui_iframe_display(url):
+    """
+    Sends message to GUI
+    """
+    global state
+
+    msg = MsgUiDisplayIFrame()
+
+    msg.fields = [
+        {
+            "value": url,
+            "type": "iframe"
+        }
+    ]
+
+    _publish_message(msg)
+    _echo_input("message to GUI: {}".format(msg.routing_key))
+
 
 
 @cli.command()
