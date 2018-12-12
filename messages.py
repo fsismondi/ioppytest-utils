@@ -10,7 +10,7 @@ This module provides the API message formats used by ioppytest test framework.
 The idea is to be able to have an
 - organized and centralized way of dealing with the big amount of messages formats used in the platform;
 - to be able to import (or just copy/paste) these messages for interacting with components on the event bus ,
-- re-use this also for the integration testing;
+- re-use this also for the interactinggration testing;
 - to have version control the messages e.g. messages_testcase_start API v1 and API v2;
 - to have a direct way of exporting this as doc.
 
@@ -26,7 +26,7 @@ Usage:
 ------
 >>> m = MsgTestCaseSkip(testcase_id = 'some_testcase_id')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.11, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
+MsgTestCaseSkip(_api_version = 1.2.15, description = Skip testcase, node = someNode, testcase_id = some_testcase_id, )
 >>> m.routing_key
 'testsuite.testcase.skip'
 >>> m.message_id # doctest: +SKIP
@@ -37,24 +37,24 @@ MsgTestCaseSkip(_api_version = 1.2.11, description = Skip testcase, node = someN
 # also we can modify some of the fields (rewrite the default ones)
 >>> m = MsgTestCaseSkip(testcase_id = 'TD_COAP_CORE_03')
 >>> m
-MsgTestCaseSkip(_api_version = 1.2.11, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
+MsgTestCaseSkip(_api_version = 1.2.15, description = Skip testcase, node = someNode, testcase_id = TD_COAP_CORE_03, )
 >>> m.testcase_id
 'TD_COAP_CORE_03'
 
 # and even export the message in json format (for example for sending the message though the amqp event bus)
 >>> m.to_json()
-'{"_api_version": "1.2.11", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
+'{"_api_version": "1.2.15", "description": "Skip testcase", "node": "someNode", "testcase_id": "TD_COAP_CORE_03"}'
 
 # We can use the Message class to import json into Message objects:
 >>> m=MsgTestSuiteStart()
 >>> m.routing_key
 'testsuite.start'
 >>> m.to_json()
-'{"_api_version": "1.2.11", "description": "Test suite START command"}'
+'{"_api_version": "1.2.15", "description": "Test suite START command"}'
 >>> json_message = m.to_json()
 >>> obj=Message.load(json_message,'testsuite.start', None )
 >>> obj
-MsgTestSuiteStart(_api_version = 1.2.11, description = Test suite START command, )
+MsgTestSuiteStart(_api_version = 1.2.15, description = Test suite START command, )
 >>> type(obj) # doctest: +SKIP
 <class 'messages.MsgTestSuiteStart'>
 
@@ -66,7 +66,7 @@ MsgTestSuiteStart(_api_version = 1.2.11, description = Test suite START command,
 # the error reply (note that we pass the message of the request to build the reply):
 >>> err = MsgErrorReply(m)
 >>> err
-MsgErrorReply(_api_version = 1.2.11, error_code = None, error_message = None, ok = False, )
+MsgErrorReply(_api_version = 1.2.15, error_code = None, error_message = None, ok = False, )
 
 # properties of the message are auto-generated:
 >>> m.reply_to
@@ -91,7 +91,7 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-API_VERSION = '1.2.11'
+API_VERSION = '1.2.15'
 
 
 class NonCompliantMessageFormatError(Exception):
@@ -201,19 +201,16 @@ class Message(object):
         >>> m.routing_key
         'sniffing.getcapture.request'
         >>> m.to_json()
-        '{"_api_version": "1.2.11", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.15", "capture_id": "TD_COAP_CORE_01"}'
         >>> json_message = m.to_json()
         >>> json_message
-        '{"_api_version": "1.2.11", "capture_id": "TD_COAP_CORE_01"}'
+        '{"_api_version": "1.2.15", "capture_id": "TD_COAP_CORE_01"}'
         >>> obj=Message.load(json_message,'testsuite.start', None )
         >>> type(obj) # doctest
         <class 'messages.MsgTestSuiteStart'>
 
 
         """
-
-        assert type(json_body) is str
-        assert type(routing_key) is str
 
         global rk_pattern_to_message_type_map
 
@@ -223,14 +220,13 @@ class Message(object):
         try:
             message_type = rk_pattern_to_message_type_map.get_message_type(routing_key)
         except KeyError as e:
-            raise NonCompliantMessageFormatError("ROUTING KEY PATTERN not recogized for RKEY=%s \nBODY=%s" %
-                                                 (routing_key, json_body))
+            raise NonCompliantMessageFormatError("Routing key pattern not recogized for RKEY=%s" % routing_key)
 
         # build message skeleton (all fields as None)
         default_values_dict = message_type().to_dict()
         payload_dict = dict.fromkeys(default_values_dict.keys(), None)
 
-        # fill messages from provided json
+        # fill message body from provided json
         payload_dict.update(json.loads(json_body))
         built_message = message_type(**payload_dict)
 
@@ -245,6 +241,7 @@ class Message(object):
         # let's update the messages properties
         if properties:
             built_message.update_properties(**props_dict)
+        built_message.routing_key = routing_key
 
         return built_message
 
@@ -269,7 +266,6 @@ class Message(object):
 
         routing_key = method.routing_key
         json_body = body.decode('utf-8')
-
         return Message.load(json_body, routing_key, props_dict)
 
     @classmethod
@@ -2274,6 +2270,23 @@ class MsgSniffingGetCaptureLastReply(MsgReply):
         "value": "1MOyoQIABAAAAAAAAAAAAMgAAAAAAAAA",  # empty PCAP
     }
 
+
+class MsgRoutingStartLossyLink(Message):
+    """
+    Requirements: Testing Tool SHOULD implement (other components should not subscribe to event)
+
+    Type: Reply (service)
+
+    Pub/Sub: sniffing -> coordination
+
+    Description: tbd
+    """
+    routing_key = "routing.lossy.link.start"
+
+    _msg_data_template = {
+        "number_of_packets_to_drop": 1,
+    }
+
     # # # # # # ANALYSIS MESSAGES # # # # # #
 
 
@@ -2890,6 +2903,7 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         # ioppytest API: TT <-> Agents
         "fromAgent.*.ip.tun.packet.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
         "fromAgent.*.802154.serial.packet.raw": MsgPacketSniffedRaw,  # Agent -> TestingTool
+
         "toAgent.*.ip.tun.packet.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
         "toAgent.*.802154.serial.packet.raw": MsgPacketInjectRaw,  # TestingTool -> Agent
         "toAgent.*.ip.tun.start": MsgAgentTunStart,  # TestingTool -> Agent
@@ -2953,7 +2967,7 @@ rk_pattern_to_message_type_map = RoutingKeyToMessageMap(
         "sniffing.getcapture.reply": MsgSniffingGetCaptureReply,  # Testing Tool Internal
         "sniffing.getlastcapture.request": MsgSniffingGetCaptureLast,  # Testing Tool Internal
         "sniffing.getlastcapture.reply": MsgSniffingGetCaptureLastReply,  # Testing Tool Internal
-
+        "routing.lossy.link.start": MsgRoutingStartLossyLink,  # Testing Tool Internal
         "analysis.interop.testcase.analyze.request": MsgInteropTestCaseAnalyze,  # Testing Tool Internal
         "analysis.interop.testcase.analyze.reply": MsgInteropTestCaseAnalyzeReply,  # Testing Tool Internal
         "dissection.dissectcapture.request": MsgDissectionDissectCapture,  # Testing Tool Internal

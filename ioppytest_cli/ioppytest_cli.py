@@ -1038,8 +1038,9 @@ def _exit():
 
 def _echo_welcome_message():
     m = """
-    Welcome to F-Interop platform!
-    The Test assistant will help you go through the interoperability session (messages in cyan).
+    Welcome to ioppytest remote interop testing framework!!
+    This is a "Test Assistant" message. 
+    The Test Assistant will help you run an interoperability test session (messages in cyan).
 
     """
     _echo_session_helper(m)
