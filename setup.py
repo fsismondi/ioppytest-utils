@@ -1,5 +1,5 @@
 # Author:
-#     Federico Sismondi <federicosismondi@gmail.com>
+#     Federico Sismondi <federicosismondi[at]gmail[dot]com>
 
 from setuptools import setup
 
@@ -37,9 +37,9 @@ with open('README.md', 'r') as fh:
 setup(
     name=name,
     author='Federico Sismondi',
-    author_email="federicosismondi@gmail.com",
+    author_email="federicosismondi[at]gmail[dot]com",
     maintainer='Federico Sismondi',
-    maintainer_email="federicosismondi@gmail.com",
+    maintainer_email="federicosismondi[at]gmail[dot]com",
     url='https://gitlab.f-interop.eu/f-interop-contributors/utils',
     description=description,
     version=VERSION,
